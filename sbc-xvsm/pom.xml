@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+    <parent>
+        <groupId>at.ac.tuwien</groupId>
+        <artifactId>sbc</artifactId>
+        <version>2014</version>
+    </parent>
+    <artifactId>sbc-xvsm</artifactId>
+    <packaging>jar</packaging>
+
+    <name>Space based computing XVSM</name>
+    <description>XVSM implementation</description>
+
+    <dependencies>
+        <dependency>
+            <groupId>${project.groupId}</groupId>
+            <artifactId>sbc-common</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.mozartspaces</groupId>
+            <artifactId>mozartspaces-runtime</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.mozartspaces</groupId>
+            <artifactId>mozartspaces-notifications</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.mozartspaces</groupId>
+            <artifactId>mozartspaces-xvsmp-jaxb</artifactId>
+        </dependency>
+        <!-- Test -->
+        <dependency>
+            <groupId>junit</groupId>
+            <artifactId>junit</artifactId>
+            <scope>test</scope>
+        </dependency>
+    </dependencies>
+</project>
