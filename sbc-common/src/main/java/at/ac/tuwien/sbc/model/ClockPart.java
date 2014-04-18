@@ -6,13 +6,14 @@
 
 package at.ac.tuwien.sbc.model;
 
+import java.io.Serializable;
 import java.util.UUID;
 
 /**
  *
  * @author Christian
  */
-public class ClockPart {
+public class ClockPart implements Serializable {
     
     private final ClockPartType type;
     private final UUID supplierId;

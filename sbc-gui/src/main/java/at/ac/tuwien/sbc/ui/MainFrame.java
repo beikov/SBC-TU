@@ -3,17 +3,24 @@
  * To change this template file, choose Tools | Templates
  * and open the template in the editor.
  */
-
 package at.ac.tuwien.sbc.ui;
+
+import at.ac.tuwien.sbc.Connector;
 
 /**
  *
  * @author Christian
  */
-public class App extends javax.swing.JFrame {
-    
-    /** Creates new form App */
-    public App() {
+public class MainFrame extends javax.swing.JFrame {
+
+    private final Connector connector;
+
+    /** Creates new form App
+     *
+     * @param connector 
+     */
+    public MainFrame(Connector connector) {
+        this.connector = connector;
         initComponents();
     }
 
@@ -60,13 +67,13 @@ public class App extends javax.swing.JFrame {
 
         jLabel1.setText("Bestandteile");
 
-        jLabel4.setText("Geh√§use");
+        jLabel4.setText("Geh‰use");
 
         jLabel5.setText("Uhrwerke");
 
         jLabel6.setText("Zeiger");
 
-        jLabel7.setText("Armb√§nder");
+        jLabel7.setText("Armb‰nder");
 
         gehaeuseValue.setText("0");
 
@@ -140,7 +147,7 @@ public class App extends javax.swing.JFrame {
                 {null, null, null, null, null, null, null, null, null, null, null}
             },
             new String [] {
-                "Seriennummer", "Genauigkeit", "Geh√§use", "Uhrwerk", "Zeiger 1", "Zeiger 2", "Armband", "Lieferant", "Montage", "Qualit√§t", "Logistik"
+                "Seriennummer", "Genauigkeit", "Geh‰use", "Uhrwerk", "Zeiger 1", "Zeiger 2", "Armband", "Lieferant", "Montage", "Qualit‰t", "Logistik"
             }
         ));
         jScrollPane2.setViewportView(jTable2);
@@ -172,7 +179,7 @@ public class App extends javax.swing.JFrame {
 
         supplierPanel1.setLayout(new javax.swing.BoxLayout(supplierPanel1, javax.swing.BoxLayout.Y_AXIS));
 
-        jComboBox1.setModel(new javax.swing.DefaultComboBoxModel(new String[] { "Geh√§use", "Uhrwerk", "Zeiger", "Armband" }));
+        jComboBox1.setModel(new javax.swing.DefaultComboBoxModel(new String[] { "Geh‰use", "Uhrwerk", "Zeiger", "Armband" }));
 
         jLabel2.setText("Anzahl");
 
@@ -244,41 +251,12 @@ public class App extends javax.swing.JFrame {
         pack();
     }// </editor-fold>//GEN-END:initComponents
 
-    /**
-     * @param args the command line arguments
-     */
-    public static void main(String args[]) {
-        /* Set the Nimbus look and feel */
-        //<editor-fold defaultstate="collapsed" desc=" Look and feel setting code (optional) ">
-        /* If Nimbus (introduced in Java SE 6) is not available, stay with the default look and feel.
-         * For details see http://download.oracle.com/javase/tutorial/uiswing/lookandfeel/plaf.html
-         */
-        try {
-            for (javax.swing.UIManager.LookAndFeelInfo info : javax.swing.UIManager.getInstalledLookAndFeels()) {
-                if ("Nimbus".equals(info.getName())) {
-                    javax.swing.UIManager.setLookAndFeel(info.getClassName());
-                    break;
-                }
-            }
-        } catch (ClassNotFoundException ex) {
-            java.util.logging.Logger.getLogger(App.class.getName())
-                .log(java.util.logging.Level.SEVERE, null, ex);
-        } catch (InstantiationException ex) {
-            java.util.logging.Logger.getLogger(App.class.getName())
-                .log(java.util.logging.Level.SEVERE, null, ex);
-        } catch (IllegalAccessException ex) {
-            java.util.logging.Logger.getLogger(App.class.getName())
-                .log(java.util.logging.Level.SEVERE, null, ex);
-        } catch (javax.swing.UnsupportedLookAndFeelException ex) {
-            java.util.logging.Logger.getLogger(App.class.getName())
-                .log(java.util.logging.Level.SEVERE, null, ex);
-        }
-        //</editor-fold>
-
+    public static void start(final Connector connector) {
         /* Create and display the form */
         java.awt.EventQueue.invokeLater(new Runnable() {
+            @Override
             public void run() {
-                new App().setVisible(true);
+                new MainFrame(connector).setVisible(true);
             }
         });
     }

@@ -9,6 +9,7 @@ package at.ac.tuwien.sbc;
 import at.ac.tuwien.sbc.model.Clock;
 import at.ac.tuwien.sbc.model.ClockPart;
 import at.ac.tuwien.sbc.model.ClockPartType;
+import at.ac.tuwien.sbc.model.ClockQualityType;
 import java.util.List;
 import java.util.Map;
 
@@ -24,10 +25,17 @@ public interface Connector {
 
     public void addParts(List<ClockPart> parts);
 
-    public void takeTransactional(Map<ClockPartType, Integer> neededClockParts, TransactionalTask<List<ClockPart>> transactionalTask);
-
-    public void addClock(Clock clock);
+    public void takeParts(Map<ClockPartType, Integer> neededClockParts, TransactionalTask<List<ClockPart>> transactionalTask);
     
-    public void addCheckedClock(Clock clock);
+    public void takeAssembled(TransactionalTask<Clock> transactionalTask);
+    
+    public boolean takeChecked(ClockQualityType type, long timeout, TransactionalTask<Clock> transactionalTask);
+
+    public void addAssembledClock(Clock clock);
+    
+    public void addCheckedClock(Clock clock, ClockQualityType type);
+    
+    public void addDeliveredClock(Clock clock);
+
     
 }
