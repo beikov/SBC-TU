@@ -67,13 +67,13 @@ public class MainFrame extends javax.swing.JFrame {
 
         jLabel1.setText("Bestandteile");
 
-        jLabel4.setText("Geh‰use");
+        jLabel4.setText("Geh√§use");
 
         jLabel5.setText("Uhrwerke");
 
         jLabel6.setText("Zeiger");
 
-        jLabel7.setText("Armb‰nder");
+        jLabel7.setText("Armb√§nder");
 
         gehaeuseValue.setText("0");
 
@@ -147,7 +147,7 @@ public class MainFrame extends javax.swing.JFrame {
                 {null, null, null, null, null, null, null, null, null, null, null}
             },
             new String [] {
-                "Seriennummer", "Genauigkeit", "Geh‰use", "Uhrwerk", "Zeiger 1", "Zeiger 2", "Armband", "Lieferant", "Montage", "Qualit‰t", "Logistik"
+                "Seriennummer", "Genauigkeit", "Geh√§use", "Uhrwerk", "Zeiger 1", "Zeiger 2", "Armband", "Lieferant", "Montage", "Qualit√§t", "Logistik"
             }
         ));
         jScrollPane2.setViewportView(jTable2);
@@ -179,7 +179,7 @@ public class MainFrame extends javax.swing.JFrame {
 
         supplierPanel1.setLayout(new javax.swing.BoxLayout(supplierPanel1, javax.swing.BoxLayout.Y_AXIS));
 
-        jComboBox1.setModel(new javax.swing.DefaultComboBoxModel(new String[] { "Geh‰use", "Uhrwerk", "Zeiger", "Armband" }));
+        jComboBox1.setModel(new javax.swing.DefaultComboBoxModel(new String[] { "Geh√§use", "Uhrwerk", "Zeiger", "Armband" }));
 
         jLabel2.setText("Anzahl");
 
