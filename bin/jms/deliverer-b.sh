@@ -1,0 +1,1 @@
+mvn -f $(dirname $0)./../sbc-jms/pom.xml exec:java -Pdeliverer-b

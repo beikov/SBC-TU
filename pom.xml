@@ -33,6 +33,9 @@
         <repository>
             <id>mozartspaces</id>
             <url>http://www.mozartspaces.org/maven-snapshots</url>
+            <snapshots>
+                <enabled>true</enabled>
+            </snapshots>
         </repository>
     </repositories>
 
@@ -58,7 +61,8 @@
                 <artifactId>sbc-gui</artifactId>
                 <version>${project.version}</version>
             </dependency>
-                
+            
+            <!-- XVSM dependencies -->
             <dependency>
                 <groupId>org.mozartspaces</groupId>
                 <artifactId>mozartspaces-runtime</artifactId>
@@ -74,6 +78,9 @@
                 <artifactId>mozartspaces-xvsmp-jaxb</artifactId>
                 <version>${version.mozartspaces}</version>
             </dependency>
+            
+            <!-- JMS dependencies -->
+            
             <!-- Test -->
             <dependency>
                 <groupId>junit</groupId>
@@ -83,7 +90,7 @@
             </dependency>
         </dependencies>
     </dependencyManagement>
-
+    
     <build>
         <plugins>
             <plugin>
@@ -109,30 +116,6 @@
         </plugins>
     </build>
     <profiles>
-        <profile>
-            <id>gui</id>
-            <dependencies>
-                <dependency>
-                    <groupId>${project.groupId}</groupId>
-                    <artifactId>sbc-gui</artifactId>
-                </dependency>
-            </dependencies>
-            <build>
-                <plugins>
-                    <plugin>
-                        <groupId>org.codehaus.mojo</groupId>
-                        <artifactId>exec-maven-plugin</artifactId>
-                        <configuration>
-                            <mainClass>at.ac.tuwien.sbc.ui.Application</mainClass>
-                            <arguments>
-                                <argument>${server.port}</argument>
-                                <argument>${connector.type}</argument>
-                            </arguments>
-                        </configuration>
-                    </plugin>
-                </plugins>
-            </build>
-        </profile>
         <profile>
             <id>xvsm-server</id>
             <dependencies>

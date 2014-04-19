@@ -14,10 +14,6 @@
     <description>Common classes</description>
 
     <dependencies>
-        <dependency>
-            <groupId>${project.groupId}</groupId>
-            <artifactId>sbc-common</artifactId>
-        </dependency>
         <!-- Test -->
         <dependency>
             <groupId>junit</groupId>

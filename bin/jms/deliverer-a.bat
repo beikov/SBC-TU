@@ -1,0 +1,1 @@
+mvn -f %~dp0..\..\sbc-jms\pom.xml exec:java -Pdeliverer-a

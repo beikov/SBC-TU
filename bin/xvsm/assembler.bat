@@ -1,0 +1,1 @@
+mvn -f %~dp0..\..\sbc-xvsm\pom.xml exec:java -Passembler

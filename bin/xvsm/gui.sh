@@ -1,0 +1,1 @@
+mvn -f $(dirname $0)./../sbc-gui/pom.xml exec:java -Pgui-xvsm

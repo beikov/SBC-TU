@@ -1,0 +1,1 @@
+mvn -f $(dirname $0)./../sbc-xvsm/pom.xml exec:java -Passembler

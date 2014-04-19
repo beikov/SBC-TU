@@ -1,0 +1,1 @@
+mvn -f %~dp0..\..\sbc-gui\pom.xml exec:java -Pgui-jms

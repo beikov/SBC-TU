@@ -11,6 +11,7 @@ import at.ac.tuwien.sbc.TransactionalTask;
 import at.ac.tuwien.sbc.model.Clock;
 import at.ac.tuwien.sbc.model.ClockPart;
 import at.ac.tuwien.sbc.model.ClockPartType;
+import at.ac.tuwien.sbc.util.SbcUtils;
 import java.util.Collections;
 import java.util.EnumMap;
 import java.util.HashMap;
@@ -36,6 +37,15 @@ public class AssemblyActor extends AbstractActor {
     
     public AssemblyActor(Connector connector) {
         super(connector);
+    }
+    
+    public static void main(String[] args) {
+        if (args.length != 2) {
+            throw new IllegalArgumentException("Usage: AssemblyActor PORT (xvsm|jms)");
+        }
+        
+        Connector connector = SbcUtils.getConnector(Integer.parseInt(args[0]), args[1]);
+        new AssemblyActor(connector).run();
     }
     
     @Override

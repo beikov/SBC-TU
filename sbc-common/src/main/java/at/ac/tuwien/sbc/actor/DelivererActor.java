@@ -10,6 +10,7 @@ import at.ac.tuwien.sbc.TransactionalTask;
 import at.ac.tuwien.sbc.model.Clock;
 import at.ac.tuwien.sbc.model.ClockPart;
 import at.ac.tuwien.sbc.model.ClockQualityType;
+import at.ac.tuwien.sbc.util.SbcUtils;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -24,6 +25,15 @@ public class DelivererActor extends AbstractActor {
     public DelivererActor(Connector connector, ClockQualityType type) {
         super(connector);
         this.type = type;
+    }
+    
+    public static void main(String[] args) {
+        if (args.length != 3) {
+            throw new IllegalArgumentException("Usage: DeliveryActor PORT (xvsm|jms) (A|B)");
+        }
+        
+        Connector connector = SbcUtils.getConnector(Integer.parseInt(args[0]), args[1]);
+        new DelivererActor(connector, ClockQualityType.valueOf(args[2])).run();
     }
 
     @Override
