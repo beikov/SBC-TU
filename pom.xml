@@ -1,172 +1,192 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
-    <modelVersion>4.0.0</modelVersion>
-    <groupId>at.ac.tuwien</groupId>
-    <artifactId>sbc</artifactId>
-    <version>2014</version>
-    <packaging>pom</packaging>
+	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+	<modelVersion>4.0.0</modelVersion>
+	<groupId>at.ac.tuwien</groupId>
+	<artifactId>sbc</artifactId>
+	<version>2014</version>
+	<packaging>pom</packaging>
 
-    <name>Space based computing</name>
-    <description>Space based computing assignment</description>
+	<name>Space based computing</name>
+	<description>Space based computing assignment</description>
 
-    <modules>
-        <module>sbc-common</module>
-        <module>sbc-gui</module>
-        <module>sbc-xvsm</module>
-        <module>sbc-jms</module>
-    </modules>
+	<modules>
+		<module>sbc-common</module>
+		<module>sbc-gui</module>
+		<module>sbc-xvsm</module>
+		<module>sbc-jms</module>
+	</modules>
 
-    <properties>
-        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-        
-        <!-- The default port for the server and client which can be overidden by providing -Dserver.port=VALUE -->
-        <server.port>4242</server.port>
-        <!-- Either provide "xvsm" or "jms" via -Dconnector.type=VALUE -->
-        <connector.type>xvsm</connector.type>
-                
-        <version.junit>4.11</version.junit>
-        <version.mozartspaces>2.1-SNAPSHOT</version.mozartspaces>
-    </properties>
+	<properties>
+		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
 
-    <repositories>
-        <repository>
-            <id>mozartspaces</id>
-            <url>http://www.mozartspaces.org/maven-snapshots</url>
-            <snapshots>
-                <enabled>true</enabled>
-            </snapshots>
-        </repository>
-    </repositories>
+		<!-- The default port for the server and client which can be overidden 
+			by providing -Dserver.port=VALUE -->
+		<server.port>4242</server.port>
+		<!-- Either provide "xvsm" or "jms" via -Dconnector.type=VALUE -->
+		<connector.type>xvsm</connector.type>
 
-    <dependencyManagement>
-        <dependencies>
-            <dependency>
-                <groupId>${project.groupId}</groupId>
-                <artifactId>sbc-common</artifactId>
-                <version>${project.version}</version>
-            </dependency>
-            <dependency>
-                <groupId>${project.groupId}</groupId>
-                <artifactId>sbc-xvsm</artifactId>
-                <version>${project.version}</version>
-            </dependency>
-            <dependency>
-                <groupId>${project.groupId}</groupId>
-                <artifactId>sbc-jms</artifactId>
-                <version>${project.version}</version>
-            </dependency>
-            <dependency>
-                <groupId>${project.groupId}</groupId>
-                <artifactId>sbc-gui</artifactId>
-                <version>${project.version}</version>
-            </dependency>
-            
-            <!-- XVSM dependencies -->
-            <dependency>
-                <groupId>org.mozartspaces</groupId>
-                <artifactId>mozartspaces-runtime</artifactId>
-                <version>${version.mozartspaces}</version>
-            </dependency>
-            <dependency>
-                <groupId>org.mozartspaces</groupId>
-                <artifactId>mozartspaces-notifications</artifactId>
-                <version>${version.mozartspaces}</version>
-            </dependency>
-            <dependency>
-                <groupId>org.mozartspaces</groupId>
-                <artifactId>mozartspaces-xvsmp-jaxb</artifactId>
-                <version>${version.mozartspaces}</version>
-            </dependency>
-            
-            <!-- JMS dependencies -->
-            
-            <!-- Test -->
-            <dependency>
-                <groupId>junit</groupId>
-                <artifactId>junit</artifactId>
-                <version>${version.junit}</version>
-                <scope>test</scope>
-            </dependency>
-        </dependencies>
-    </dependencyManagement>
-    
-    <build>
-        <plugins>
-            <plugin>
-                <artifactId>maven-compiler-plugin</artifactId>
-                <version>3.1</version>
-                <configuration>
-                    <source>1.6</source>
-                    <target>1.6</target>
-                </configuration>
-            </plugin>
-            <plugin>
-                <groupId>org.codehaus.mojo</groupId>
-                <artifactId>exec-maven-plugin</artifactId>
-                <version>1.2.1</version>
-                <executions>  
-                    <execution>
-                        <goals>  
-                            <goal>java</goal>  
-                        </goals>
-                    </execution>
-                </executions>
-            </plugin>
-        </plugins>
-    </build>
-    <profiles>
-        <profile>
-            <id>xvsm-server</id>
-            <dependencies>
-                <dependency>
-                    <groupId>org.mozartspaces</groupId>
-                    <artifactId>mozartspaces-runtime</artifactId>
-                </dependency>
-                <dependency>
-                    <groupId>org.mozartspaces</groupId>
-                    <artifactId>mozartspaces-notifications</artifactId>
-                </dependency>
-                <dependency>
-                    <groupId>org.mozartspaces</groupId>
-                    <artifactId>mozartspaces-xvsmp-jaxb</artifactId>
-                </dependency>
-            </dependencies>
-            <build>
-                <plugins>
-                    <plugin>
-                        <groupId>org.codehaus.mojo</groupId>
-                        <artifactId>exec-maven-plugin</artifactId>
-                        <configuration>
-                            <mainClass>org.mozartspaces.core.Server</mainClass>
-                            <arguments>
-                                <argument>${server.port}</argument>
-                            </arguments>
-                        </configuration>
-                    </plugin>
-                </plugins>
-            </build>
-        </profile>
-        <profile>
-            <id>jms-server</id>
-            <dependencies>
-                <!-- JMS dependencies here -->
-            </dependencies>
-            <build>
-                <plugins>
-                    <plugin>
-                        <groupId>org.codehaus.mojo</groupId>
-                        <artifactId>exec-maven-plugin</artifactId>
-                        <configuration>
-                            <mainClass><!-- Main class for JMS server here --></mainClass>
-                            <arguments>
-                                <!-- Further arguments to the main class here -->
-                                <argument>${server.port}</argument>
-                            </arguments>
-                        </configuration>
-                    </plugin>
-                </plugins>
-            </build>
-        </profile>
-    </profiles>
+		<version.junit>4.11</version.junit>
+		<version.mozartspaces>2.1-SNAPSHOT</version.mozartspaces>
+	</properties>
+
+	<repositories>
+		<repository>
+			<id>mozartspaces</id>
+			<url>http://www.mozartspaces.org/maven-snapshots</url>
+			<snapshots>
+				<enabled>true</enabled>
+			</snapshots>
+		</repository>
+	</repositories>
+
+	<dependencyManagement>
+		<dependencies>
+			<dependency>
+				<groupId>${project.groupId}</groupId>
+				<artifactId>sbc-common</artifactId>
+				<version>${project.version}</version>
+			</dependency>
+			<dependency>
+				<groupId>${project.groupId}</groupId>
+				<artifactId>sbc-xvsm</artifactId>
+				<version>${project.version}</version>
+			</dependency>
+			<dependency>
+				<groupId>${project.groupId}</groupId>
+				<artifactId>sbc-jms</artifactId>
+				<version>${project.version}</version>
+			</dependency>
+			<dependency>
+				<groupId>${project.groupId}</groupId>
+				<artifactId>sbc-gui</artifactId>
+				<version>${project.version}</version>
+			</dependency>
+
+			<!-- XVSM dependencies -->
+			<dependency>
+				<groupId>org.mozartspaces</groupId>
+				<artifactId>mozartspaces-runtime</artifactId>
+				<version>${version.mozartspaces}</version>
+			</dependency>
+			<dependency>
+				<groupId>org.mozartspaces</groupId>
+				<artifactId>mozartspaces-notifications</artifactId>
+				<version>${version.mozartspaces}</version>
+			</dependency>
+			<dependency>
+				<groupId>org.mozartspaces</groupId>
+				<artifactId>mozartspaces-xvsmp-jaxb</artifactId>
+				<version>${version.mozartspaces}</version>
+			</dependency>
+
+			<!-- JMS dependencies -->
+			<dependency>
+				<groupId>jms</groupId>
+				<artifactId>jms</artifactId>
+				<version>1.1</version>
+			</dependency>
+
+
+			<!-- Test -->
+			<dependency>
+				<groupId>junit</groupId>
+				<artifactId>junit</artifactId>
+				<version>${version.junit}</version>
+				<scope>test</scope>
+			</dependency>
+		</dependencies>
+	</dependencyManagement>
+
+	<build>
+		<plugins>
+			<plugin>
+				<artifactId>maven-compiler-plugin</artifactId>
+				<version>3.1</version>
+				<configuration>
+					<source>1.6</source>
+					<target>1.6</target>
+				</configuration>
+			</plugin>
+			<plugin>
+				<groupId>org.codehaus.mojo</groupId>
+				<artifactId>exec-maven-plugin</artifactId>
+				<version>1.2.1</version>
+				<executions>
+					<execution>
+						<goals>
+							<goal>java</goal>
+						</goals>
+					</execution>
+				</executions>
+			</plugin>
+		</plugins>
+	</build>
+	<profiles>
+		<profile>
+			<id>xvsm-server</id>
+			<dependencies>
+				<dependency>
+					<groupId>org.mozartspaces</groupId>
+					<artifactId>mozartspaces-runtime</artifactId>
+				</dependency>
+				<dependency>
+					<groupId>org.mozartspaces</groupId>
+					<artifactId>mozartspaces-notifications</artifactId>
+				</dependency>
+				<dependency>
+					<groupId>org.mozartspaces</groupId>
+					<artifactId>mozartspaces-xvsmp-jaxb</artifactId>
+				</dependency>
+			</dependencies>
+			<build>
+				<plugins>
+					<plugin>
+						<groupId>org.codehaus.mojo</groupId>
+						<artifactId>exec-maven-plugin</artifactId>
+						<configuration>
+							<mainClass>org.mozartspaces.core.Server</mainClass>
+							<arguments>
+								<argument>${server.port}</argument>
+							</arguments>
+						</configuration>
+					</plugin>
+				</plugins>
+			</build>
+		</profile>
+		<profile>
+			<id>jms-server</id>
+			<dependencies>
+				<!-- JMS dependencies here -->
+				<dependency>
+					<groupId>org.glassfish.appclient</groupId>
+					<artifactId>gf-client</artifactId>
+					<version>3.1</version>
+					<type>pom</type>
+					<scope>compile</scope>
+				</dependency>
+				<dependency>
+					<groupId>org.glassfish.external.jms</groupId>
+					<artifactId>imqjmsra</artifactId>
+					<version>3.1.0</version>
+				</dependency>
+			</dependencies>
+			<build>
+				<plugins>
+					<plugin>
+						<groupId>org.codehaus.mojo</groupId>
+						<artifactId>exec-maven-plugin</artifactId>
+						<configuration>
+							<mainClass><!-- Main class for JMS server here -->
+							</mainClass>
+							<arguments>
+								<!-- Further arguments to the main class here -->
+								<argument>${server.port}</argument>
+							</arguments>
+						</configuration>
+					</plugin>
+				</plugins>
+			</build>
+		</profile>
+	</profiles>
 </project>
