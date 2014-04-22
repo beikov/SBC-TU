@@ -116,7 +116,7 @@
         </plugins>
     </build>
     <profiles>
-        <profile>
+<!--        <profile>
             <id>xvsm-server</id>
             <dependencies>
                 <dependency>
@@ -146,7 +146,7 @@
                     </plugin>
                 </plugins>
             </build>
-        </profile>
+        </profile>-->
         <profile>
             <id>jms-server</id>
             <dependencies>

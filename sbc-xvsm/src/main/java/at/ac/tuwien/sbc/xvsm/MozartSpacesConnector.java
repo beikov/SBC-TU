@@ -18,8 +18,13 @@ import at.ac.tuwien.sbc.model.ClockStatus;
 import java.net.URI;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.List;
 import java.util.Map;
+import org.mozartspaces.capi3.AnyCoordinator;
+import org.mozartspaces.capi3.CoordinationData;
+import org.mozartspaces.capi3.Coordinator;
+import org.mozartspaces.capi3.CountNotMetException;
 import org.mozartspaces.capi3.FifoCoordinator;
 import org.mozartspaces.capi3.KeyCoordinator;
 import org.mozartspaces.capi3.LabelCoordinator;
@@ -49,7 +54,11 @@ public class MozartSpacesConnector implements Connector {
     private static final String CHECKED_CLOCKS_CONTAINER_NAME = "Fabrik/GepruefteUhren";
     private static final String DELIVERED_CLOCKS_CONTAINER_NAME = "Fabrik/AusgelieferteUhren";
 
+    private static final String PARTS_TYPE_COORDINATOR_NAME = "type";
+    private static final String CLOCK_QUALITY_COORDINATOR_NAME = "quality";
+
     private final ThreadLocal<TransactionReference> currentTransaction = new ThreadLocal<TransactionReference>();
+    private final ThreadLocal<Boolean> currentTransactionRollback = new ThreadLocal<Boolean>();
     private final Capi capi;
     private final URI uri;
 
@@ -71,80 +80,92 @@ public class MozartSpacesConnector implements Connector {
                 }
             });
         notificationManager = new NotificationManager(capi.getCore());
-        partsContainer = getOrCreateContainer(PARTS_CONTAINER_NAME);
-        assembledClocksContainer = getOrCreateContainer(ASSEMBLED_CLOCKS_CONTAINER_NAME);
-        checkedClocksContainer = getOrCreateContainer(CHECKED_CLOCKS_CONTAINER_NAME);
-        deliveredClocksContainer = getOrCreateContainer(DELIVERED_CLOCKS_CONTAINER_NAME);
+        partsContainer = getOrCreateContainer(PARTS_CONTAINER_NAME, new LabelCoordinator(PARTS_TYPE_COORDINATOR_NAME),
+                                              new FifoCoordinator());
+        assembledClocksContainer = getOrCreateContainer(ASSEMBLED_CLOCKS_CONTAINER_NAME, new FifoCoordinator());
+        checkedClocksContainer = getOrCreateContainer(CHECKED_CLOCKS_CONTAINER_NAME, new LabelCoordinator(
+            CLOCK_QUALITY_COORDINATOR_NAME), new FifoCoordinator());
+        deliveredClocksContainer = getOrCreateContainer(DELIVERED_CLOCKS_CONTAINER_NAME, new FifoCoordinator());
     }
 
-    private ContainerReference createContainer(String name) {
-        try {
-            return capi.createContainer(name, uri, MzsConstants.Container.UNBOUNDED, Arrays.asList(new FifoCoordinator()),
-                                        Arrays.asList(new LindaCoordinator()), null);
-        } catch (MzsCoreException ex) {
-            throw new RuntimeException(ex);
-        }
-    }
-
-    private ContainerReference getOrCreateContainer(String name) {
+    private ContainerReference getOrCreateContainer(String name, Coordinator... coordinators) {
         try {
             return capi.lookupContainer(name, uri, MAX_TIMEOUT_MILLIS, null);
         } catch (MzsCoreException ex) {
-            return createContainer(name);
-        }
-    }
-
-    private void commitCurrentTransaction() {
-        TransactionReference tx = currentTransaction.get();
-        if (tx != null) {
             try {
-                capi.commitTransaction(tx);
-            } catch (MzsCoreException ex) {
-                throw new RuntimeException(ex);
-            } finally {
-                currentTransaction.remove();
+                return capi.createContainer(name, uri, MzsConstants.Container.UNBOUNDED, Arrays.asList(coordinators),
+                                            null, null);
+            } catch (MzsCoreException ex2) {
+                throw new RuntimeException(ex2);
             }
         }
     }
 
-    private void rollbackCurrentTransaction() {
-        TransactionReference tx = currentTransaction.get();
-        if (tx != null) {
-            try {
-                capi.rollbackTransaction(tx);
-            } catch (MzsCoreException ex) {
-                throw new RuntimeException(ex);
-            } finally {
-                currentTransaction.remove();
-            }
+    private boolean commit(TransactionReference tx) {
+        try {
+            capi.commitTransaction(tx);
+            return false;
+        } catch (MzsTimeoutException ex) {
+            return true;
+        } catch (MzsCoreException ex) {
+            throw new RuntimeException(ex);
+        } finally {
+            currentTransaction.remove();
+            currentTransactionRollback.remove();
         }
     }
 
-    private void transactional(TransactionalWork work) {
-        transactional(work, MzsConstants.TransactionTimeout.INFINITE);
+    private void rollback(TransactionReference tx) {
+        try {
+            capi.rollbackTransaction(tx);
+        } catch (MzsTimeoutException ex) {
+            // On timeout we dont have to rollback
+        } catch (MzsCoreException ex) {
+            throw new RuntimeException(ex);
+        } finally {
+            currentTransaction.remove();
+        }
+    }
+
+    private boolean transactional(TransactionalWork work) {
+        return transactional(work, MzsConstants.TransactionTimeout.INFINITE);
     }
 
     private boolean transactional(TransactionalWork work, long timeoutInMillis) {
-        boolean rollback = false;
         boolean created = ensureCurrentTransaction(timeoutInMillis);
         TransactionReference tx = getCurrentTransaction();
+        currentTransactionRollback.set(Boolean.TRUE);
 
         try {
             work.doWork(tx);
-            return false;
+
+            if (created) {
+                return commit(tx);
+            } else {
+                // Indicates no timeout occurred
+                return false;
+            }
         } catch (MzsTimeoutException ex) {
-            rollback = true;
+            // On timeout we dont have to rollback
+            created = false;
+            currentTransaction.remove();
+            currentTransactionRollback.remove();
             return true;
-        } catch (MzsCoreException ex) {
-            rollback = true;
+        } catch (CountNotMetException ex) {
+            // This happens when try once is used and is handeled like a timeout
+            created = false;
+            currentTransaction.remove();
+            currentTransactionRollback.remove();
+            return true;
+        } catch (RuntimeException ex) {
+            throw ex;
+        } catch (Error ex) {
+            throw ex;
+        } catch (Throwable ex) {
             throw new RuntimeException(ex);
         } finally {
-            if (created) {
-                if (rollback) {
-                    rollbackCurrentTransaction();
-                } else {
-                    commitCurrentTransaction();
-                }
+            if (created && Boolean.TRUE == currentTransactionRollback.get()) {
+                rollback(tx);
             }
         }
     }
@@ -153,6 +174,12 @@ public class MozartSpacesConnector implements Connector {
         return currentTransaction.get();
     }
 
+    /**
+     * Returns true if the call resulted in creating the transaction.
+     *
+     * @param timeoutInMillis
+     * @return
+     */
     private boolean ensureCurrentTransaction(long timeoutInMillis) {
         try {
             TransactionReference tx = currentTransaction.get();
@@ -170,7 +197,9 @@ public class MozartSpacesConnector implements Connector {
     @Override
     public Subscription subscribeForClockParts(ClockPartListener listener) {
         try {
-            Notification notification = notificationManager.createNotification(partsContainer, new MozartSpacesClockPartListener(listener), Operation.WRITE);
+            Notification notification = notificationManager.createNotification(partsContainer,
+                                                                               new MozartSpacesClockPartListener(listener),
+                                                                               Operation.WRITE);
             return new MozartSpacesSubscription(Arrays.asList(notification));
         } catch (MzsCoreException ex) {
             throw new RuntimeException(ex);
@@ -183,9 +212,12 @@ public class MozartSpacesConnector implements Connector {
     public Subscription subscribeForClocks(ClockListener listener) {
         try {
             List<Notification> notifications = new ArrayList<Notification>();
-            notifications.add(notificationManager.createNotification(assembledClocksContainer, new MozartSpacesClockListener(listener, ClockStatus.ASSEMBLED), Operation.WRITE));
-            notifications.add(notificationManager.createNotification(checkedClocksContainer, new MozartSpacesClockListener(listener, ClockStatus.CHECKED), Operation.WRITE));
-            notifications.add(notificationManager.createNotification(deliveredClocksContainer, new MozartSpacesClockListener(listener, ClockStatus.DELIVERED), Operation.WRITE));
+            notifications.add(notificationManager.createNotification(assembledClocksContainer, new MozartSpacesClockListener(
+                listener, ClockStatus.ASSEMBLED), Operation.WRITE));
+            notifications.add(notificationManager.createNotification(checkedClocksContainer, new MozartSpacesClockListener(
+                listener, ClockStatus.CHECKED), Operation.WRITE));
+            notifications.add(notificationManager.createNotification(deliveredClocksContainer, new MozartSpacesClockListener(
+                listener, ClockStatus.DELIVERED), Operation.WRITE));
             return new MozartSpacesSubscription(notifications);
         } catch (MzsCoreException ex) {
             throw new RuntimeException(ex);
@@ -194,14 +226,18 @@ public class MozartSpacesConnector implements Connector {
         }
     }
 
+    private List<? extends CoordinationData> getPartCoordinationData(ClockPart part) {
+        return Arrays.asList(LabelCoordinator.newCoordinationData(part.getType()
+            .name(), PARTS_TYPE_COORDINATOR_NAME));
+    }
+
     @Override
     public void addParts(final List<ClockPart> parts) {
         final Entry[] entries = new Entry[parts.size()];
 
         for (int i = 0; i < parts.size(); i++) {
             ClockPart part = parts.get(i);
-            entries[i] = new Entry(part, KeyCoordinator.newCoordinationData(part.getType()
-                .name()));
+            entries[i] = new Entry(part, getPartCoordinationData(part));
         }
 
         transactional(new TransactionalWork() {
@@ -219,14 +255,15 @@ public class MozartSpacesConnector implements Connector {
 
             @Override
             public void doWork(TransactionReference tx) throws MzsCoreException {
-                List<Selector> selectors = new ArrayList<Selector>();
+                List<ClockPart> clockParts = new ArrayList(neededClockParts.size());
 
                 for (Map.Entry<ClockPartType, Integer> entry : neededClockParts.entrySet()) {
-                    selectors.add(KeyCoordinator.newSelector(entry.getKey()
-                        .name(), entry.getValue()));
+                    Selector selector = LabelCoordinator.newSelector(entry.getKey()
+                        .name(), entry.getValue(), PARTS_TYPE_COORDINATOR_NAME);
+                    // Use a timeout to avoid deadlocks
+                    clockParts.addAll((Collection) capi.take(partsContainer, selector, MAX_TIMEOUT_MILLIS, tx));
                 }
 
-                List<ClockPart> clockParts = capi.take(partsContainer, selectors, MzsConstants.RequestTimeout.INFINITE, tx);
                 transactionalTask.doWork(clockParts);
             }
         });
@@ -241,6 +278,7 @@ public class MozartSpacesConnector implements Connector {
                 List<Selector> selectors = new ArrayList<Selector>();
                 selectors.add(FifoCoordinator.newSelector(1));
 
+                // Since we only take one here, we can use infinite timeouts
                 Clock clock = (Clock) capi.take(assembledClocksContainer, selectors, MzsConstants.RequestTimeout.INFINITE, tx)
                     .get(0);
                 transactionalTask.doWork(clock);
@@ -256,9 +294,10 @@ public class MozartSpacesConnector implements Connector {
             public void doWork(TransactionReference tx) throws MzsCoreException {
                 List<Selector> selectors = new ArrayList<Selector>();
 
-                selectors.add(LabelCoordinator.newSelector(type.name()));
+                selectors.add(LabelCoordinator.newSelector(type.name(), 1, CLOCK_QUALITY_COORDINATOR_NAME));
                 selectors.add(FifoCoordinator.newSelector(1));
 
+                // Since we only take one here, we can use infinite timeouts
                 Clock clock = (Clock) capi.take(checkedClocksContainer, selectors, MzsConstants.RequestTimeout.INFINITE, tx)
                     .get(0);
                 transactionalTask.doWork(clock);
@@ -268,8 +307,7 @@ public class MozartSpacesConnector implements Connector {
 
     @Override
     public void addAssembledClock(Clock clock) {
-        final Entry entry = new Entry(clock, KeyCoordinator.newCoordinationData(clock.getId()
-            .toString()));
+        final Entry entry = new Entry(clock);
         transactional(new TransactionalWork() {
 
             @Override
@@ -281,8 +319,7 @@ public class MozartSpacesConnector implements Connector {
 
     @Override
     public void addCheckedClock(Clock clock, ClockQualityType type) {
-        final Entry entry = new Entry(clock, KeyCoordinator.newCoordinationData(clock.getId()
-            .toString()), LabelCoordinator.newCoordinationData(type.name()));
+        final Entry entry = new Entry(clock, LabelCoordinator.newCoordinationData(type.name(), CLOCK_QUALITY_COORDINATOR_NAME));
         transactional(new TransactionalWork() {
 
             @Override
@@ -294,8 +331,7 @@ public class MozartSpacesConnector implements Connector {
 
     @Override
     public void addDeliveredClock(Clock clock) {
-        final Entry entry = new Entry(clock, KeyCoordinator.newCoordinationData(clock.getId()
-            .toString()));
+        final Entry entry = new Entry(clock);
         transactional(new TransactionalWork() {
 
             @Override

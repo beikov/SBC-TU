@@ -39,18 +39,17 @@ public class DelivererActor extends AbstractActor {
     @Override
     public void run() {
         while (!Thread.interrupted()) {
-            if (connector.takeChecked(type, 1000, new TransactionalTask<Clock>() {
+            if (connector.takeChecked(type, 5000, new TransactionalTask<Clock>() {
 
                 @Override
                 public void doWork(Clock clock) {
-                    clock.check(id, random.get()
-                        .nextInt(10) + 1);
+                    clock.deliver(id);
                     connector.addDeliveredClock(clock);
                 }
 
             })) {
                 // Timeout occurred
-                connector.takeChecked(ClockQualityType.C, 100, new TransactionalTask<Clock>() {
+                connector.takeChecked(ClockQualityType.C, 1000, new TransactionalTask<Clock>() {
 
                     @Override
                     public void doWork(Clock clock) {

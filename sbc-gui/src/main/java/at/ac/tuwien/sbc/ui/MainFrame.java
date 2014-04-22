@@ -6,6 +6,7 @@
 package at.ac.tuwien.sbc.ui;
 
 import at.ac.tuwien.sbc.Connector;
+import java.util.concurrent.ExecutorService;
 
 /**
  *
@@ -14,13 +15,16 @@ import at.ac.tuwien.sbc.Connector;
 public class MainFrame extends javax.swing.JFrame {
 
     private final Connector connector;
+    private final ExecutorService threadPool;
 
     /** Creates new form App
      *
      * @param connector 
+     * @param threadPool 
      */
-    public MainFrame(Connector connector) {
+    public MainFrame(Connector connector, ExecutorService threadPool) {
         this.connector = connector;
+        this.threadPool = threadPool;
         initComponents();
     }
 
@@ -251,12 +255,12 @@ public class MainFrame extends javax.swing.JFrame {
         pack();
     }// </editor-fold>//GEN-END:initComponents
 
-    public static void start(final Connector connector) {
+    public static void start(final Connector connector, final ExecutorService threadPool) {
         /* Create and display the form */
         java.awt.EventQueue.invokeLater(new Runnable() {
             @Override
             public void run() {
-                new MainFrame(connector).setVisible(true);
+                new MainFrame(connector, threadPool).setVisible(true);
             }
         });
     }
