@@ -9,20 +9,22 @@ package at.ac.tuwien.sbc.jms;
 
 
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
 import java.util.Map;
 
 import javax.jms.Connection;
-import javax.jms.DeliveryMode;
-import javax.jms.Destination;
 import javax.jms.JMSException;
 import javax.jms.Message;
 import javax.jms.MessageConsumer;
 import javax.jms.MessageProducer;
 import javax.jms.ObjectMessage;
+import javax.jms.QueueSender;
 import javax.jms.Session;
+import javax.jms.Topic;
 
 import org.apache.activemq.ActiveMQConnectionFactory;
+import org.apache.activemq.ActiveMQPrefetchPolicy;
 
 import at.ac.tuwien.sbc.ClockListener;
 import at.ac.tuwien.sbc.ClockPartListener;
@@ -33,7 +35,6 @@ import at.ac.tuwien.sbc.model.Clock;
 import at.ac.tuwien.sbc.model.ClockPart;
 import at.ac.tuwien.sbc.model.ClockPartType;
 import at.ac.tuwien.sbc.model.ClockQualityType;
-import javax.jms.ConnectionFactory;
 
 /**
  *
@@ -41,147 +42,141 @@ import javax.jms.ConnectionFactory;
  */
 public class JmsConnector implements Connector {
 
-	private static final String CHASSIS_QUEUE = "queue/chassis";
-	private static final String CLOCKWORK_QUEUE = "queue/clockwork";
-	private static final String CLOCKHAND_QUEUE = "queue/clockhand";
-	private static final String WRISTBAND_QUEUE = "queue/wristband";
-	private static final String ASSEMBLED_QUEUE = "queue/assembled";
-	private static final String HIGH_QUALITY_QUEUE = "queue/high_qual";
-	private static final String MED_QUALITY_QUEUE = "queue/med_qual";
-	private static final String LOW_QUALITY_QUEUE = "queue/low_qual";
-	private static final String DELIVERED_QUEUE = "queue/delivered";
 
-	private final ConnectionFactory connectionFactory;
-	private final Session session;
-	private final Connection connection;
+	private static String CHASSIS_QUEUE = "queue/chassis";
+	private static String CLOCKWORK_QUEUE = "queue/clockwork";
+	private static String CLOCKHAND_QUEUE = "queue/clockhand";
+	private static String WRISTBAND_QUEUE = "queue/wristband";
+	private static String ASSEMBLED_QUEUE = "queue/assembled";
+	private static String HIGH_QUALITY_QUEUE = "queue/high_qual";
+	private static String MED_QUALITY_QUEUE = "queue/med_qual";
+	private static String LOW_QUALITY_QUEUE = "queue/low_qual";
+	private static String DELIVERED_QUEUE = "queue/delivered";
 
-	public JmsConnector(int port) {
-        this.connectionFactory = new ActiveMQConnectionFactory("vm://localhost:" + port);
-        
-        try {
-            connection = connectionFactory.createConnection();
-            connection.start();
-            session = connection.createSession(false, Session.AUTO_ACKNOWLEDGE);
-        } catch (JMSException ex) {
-            throw new RuntimeException(ex);
-        }
+	private Topic chassisTopic, clockworkTopic, clockhandTopic, wristbandTopic, assembledTopic, highQualityTopic, medQualityTopic, lowQualityTopic, deliveredTopic;
+	private MessageProducer chassisProducer, clockworkProducer, clockhandProducer, wristbandProducer, assembledProducer, highQualityProducer, medQualityProducer, lowQualityProducer, deliveredProducer;
+	private MessageConsumer chassisConsumer, clockworkConsumer, clockhandConsumer, wristbandConsumer, assembledConsumer, highQualityConsumer, medQualityConsumer, lowQualityConsumer;
+
+	private Session session;
+	private Connection connection;
+
+
+	public JmsConnector(int port){
+
+		connect(port);
+
 	}
 
-	private MessageProducer initAndGetProducer(String queue){
+	private void connect(int port){
 		try {
-			MessageProducer producer =  session.createProducer(session.createQueue(queue));
-			producer.setDeliveryMode(DeliveryMode.PERSISTENT);
-			return producer;
-		} catch (JMSException ex) {
-			throw new RuntimeException(ex);
-		}
-	}
+			ActiveMQConnectionFactory connectionFactory = new ActiveMQConnectionFactory();
+			ActiveMQPrefetchPolicy policy = new ActiveMQPrefetchPolicy();
+			policy.setQueuePrefetch(0); 
+			connectionFactory.setPrefetchPolicy(policy);
+			connection = connectionFactory.createConnection();
+			connection.start();
+			session = connection.createSession(false, Session.AUTO_ACKNOWLEDGE);
 
-	private MessageConsumer initAndGetConsumer(String queue){
-		try {
-			Destination dest =  session.createQueue(queue);
-			return session.createConsumer(dest);
-		} catch (JMSException ex) {
-			throw new RuntimeException(ex);
-		}
-	}
+			// create topics
+			chassisTopic = session.createTopic(CHASSIS_QUEUE);
+			clockworkTopic = session.createTopic(CLOCKWORK_QUEUE);
+			clockhandTopic = session.createTopic(CLOCKHAND_QUEUE);
+			wristbandTopic = session.createTopic(WRISTBAND_QUEUE);
+			assembledTopic = session.createTopic(ASSEMBLED_QUEUE);
+			highQualityTopic = session.createTopic(HIGH_QUALITY_QUEUE);
+			medQualityTopic = session.createTopic(MED_QUALITY_QUEUE);
+			lowQualityTopic = session.createTopic(LOW_QUALITY_QUEUE);
+			deliveredTopic = session.createTopic(DELIVERED_QUEUE);
 
-	private void close() throws JMSException{
-		session.close();
-		connection.stop();
-		connection.close();
-	}
+			// create producers
+			chassisProducer = session.createProducer(chassisTopic);
+			clockworkProducer = session.createProducer(clockworkTopic);
+			clockhandProducer = session.createProducer(clockhandTopic);
+			wristbandProducer = session.createProducer(wristbandTopic);
+			assembledProducer = session.createProducer(assembledTopic);
+			highQualityProducer = session.createProducer(highQualityTopic);
+			medQualityProducer = session.createProducer(medQualityTopic);
+			lowQualityProducer = session.createProducer(lowQualityTopic);
+			deliveredProducer = session.createProducer(deliveredTopic);
 
-	public void close(MessageConsumer consumer){
-		try {
-			consumer.close();
-			close();
-		} catch (JMSException ex) {
-			throw new RuntimeException(ex);
-		}
-	}
 
-	public void close(MessageProducer producer){
-		try{
-			producer.close();
-			close();
-		} catch (JMSException ex) {
-			throw new RuntimeException(ex);
+			// create consumers
+			chassisConsumer = session.createConsumer(chassisTopic );
+			clockworkConsumer = session.createConsumer(clockworkTopic );
+			clockhandConsumer = session.createConsumer(clockhandTopic );
+			wristbandConsumer = session.createConsumer(wristbandTopic );
+			assembledConsumer = session.createConsumer(assembledTopic);
+			highQualityConsumer = session.createConsumer(highQualityTopic);
+			medQualityConsumer = session.createConsumer(medQualityTopic );
+			lowQualityConsumer = session.createConsumer(lowQualityTopic );
+
+
+		} catch (JMSException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
 		}
 	}
 
 	@Override
 	public Subscription subscribeForClockParts(ClockPartListener listener) {
-		throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+		// TODO Auto-generated method stub
+		return null;
 	}
 
 	@Override
 	public Subscription subscribeForClocks(ClockListener listener) {
-		throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+		// TODO Auto-generated method stub
+		return null;
 	}
-
+	
 	@Override
 	public void addParts(List<ClockPart> parts) {
 		try {
 			for( ClockPart cp : parts ){
-				MessageProducer producer = null;
 				switch (cp.getType()) {
-				case GEHAEUSE:	producer = initAndGetProducer(CHASSIS_QUEUE);		break;
-				case UHRWERK:	producer = initAndGetProducer(CLOCKWORK_QUEUE);		break;
-				case ZEIGER:	producer = initAndGetProducer(CLOCKHAND_QUEUE);		break;
-				case ARMBAND:	producer = initAndGetProducer(WRISTBAND_QUEUE);		break;
+				case GEHAEUSE:	chassisProducer.send(session.createObjectMessage(cp));		break;
+				case UHRWERK:	clockworkProducer.send(session.createObjectMessage(cp));	break;
+				case ZEIGER:	clockhandProducer.send(session.createObjectMessage(cp));	break;
+				case ARMBAND:	wristbandProducer.send(session.createObjectMessage(cp));	break;
 				}
-				Message msg = session.createObjectMessage(cp);
-				producer.send(msg);
-				close(producer);
 			}
-		} catch (JMSException ex) {
-			throw new RuntimeException(ex);
+		} catch (JMSException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
 		}	
-
 	}
 
 	@Override
 	public void takeParts(Map<ClockPartType, Integer> neededClockParts, TransactionalTask<List<ClockPart>> transactionalTask) {
 		try {
-			int neededParts = 0;
 			List<ClockPart> parts = new ArrayList<ClockPart>();
 			for(ClockPartType t : neededClockParts.keySet()){
-				MessageConsumer consumer = null;
-				switch(t){
-				case GEHAEUSE:	consumer = initAndGetConsumer(CHASSIS_QUEUE);	break;
-				case UHRWERK:	consumer = initAndGetConsumer(CLOCKWORK_QUEUE);	break;
-				case ZEIGER:	consumer = initAndGetConsumer(CLOCKHAND_QUEUE);	break;
-				case ARMBAND:	consumer = initAndGetConsumer(WRISTBAND_QUEUE);	break;
-				}
+				ObjectMessage message = null;
 				for(int i=0, upper = neededClockParts.get(t); i < upper ; i++){
-					neededParts++;
-					ObjectMessage message = (ObjectMessage) consumer.receive(100);
-					if(message != null){
-						parts.add( (ClockPart) message.getObject() );
+					switch(t){
+					case GEHAEUSE:	message = (ObjectMessage) chassisConsumer.receive();	break;
+					case UHRWERK:	message = (ObjectMessage) clockworkConsumer.receive();	break;
+					case ZEIGER:	message = (ObjectMessage) clockhandConsumer.receive();	break;
+					case ARMBAND:	message = (ObjectMessage) wristbandConsumer.receive();	break;
 					}
+					parts.add( (ClockPart) message.getObject() );
 				}
-				close(consumer);
 			}
-			if(parts.size() == neededParts){
-				transactionalTask.doWork(parts);
-			}
-		} catch (JMSException ex) {
-			throw new RuntimeException(ex);
+			transactionalTask.doWork(parts);
+		} catch (JMSException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
 		}
 	}
 
 	@Override
 	public void takeAssembled(TransactionalTask<Clock> transactionalTask) {
 		try {
-			MessageConsumer consumer = initAndGetConsumer(ASSEMBLED_QUEUE);
-			ObjectMessage message = (ObjectMessage) consumer.receiveNoWait();
-			close(consumer);
-			if( message != null ){
-				transactionalTask.doWork( (Clock) message.getObject() );
-			}
-		} catch (JMSException ex) {
-			throw new RuntimeException(ex);
+			ObjectMessage message = (ObjectMessage) assembledConsumer.receive();
+			transactionalTask.doWork( (Clock) message.getObject() );
+		} catch (JMSException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
 		}
 
 	}
@@ -191,31 +186,31 @@ public class JmsConnector implements Connector {
 		try {
 			MessageConsumer consumer = null;
 			switch(type){
-			case A:	consumer = initAndGetConsumer(HIGH_QUALITY_QUEUE);	break;
-			case B:	consumer = initAndGetConsumer(MED_QUALITY_QUEUE);	break;
-			case C:	consumer = initAndGetConsumer(LOW_QUALITY_QUEUE);	break;
+			case A:	consumer = highQualityConsumer;	break;
+			case B:	consumer = medQualityConsumer;	break;
+			case C:	consumer = lowQualityConsumer;	break;
 			}
 			ObjectMessage message = (ObjectMessage) consumer.receive(timeout);
-			close(consumer);
 			if(message == null){
-				return false;
+				return true;
 			}
 			transactionalTask.doWork((Clock) message.getObject());
-			return true;
-		} catch (JMSException ex) {
-			throw new RuntimeException(ex);
+			return false;
+		} catch (JMSException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
 		}	
+		return true;
 	}
 
 	@Override
 	public void addAssembledClock(Clock clock) {
 		try {
-			MessageProducer producer = initAndGetProducer(ASSEMBLED_QUEUE);
 			Message msg = session.createObjectMessage(clock);
-			producer.send(msg);
-			close(producer);
-		} catch (JMSException ex) {
-			throw new RuntimeException(ex);
+			assembledProducer.send(msg);
+		} catch (JMSException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
 		}
 
 	}
@@ -225,30 +220,29 @@ public class JmsConnector implements Connector {
 		try {
 			MessageProducer producer = null;
 			switch(type){
-			case A:	producer = initAndGetProducer(HIGH_QUALITY_QUEUE);	break;
-			case B:	producer = initAndGetProducer(MED_QUALITY_QUEUE);	break;
-			case C:	producer = initAndGetProducer(LOW_QUALITY_QUEUE);	break;
+			case A:	producer = highQualityProducer;	break;
+			case B:	producer = medQualityProducer;	break;
+			case C:	producer = lowQualityProducer;	break;
 			}
 			Message msg = session.createObjectMessage(clock);
 			producer.send(msg);
-			close(producer);
-		} catch (JMSException ex) {
-			throw new RuntimeException(ex);
+		} catch (JMSException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
 		}	
 	}
 
 	@Override
 	public void addDeliveredClock(Clock clock) {
 		try {
-			MessageProducer producer = initAndGetProducer(DELIVERED_QUEUE);
 			Message msg = session.createObjectMessage(clock);
-			producer.send(msg);
-			close(producer);
-		} catch (JMSException ex) {
-			throw new RuntimeException(ex);
+			deliveredProducer.send(msg);
+		} catch (JMSException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
 		}
-
 	}
+
 
 
 }
