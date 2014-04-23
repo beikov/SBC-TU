@@ -13,6 +13,10 @@
     <name>Space based computing XVSM</name>
     <description>XVSM implementation</description>
 
+    <properties>
+        <mozartspaces.configurationFile>mozartspaces-client.xml</mozartspaces.configurationFile>
+    </properties>
+            
     <dependencies>
         <dependency>
             <groupId>${project.groupId}</groupId>
@@ -54,6 +58,12 @@
                                 <argument>${server.port}</argument>
                                 <argument>xvsm</argument>
                             </arguments>
+                            <systemProperties>
+                                <systemProperty>
+                                    <key>mozartspaces.configurationFile</key>
+                                    <value>${mozartspaces.configurationFile}</value>
+                                </systemProperty>
+                            </systemProperties>
                         </configuration>
                     </plugin>
                 </plugins>
@@ -73,6 +83,12 @@
                                 <argument>xvsm</argument>
                                 <argument>A</argument>
                             </arguments>
+                            <systemProperties>
+                                <systemProperty>
+                                    <key>mozartspaces.configurationFile</key>
+                                    <value>${mozartspaces.configurationFile}</value>
+                                </systemProperty>
+                            </systemProperties>
                         </configuration>
                     </plugin>
                 </plugins>
@@ -92,6 +108,12 @@
                                 <argument>xvsm</argument>
                                 <argument>B</argument>
                             </arguments>
+                            <systemProperties>
+                                <systemProperty>
+                                    <key>mozartspaces.configurationFile</key>
+                                    <value>${mozartspaces.configurationFile}</value>
+                                </systemProperty>
+                            </systemProperties>
                         </configuration>
                     </plugin>
                 </plugins>
@@ -110,6 +132,38 @@
                                 <argument>${server.port}</argument>
                                 <argument>xvsm</argument>
                             </arguments>
+                            <systemProperties>
+                                <systemProperty>
+                                    <key>mozartspaces.configurationFile</key>
+                                    <value>${mozartspaces.configurationFile}</value>
+                                </systemProperty>
+                            </systemProperties>
+                        </configuration>
+                    </plugin>
+                </plugins>
+            </build>
+        </profile>
+        <profile>
+            <id>server</id>
+            <properties>
+                <mozartspaces.configurationFile>mozartspaces-server.xml</mozartspaces.configurationFile>
+            </properties>
+            <build>
+                <plugins>
+                    <plugin>
+                        <groupId>org.codehaus.mojo</groupId>
+                        <artifactId>exec-maven-plugin</artifactId>
+                        <configuration>
+                            <mainClass>org.mozartspaces.core.Server</mainClass>
+                            <arguments>
+                                <argument>${server.port}</argument>
+                            </arguments>
+                            <systemProperties>
+                                <systemProperty>
+                                    <key>mozartspaces.configurationFile</key>
+                                    <value>${mozartspaces.configurationFile}</value>
+                                </systemProperty>
+                            </systemProperties>
                         </configuration>
                     </plugin>
                 </plugins>

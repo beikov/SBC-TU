@@ -29,6 +29,9 @@
     <profiles>
         <profile>
             <id>gui-xvsm</id>
+            <properties>
+                <mozartspaces.configurationFile>mozartspaces-client.xml</mozartspaces.configurationFile>
+            </properties>
             <dependencies>
                 <dependency>
                     <groupId>${project.groupId}</groupId>
@@ -47,6 +50,12 @@
                                 <argument>${server.port}</argument>
                                 <argument>xvsm</argument>
                             </arguments>
+                            <systemProperties>
+                                <systemProperty>
+                                    <key>mozartspaces.configurationFile</key>
+                                    <value>${mozartspaces.configurationFile}</value>
+                                </systemProperty>
+                            </systemProperties>
                         </configuration>
                     </plugin>
                 </plugins>
