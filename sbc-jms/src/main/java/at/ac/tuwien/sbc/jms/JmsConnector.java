@@ -119,15 +119,23 @@ public class JmsConnector implements Connector {
 
 	@Override
 	public Subscription subscribeForClockParts(ClockPartListener listener) {
-		// TODO Auto-generated method stub
-		return null;
+        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
 	}
 
 	@Override
 	public Subscription subscribeForClocks(ClockListener listener) {
-		// TODO Auto-generated method stub
-		return null;
+        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
 	}
+
+    @Override
+    public List<ClockPart> getClockParts() {
+        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+    }
+
+    @Override
+    public List<Clock> getClocks() {
+        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+    }
 	
 	@Override
 	public void addParts(List<ClockPart> parts) {
@@ -243,6 +251,8 @@ public class JmsConnector implements Connector {
 		}
 	}
 
-
+    public void addDisassembledClock(Clock clock) {
+        throw new UnsupportedOperationException();
+    }
 
 }

@@ -7,6 +7,7 @@
 package at.ac.tuwien.sbc;
 
 import at.ac.tuwien.sbc.model.Clock;
+import java.util.List;
 
 /**
  *
@@ -14,9 +15,5 @@ import at.ac.tuwien.sbc.model.Clock;
  */
 public interface ClockListener {
     
-    public void onClockAssembled(Clock clock);
-    
-    public void onClockChecked(Clock clock);
-    
-    public void onClockDelivered(Clock clock);
+    public void onClocksUpdated(List<Clock> clocks);
 }

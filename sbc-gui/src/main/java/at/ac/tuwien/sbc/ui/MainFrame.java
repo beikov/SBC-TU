@@ -17,15 +17,53 @@ public class MainFrame extends javax.swing.JFrame {
     private final Connector connector;
     private final ExecutorService threadPool;
 
+    private final ClockPartCounter counter;
+
     /** Creates new form App
      *
-     * @param connector 
-     * @param threadPool 
+     * @param connector
+     * @param threadPool
      */
     public MainFrame(Connector connector, ExecutorService threadPool) {
         this.connector = connector;
         this.threadPool = threadPool;
+        this.counter = new ClockPartCounter();
         initComponents();
+
+        CountingClockPartListener clockPartListener = new CountingClockPartListener(counter, new Runnable() {
+
+            @Override
+            public void run() {
+                java.awt.EventQueue.invokeLater(new Runnable() {
+                    @Override
+                    public void run() {
+                        gehaeuseValue.setText(counter.getChassisCounter().toString());
+                        uhrwerkeValue.setText(counter.getClockWorkCounter().toString());
+                        zeigerValue.setText(counter.getClockHandCounter().toString());
+                        armbaenderValue.setText(counter.getWristbandCounter().toString());
+                    }
+                });
+            }
+        });
+        connector.subscribeForClockParts(clockPartListener);
+        clockPartListener.setCurrentClockParts(connector.getClockParts());
+
+        CollectingClockListener clockListener = new CollectingClockListener(new Runnable() {
+
+            @Override
+            public void run() {
+                java.awt.EventQueue.invokeLater(new Runnable() {
+                    @Override
+                    public void run() {
+                        // Update clock table model
+                    }
+                });
+            }
+        });
+        connector.subscribeForClocks(clockListener);
+        clockListener.onClocksUpdated(connector.getClocks());
+
+        // TODO: clock table model
     }
 
     /** This method is called from within the constructor to
@@ -98,24 +136,24 @@ public class MainFrame extends javax.swing.JFrame {
                         .addComponent(jLabel1, javax.swing.GroupLayout.PREFERRED_SIZE, 69, javax.swing.GroupLayout.PREFERRED_SIZE))
                     .addGroup(jPanel3Layout.createSequentialGroup()
                         .addGap(49, 49, 49)
-                        .addGroup(jPanel3Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                        .addGroup(jPanel3Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
                             .addGroup(jPanel3Layout.createSequentialGroup()
                                 .addComponent(jLabel5, javax.swing.GroupLayout.PREFERRED_SIZE, 69, javax.swing.GroupLayout.PREFERRED_SIZE)
                                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
-                                .addComponent(uhrwerkeValue))
+                                .addComponent(uhrwerkeValue, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
                             .addGroup(jPanel3Layout.createSequentialGroup()
                                 .addComponent(jLabel4, javax.swing.GroupLayout.PREFERRED_SIZE, 69, javax.swing.GroupLayout.PREFERRED_SIZE)
                                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
-                                .addComponent(gehaeuseValue))
+                                .addComponent(gehaeuseValue, javax.swing.GroupLayout.PREFERRED_SIZE, 50, javax.swing.GroupLayout.PREFERRED_SIZE))
                             .addGroup(jPanel3Layout.createSequentialGroup()
                                 .addComponent(jLabel6, javax.swing.GroupLayout.PREFERRED_SIZE, 69, javax.swing.GroupLayout.PREFERRED_SIZE)
                                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
-                                .addComponent(zeigerValue))
+                                .addComponent(zeigerValue, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
                             .addGroup(jPanel3Layout.createSequentialGroup()
                                 .addComponent(jLabel7, javax.swing.GroupLayout.PREFERRED_SIZE, 69, javax.swing.GroupLayout.PREFERRED_SIZE)
                                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
-                                .addComponent(armbaenderValue)))))
-                .addContainerGap(866, Short.MAX_VALUE))
+                                .addComponent(armbaenderValue, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)))))
+                .addContainerGap(822, Short.MAX_VALUE))
         );
         jPanel3Layout.setVerticalGroup(
             jPanel3Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)

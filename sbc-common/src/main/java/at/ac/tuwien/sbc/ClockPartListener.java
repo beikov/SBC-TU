@@ -7,6 +7,7 @@
 package at.ac.tuwien.sbc;
 
 import at.ac.tuwien.sbc.model.ClockPart;
+import java.util.List;
 
 /**
  *
@@ -14,7 +15,7 @@ import at.ac.tuwien.sbc.model.ClockPart;
  */
 public interface ClockPartListener {
     
-    public void onClockPartAdded(ClockPart clockPart);
+    public void onClockPartsAdded(List<ClockPart> clockParts);
     
-    public void onClockPartRemoved(ClockPart clockPart);
+    public void onClockPartsRemoved(List<ClockPart> clockParts);
 }

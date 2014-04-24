@@ -22,6 +22,10 @@ public interface Connector {
     public Subscription subscribeForClockParts(ClockPartListener listener);
     
     public Subscription subscribeForClocks(ClockListener listener);
+    
+    public List<ClockPart> getClockParts();
+    
+    public List<Clock> getClocks();
 
     public void addParts(List<ClockPart> parts);
 
@@ -37,5 +41,5 @@ public interface Connector {
     
     public void addDeliveredClock(Clock clock);
 
-    
+    public void addDisassembledClock(Clock clock);
 }

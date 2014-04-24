@@ -7,7 +7,6 @@
 package at.ac.tuwien.sbc.xvsm;
 
 import at.ac.tuwien.sbc.ClockPartListener;
-import at.ac.tuwien.sbc.model.ClockPart;
 import java.io.Serializable;
 import java.util.List;
 import org.mozartspaces.notifications.Notification;
@@ -29,13 +28,9 @@ public class MozartSpacesClockPartListener implements NotificationListener {
     @Override
     public void entryOperationFinished(Notification source, Operation operation, List<? extends Serializable> entries) {
         if (operation == Operation.WRITE) {
-            for (Serializable entry : entries) {
-                listener.onClockPartAdded((ClockPart) entry);
-            }
+            listener.onClockPartsAdded((List) entries);
         } else if (operation == Operation.TAKE || operation == Operation.DELETE) {
-            for (Serializable entry : entries) {
-                listener.onClockPartRemoved((ClockPart) entry);
-            }
+            listener.onClockPartsRemoved((List) entries);
         }
     }
     

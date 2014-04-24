@@ -19,8 +19,13 @@ import java.net.URI;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.EnumSet;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import org.mozartspaces.capi3.AnyCoordinator;
 import org.mozartspaces.capi3.CoordinationData;
 import org.mozartspaces.capi3.Coordinator;
@@ -37,8 +42,10 @@ import org.mozartspaces.core.Entry;
 import org.mozartspaces.core.MzsConstants;
 import org.mozartspaces.core.MzsCoreException;
 import org.mozartspaces.core.MzsTimeoutException;
+import org.mozartspaces.core.RequestContext;
 import org.mozartspaces.core.TransactionReference;
 import org.mozartspaces.notifications.Notification;
+import org.mozartspaces.notifications.NotificationListener;
 import org.mozartspaces.notifications.NotificationManager;
 import org.mozartspaces.notifications.Operation;
 
@@ -53,6 +60,7 @@ public class MozartSpacesConnector implements Connector {
     private static final String ASSEMBLED_CLOCKS_CONTAINER_NAME = "Fabrik/Uhren";
     private static final String CHECKED_CLOCKS_CONTAINER_NAME = "Fabrik/GepruefteUhren";
     private static final String DELIVERED_CLOCKS_CONTAINER_NAME = "Fabrik/AusgelieferteUhren";
+    private static final String DISASSEMBLED_CLOCKS_CONTAINER_NAME = "Fabrik/SchlechteUhren";
 
     private static final String PARTS_TYPE_COORDINATOR_NAME = "type";
     private static final String CLOCK_QUALITY_COORDINATOR_NAME = "quality";
@@ -67,6 +75,7 @@ public class MozartSpacesConnector implements Connector {
     private final ContainerReference assembledClocksContainer;
     private final ContainerReference checkedClocksContainer;
     private final ContainerReference deliveredClocksContainer;
+    private final ContainerReference disassembledClocksContainer;
 
     public MozartSpacesConnector(int port) {
         capi = new Capi(DefaultMzsCore.newInstance(0));
@@ -86,6 +95,7 @@ public class MozartSpacesConnector implements Connector {
         checkedClocksContainer = getOrCreateContainer(CHECKED_CLOCKS_CONTAINER_NAME, new LabelCoordinator(
             CLOCK_QUALITY_COORDINATOR_NAME), new FifoCoordinator());
         deliveredClocksContainer = getOrCreateContainer(DELIVERED_CLOCKS_CONTAINER_NAME, new FifoCoordinator());
+        disassembledClocksContainer = getOrCreateContainer(DISASSEMBLED_CLOCKS_CONTAINER_NAME, new FifoCoordinator());
     }
 
     private ContainerReference getOrCreateContainer(String name, Coordinator... coordinators) {
@@ -207,21 +217,54 @@ public class MozartSpacesConnector implements Connector {
             throw new RuntimeException(ex);
         }
     }
-
+    
     @Override
-    public Subscription subscribeForClocks(ClockListener listener) {
+    public List<ClockPart> getClockParts() {
+        List<? extends Selector> selectors = Arrays.asList(FifoCoordinator.newSelector(MzsConstants.Selecting.COUNT_ALL));
+        
         try {
-            List<Notification> notifications = new ArrayList<Notification>();
-            notifications.add(notificationManager.createNotification(assembledClocksContainer, new MozartSpacesClockListener(
-                listener, ClockStatus.ASSEMBLED), Operation.WRITE));
-            notifications.add(notificationManager.createNotification(checkedClocksContainer, new MozartSpacesClockListener(
-                listener, ClockStatus.CHECKED), Operation.WRITE));
-            notifications.add(notificationManager.createNotification(deliveredClocksContainer, new MozartSpacesClockListener(
-                listener, ClockStatus.DELIVERED), Operation.WRITE));
-            return new MozartSpacesSubscription(notifications);
+            return capi.read(partsContainer, selectors, MzsConstants.RequestTimeout.INFINITE, null);
         } catch (MzsCoreException ex) {
             throw new RuntimeException(ex);
-        } catch (InterruptedException ex) {
+        }
+    }
+
+    @Override
+    public Subscription subscribeForClocks(final ClockListener listener) {
+        final List<Notification> notifications = new ArrayList<Notification>();
+        final Set<Operation> operations = EnumSet.of(Operation.WRITE);
+        final NotificationListener l = new MozartSpacesClockListener(listener);
+        
+        transactional(new TransactionalWork() {
+
+            @Override
+            public void doWork(TransactionReference tx) throws MzsCoreException {
+                try {
+                    notifications.add(notificationManager.createNotification(assembledClocksContainer, l, operations, tx, null));
+                    notifications.add(notificationManager.createNotification(checkedClocksContainer, l, operations, tx, null));
+                    notifications.add(notificationManager.createNotification(deliveredClocksContainer, l, operations, tx, null));
+                    notifications.add(notificationManager.createNotification(disassembledClocksContainer, l, operations, tx, null));
+                } catch (InterruptedException ex) {
+                    throw new RuntimeException(ex);
+                }
+            }
+        });
+        
+        return new MozartSpacesSubscription(notifications);
+    }
+    
+    @Override
+    public List<Clock> getClocks() {
+        List<Clock> clocks = new ArrayList<Clock>();
+        List<? extends Selector> selectors = Arrays.asList(FifoCoordinator.newSelector(MzsConstants.Selecting.COUNT_ALL));
+        
+        try {
+            clocks.addAll((List) capi.read(assembledClocksContainer, selectors, MzsConstants.RequestTimeout.INFINITE, null));
+            clocks.addAll((List) capi.read(checkedClocksContainer, selectors, MzsConstants.RequestTimeout.INFINITE, null));
+            clocks.addAll((List) capi.read(deliveredClocksContainer, selectors, MzsConstants.RequestTimeout.INFINITE, null));
+            clocks.addAll((List) capi.read(disassembledClocksContainer, selectors, MzsConstants.RequestTimeout.INFINITE, null));
+            return clocks;
+        } catch (MzsCoreException ex) {
             throw new RuntimeException(ex);
         }
     }
@@ -337,6 +380,18 @@ public class MozartSpacesConnector implements Connector {
             @Override
             public void doWork(TransactionReference tx) throws MzsCoreException {
                 capi.write(deliveredClocksContainer, MzsConstants.RequestTimeout.ZERO, tx, entry);
+            }
+        });
+    }
+    
+    @Override
+    public void addDisassembledClock(Clock clock) {
+        final Entry entry = new Entry(clock);
+        transactional(new TransactionalWork() {
+
+            @Override
+            public void doWork(TransactionReference tx) throws MzsCoreException {
+                capi.write(disassembledClocksContainer, MzsConstants.RequestTimeout.ZERO, tx, entry);
             }
         });
     }

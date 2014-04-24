@@ -59,12 +59,8 @@ public class DelivererActor extends AbstractActor {
 
                     @Override
                     public void doWork(Clock clock) {
-                        List<ClockPart> parts = new ArrayList<ClockPart>();
-                        parts.add(clock.getChassis());
-                        parts.add(clock.getClockHand1());
-                        parts.add(clock.getClockHand2());
-                        parts.add(clock.getWristband());
-                        connector.addParts(parts);
+                        connector.addParts(clock.disassemble(id));
+                        connector.addDisassembledClock(clock);
                     }
                 });
             }

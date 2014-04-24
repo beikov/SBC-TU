@@ -13,5 +13,6 @@ package at.ac.tuwien.sbc.model;
 public enum ClockStatus {
     ASSEMBLED,
     CHECKED,
-    DELIVERED
+    DELIVERED,
+    DISASSEMBLED
 }
