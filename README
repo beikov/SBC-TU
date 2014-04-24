@@ -1,0 +1,20 @@
+This project is our solution to the assignment 1 of the course "Distributed Programming with Space Based Computing Middleware".
+
+We are using Maven as our build system and chose to use MozartSpaces for the Space-Technology and JMS for the Non-Space-Technology part. To build and run the application only Java 1.6+ and an installation of Maven is necessary.
+
+Since we are using a multi module project layout you only have to invoke "mvn install" in the root directory to compile, package and install the artifacts into your local repository. To start the application we offer a scripts which are contained in the "bin" directory. As you can see we have a subdirectory "jms" and "xvsm" which both contain the same scripts but the first is for the JMS and the second for the MozartSpaces implementation. There are scripts for both, Windows(".bat" files) and Linux(".sh" files).
+
+To start either the JMS server or the MozartSpaces server use:
+	- */jms/server.bat* / */jms/server.sh* or */xvsm/server.bat* / */xvsm/server.sh*
+
+Start GUI:
+	- */jms/gui.bat* / */jms/gui.sh* or */xvsm/gui.bat* / */xvsm/gui.sh*
+	
+Start assembly employee:
+	- */jms/assembler.bat* / */jms/assembler.sh* or */xvsm/assembler.bat* / */xvsm/checker.sh*
+Start quality assurance employee:
+	- */jms/checker.bat* / */jms/checker.sh* or */xvsm/checker.bat* / */xvsm/checker.sh*
+Start logistics employee for Class A clocks:
+	- */jms/deliverer-a.bat* / */jms/deliverer-a.sh* or */xvsm/deliverer-a.bat* / */xvsm/deliverer-a.sh*
+Start logistics employee for Class B clocks:
+	- */jms/deliverer-b.bat* / */jms/deliverer-b.sh* or */xvsm/deliverer-b.bat* / */xvsm/deliverer-b.sh*

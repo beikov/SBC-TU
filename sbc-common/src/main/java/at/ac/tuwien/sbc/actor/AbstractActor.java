@@ -33,6 +33,10 @@ public abstract class AbstractActor implements Runnable {
         this.connector = connector;
     }
     
+    public UUID getId() {
+        return id;
+    }
+    
     protected void sleepForSeconds(int from, int to) {
         try {
             // Wait an amount of seconds between from and to
