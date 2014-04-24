@@ -5,16 +5,22 @@ We are using Maven as our build system and chose to use MozartSpaces for the Spa
 Since we are using a multi module project layout you only have to invoke "mvn install" in the root directory to compile, package and install the artifacts into your local repository. To start the application we offer a scripts which are contained in the "bin" directory. As you can see we have a subdirectory "jms" and "xvsm" which both contain the same scripts but the first is for the JMS and the second for the MozartSpaces implementation. There are scripts for both, Windows(".bat" files) and Linux(".sh" files).
 
 To start either the JMS server or the MozartSpaces server use:
-	- */jms/server.bat* / */jms/server.sh* or */xvsm/server.bat* / */xvsm/server.sh*
+ - Windows: /jms/server.bat  or Linux: /jms/server.sh
+ - Windows: /xvsm/server.bat or Linux: /xvsm/server.sh
 
 Start GUI:
-	- */jms/gui.bat* / */jms/gui.sh* or */xvsm/gui.bat* / */xvsm/gui.sh*
+ - Windows: /jms/gui.bat  or Linux: /jms/gui.sh
+ - Windows: /xvsm/gui.bat or Linux: /xvsm/gui.sh
 	
 Start assembly employee:
-	- */jms/assembler.bat* / */jms/assembler.sh* or */xvsm/assembler.bat* / */xvsm/checker.sh*
+ - Windows: /jms/assembler.bat  or Linux: /jms/assembler.sh
+ - Windows: /xvsm/assembler.bat or Linux: /xvsm/checker.sh
 Start quality assurance employee:
-	- */jms/checker.bat* / */jms/checker.sh* or */xvsm/checker.bat* / */xvsm/checker.sh*
+ - Windows: /jms/checker.bat  or Linux: /jms/checker.sh
+ - Windows: /xvsm/checker.bat or Linux: /xvsm/checker.sh
 Start logistics employee for Class A clocks:
-	- */jms/deliverer-a.bat* / */jms/deliverer-a.sh* or */xvsm/deliverer-a.bat* / */xvsm/deliverer-a.sh*
+ - Windows: /jms/deliverer-a.bat  or Linux: /jms/deliverer-a.sh
+ - Windows: /xvsm/deliverer-a.bat or Linux: /xvsm/deliverer-a.sh
 Start logistics employee for Class B clocks:
-	- */jms/deliverer-b.bat* / */jms/deliverer-b.sh* or */xvsm/deliverer-b.bat* / */xvsm/deliverer-b.sh*
+ - Windows: /jms/deliverer-b.bat  or Linux: /jms/deliverer-b.sh
+ - Windows: /xvsm/deliverer-b.bat or Linux: /xvsm/deliverer-b.sh
