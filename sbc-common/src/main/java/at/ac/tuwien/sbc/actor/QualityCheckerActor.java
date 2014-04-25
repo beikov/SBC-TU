@@ -29,6 +29,7 @@ public class QualityCheckerActor extends AbstractActor {
         Connector connector = SbcUtils.getConnector(Integer.parseInt(args[0]), args[1]);
         AbstractActor actor = new QualityCheckerActor(connector);
         Thread t = new Thread(actor);
+        t.start();
         
         System.out.println("Starting " + actor.getClass().getSimpleName() + " with id " + actor.getId());
         System.out.println("Press CTRL+C to shutdown...");

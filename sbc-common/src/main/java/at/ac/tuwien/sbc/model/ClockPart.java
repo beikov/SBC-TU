@@ -25,6 +25,10 @@ public class ClockPart implements Serializable {
         this.supplierId = supplierId;
     }
 
+    public UUID getId() {
+        return id;
+    }
+
     public ClockPartType getType() {
         return type;
     }

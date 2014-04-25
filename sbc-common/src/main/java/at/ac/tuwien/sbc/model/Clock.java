@@ -154,7 +154,7 @@ public class Clock implements Comparable<Clock>, Serializable  {
         }
         
         int result = assemblerId.compareTo(o.assemblerId);
-        result = result != 0 ? result : (createdTime < createdTime) ? -1 : ((createdTime == createdTime) ? 0 : 1);
+        result = result != 0 ? result : (createdTime < o.createdTime) ? -1 : ((createdTime == o.createdTime) ? 0 : 1);
         return result;
     }
 

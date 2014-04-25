@@ -26,6 +26,14 @@ public class SupplierActor extends AbstractActor {
         this.partType = partType;
         this.amount = amount;
     }
+
+    public ClockPartType getPartType() {
+        return partType;
+    }
+
+    public int getAmount() {
+        return amount;
+    }
     
     @Override
     public void run() {
