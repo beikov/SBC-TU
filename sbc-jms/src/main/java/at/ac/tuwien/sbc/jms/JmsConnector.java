@@ -9,6 +9,7 @@ package at.ac.tuwien.sbc.jms;
 
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 
@@ -19,6 +20,7 @@ import javax.jms.MessageConsumer;
 import javax.jms.MessageProducer;
 import javax.jms.ObjectMessage;
 import javax.jms.Queue;
+import javax.jms.QueueBrowser;
 import javax.jms.Session;
 import javax.jms.Topic;
 
@@ -65,13 +67,11 @@ public class JmsConnector implements Connector {
 
 	private MessageProducer clockPartQueueProducer, clockQueueProducer, clockPartTopicProducer, clockTopicProducer;
 	private MessageConsumer clockPartTopicConsumer, clockTopicConsumer;
-	private MessageConsumer chassisConsumer, clockworkConsumer, clockhandConsumer, wristbandConsumer, assembledConsumer, highQualityConsumer, medQualityConsumer, lowQualityConsumer, disassembledConsumer, deliveredConsumer;
+	private MessageConsumer chassisConsumer, clockworkConsumer, clockhandConsumer, wristbandConsumer, assembledConsumer, highQualityConsumer, medQualityConsumer, lowQualityConsumer;
 
 	private Session session;
 	private Connection connection;
 
-	private List<ClockPart> clockParts;
-	private List<Clock> clocks;
 
 	public JmsConnector(int port){
 
@@ -124,7 +124,7 @@ public class JmsConnector implements Connector {
 		// TODO Auto-generated method stub
 		return null;
 	}
-	
+
 	private void connectClockPartListener(){
 		try {
 			if(clockPartTopic == null)
@@ -173,7 +173,7 @@ public class JmsConnector implements Connector {
 				clockPartQueue = session.createQueue(CLOCKPART_QUEUE);
 			if(clockQueue == null)
 				clockQueue = session.createQueue(CLOCK_QUEUE);
-			
+
 			if(clockTopic == null)
 				clockTopic = session.createTopic(CLOCK_TOPIC);
 
@@ -188,13 +188,13 @@ public class JmsConnector implements Connector {
 
 			if(clockQueueProducer == null)
 				clockQueueProducer = session.createProducer(clockQueue);
-			
+
 			if(clockTopicProducer == null)
 				clockTopicProducer = session.createProducer(clockTopic);
-			
+
 			if(clockPartTopic == null)
 				clockPartTopic = session.createTopic(CLOCKPART_TOPIC);
-			
+
 			if(clockPartTopicProducer == null)
 				clockPartTopicProducer = session.createProducer(clockPartTopic);
 		} catch (JMSException e) {
@@ -217,10 +217,10 @@ public class JmsConnector implements Connector {
 
 			if(clockTopic == null)
 				clockTopic = session.createTopic(CLOCK_TOPIC);
-			
+
 			if(clockTopicProducer == null)
 				clockTopicProducer = session.createProducer(clockTopic);
-			
+
 		} catch (JMSException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
@@ -394,25 +394,68 @@ public class JmsConnector implements Connector {
 			e.printStackTrace();
 		}
 	}
-	
+
 	@Override
 	public List<ClockPart> getClockParts() {
-		//		throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
-		if(clockParts == null){
-			clockParts = new ArrayList<ClockPart>();
+		try {
+			QueueBrowser clockPartBrowser = createClockPartBrowser();
+			List<ObjectMessage> list = Collections.list(clockPartBrowser.getEnumeration());
+			List<ClockPart> clockParts = new ArrayList<ClockPart>();
+			for(ObjectMessage m : list ){
+				clockParts.add((ClockPart) m.getObject());
+			}
+			clockPartBrowser.close();
+			return clockParts;
+		} catch (JMSException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
 		}
-		return clockParts;
+		return null;
 	}
 
 	@Override
 	public List<Clock> getClocks() {
-		//		throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
-		if(clocks == null){
-			clocks = new ArrayList<Clock>();
+		try{
+			QueueBrowser clockBrowser = createClockBrowser();
+			List<ObjectMessage> list = Collections.list(clockBrowser.getEnumeration());
+			List<Clock> clocks = new ArrayList<Clock>();
+			for(ObjectMessage m : list ){
+				clocks.add((Clock) m.getObject());
+			}
+			clockBrowser.close();
+			return clocks;
+		}catch (JMSException e){
+			// TODO Auto-generated catch block
+			e.printStackTrace();
 		}
-		return clocks;
+		return null;
 	}
 
+	private QueueBrowser createClockBrowser(){
+		try {
+			if(clockQueue == null){
+				clockQueue = session.createQueue(CLOCK_QUEUE);
+			}
+			return session.createBrowser(clockQueue);
+		} catch (JMSException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+		return null;
+	}
+
+	private QueueBrowser createClockPartBrowser(){
+		try {
+			if(clockPartQueue == null){
+				clockPartQueue = session.createQueue(CLOCKPART_QUEUE);
+			}
+			return session.createBrowser(clockPartQueue);
+		} catch (JMSException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+		return null;
+	}
 
 
 
