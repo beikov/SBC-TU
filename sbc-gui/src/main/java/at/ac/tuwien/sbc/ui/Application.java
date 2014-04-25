@@ -7,12 +7,6 @@
 package at.ac.tuwien.sbc.ui;
 
 import at.ac.tuwien.sbc.Connector;
-import at.ac.tuwien.sbc.actor.AssemblyActor;
-import at.ac.tuwien.sbc.actor.DelivererActor;
-import at.ac.tuwien.sbc.actor.QualityCheckerActor;
-import at.ac.tuwien.sbc.actor.SupplierActor;
-import at.ac.tuwien.sbc.model.ClockPartType;
-import at.ac.tuwien.sbc.model.ClockQualityType;
 import at.ac.tuwien.sbc.util.SbcUtils;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;

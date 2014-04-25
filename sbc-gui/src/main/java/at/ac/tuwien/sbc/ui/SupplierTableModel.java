@@ -7,13 +7,8 @@
 package at.ac.tuwien.sbc.ui;
 
 import at.ac.tuwien.sbc.actor.SupplierActor;
-import java.awt.EventQueue;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.concurrent.ExecutorService;
-import javax.swing.JButton;
 import javax.swing.table.AbstractTableModel;
 
 /**

@@ -7,17 +7,9 @@ package at.ac.tuwien.sbc.ui;
 
 import at.ac.tuwien.sbc.Connector;
 import at.ac.tuwien.sbc.actor.SupplierActor;
-import at.ac.tuwien.sbc.model.Clock;
 import at.ac.tuwien.sbc.model.ClockPartType;
-import java.awt.EventQueue;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
 import java.util.concurrent.ExecutorService;
-import javax.swing.AbstractAction;
-import javax.swing.Action;
 import javax.swing.JButton;
-import javax.swing.table.DefaultTableModel;
-import javax.swing.table.TableColumn;
 
 /**
  *
@@ -89,6 +81,7 @@ public class MainFrame extends javax.swing.JFrame {
                 });
             }
         });
+        // Subscribe before retrieving data or else we might miss notifications
         connector.subscribeForClockParts(clockPartListener);
         clockPartListener.setCurrentClockParts(connector.getClockParts());
 
@@ -105,6 +98,7 @@ public class MainFrame extends javax.swing.JFrame {
                 });
             }
         });
+        // Subscribe before retrieving data or else we might miss notifications
         connector.subscribeForClocks(clockListener);
         clockListener.onClocksUpdated(connector.getClocks());
     }

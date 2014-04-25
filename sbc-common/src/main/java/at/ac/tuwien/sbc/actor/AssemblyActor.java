@@ -14,7 +14,6 @@ import at.ac.tuwien.sbc.model.ClockPartType;
 import at.ac.tuwien.sbc.util.SbcUtils;
 import java.util.Collections;
 import java.util.EnumMap;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 

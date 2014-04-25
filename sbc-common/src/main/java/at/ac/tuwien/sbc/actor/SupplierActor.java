@@ -6,9 +6,9 @@
 
 package at.ac.tuwien.sbc.actor;
 
-import at.ac.tuwien.sbc.model.ClockPartType;
 import at.ac.tuwien.sbc.Connector;
 import at.ac.tuwien.sbc.model.ClockPart;
+import at.ac.tuwien.sbc.model.ClockPartType;
 import java.util.ArrayList;
 import java.util.List;
 

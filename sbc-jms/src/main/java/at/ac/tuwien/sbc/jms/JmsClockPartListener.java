@@ -1,16 +1,13 @@
 package at.ac.tuwien.sbc.jms;
 
+import at.ac.tuwien.sbc.ClockPartListener;
+import at.ac.tuwien.sbc.model.ClockPart;
 import java.util.ArrayList;
 import java.util.List;
-
 import javax.jms.JMSException;
 import javax.jms.Message;
 import javax.jms.MessageListener;
 import javax.jms.ObjectMessage;
-
-import at.ac.tuwien.sbc.ClockPartListener;
-import at.ac.tuwien.sbc.model.Clock;
-import at.ac.tuwien.sbc.model.ClockPart;
 
 public class JmsClockPartListener implements MessageListener{
 

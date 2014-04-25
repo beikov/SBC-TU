@@ -8,11 +8,8 @@ package at.ac.tuwien.sbc.actor;
 import at.ac.tuwien.sbc.Connector;
 import at.ac.tuwien.sbc.TransactionalTask;
 import at.ac.tuwien.sbc.model.Clock;
-import at.ac.tuwien.sbc.model.ClockPart;
 import at.ac.tuwien.sbc.model.ClockQualityType;
 import at.ac.tuwien.sbc.util.SbcUtils;
-import java.util.ArrayList;
-import java.util.List;
 
 /**
  *

@@ -6,7 +6,6 @@
 package at.ac.tuwien.sbc.ui;
 
 import at.ac.tuwien.sbc.model.Clock;
-import java.util.ArrayList;
 import java.util.List;
 import javax.swing.table.AbstractTableModel;
 

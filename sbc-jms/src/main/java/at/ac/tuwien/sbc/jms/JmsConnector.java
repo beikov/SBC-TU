@@ -8,11 +8,19 @@ package at.ac.tuwien.sbc.jms;
 
 
 
+import at.ac.tuwien.sbc.ClockListener;
+import at.ac.tuwien.sbc.ClockPartListener;
+import at.ac.tuwien.sbc.Connector;
+import at.ac.tuwien.sbc.Subscription;
+import at.ac.tuwien.sbc.TransactionalTask;
+import at.ac.tuwien.sbc.model.Clock;
+import at.ac.tuwien.sbc.model.ClockPart;
+import at.ac.tuwien.sbc.model.ClockPartType;
+import at.ac.tuwien.sbc.model.ClockQualityType;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
-
 import javax.jms.Connection;
 import javax.jms.JMSException;
 import javax.jms.Message;
@@ -23,19 +31,8 @@ import javax.jms.Queue;
 import javax.jms.QueueBrowser;
 import javax.jms.Session;
 import javax.jms.Topic;
-
 import org.apache.activemq.ActiveMQConnectionFactory;
 import org.apache.activemq.ActiveMQPrefetchPolicy;
-
-import at.ac.tuwien.sbc.ClockListener;
-import at.ac.tuwien.sbc.ClockPartListener;
-import at.ac.tuwien.sbc.Connector;
-import at.ac.tuwien.sbc.Subscription;
-import at.ac.tuwien.sbc.TransactionalTask;
-import at.ac.tuwien.sbc.model.Clock;
-import at.ac.tuwien.sbc.model.ClockPart;
-import at.ac.tuwien.sbc.model.ClockPartType;
-import at.ac.tuwien.sbc.model.ClockQualityType;
 
 /**
  *

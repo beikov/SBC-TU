@@ -9,7 +9,6 @@ package at.ac.tuwien.sbc.ui;
 import at.ac.tuwien.sbc.ClockListener;
 import at.ac.tuwien.sbc.model.Clock;
 import java.util.List;
-import java.util.concurrent.ConcurrentSkipListMap;
 
 /**
  *
