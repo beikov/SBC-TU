@@ -48,9 +48,9 @@ public class MainFrame extends javax.swing.JFrame {
                 });
             }
         });
-        connector.subscribeForClockParts(clockPartListener);
         clockPartListener.setCurrentClockParts(connector.getClockParts());
-
+       
+        
         CollectingClockListener clockListener = new CollectingClockListener(new Runnable() {
 
             @Override
@@ -63,8 +63,10 @@ public class MainFrame extends javax.swing.JFrame {
                 });
             }
         });
-        connector.subscribeForClocks(clockListener);
         clockListener.onClocksUpdated(connector.getClocks());
+        
+        connector.subscribeForClocks(clockListener);
+        connector.subscribeForClockParts(clockPartListener);
 
         // TODO: clock table model
     }
