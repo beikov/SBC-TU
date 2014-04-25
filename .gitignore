@@ -3,6 +3,7 @@
 .classpath
 .factorypath
 target/
+bin/jms/activemq-data
 sbc-common/.project
 sbc-common/.settings/
 sbc-common/.classpath

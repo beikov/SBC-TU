@@ -349,10 +349,6 @@ public class MainFrame extends javax.swing.JFrame {
         }
     }//GEN-LAST:event_jButton1MouseReleased
 
-    private void startSupplier(ClockPartType type, int amount) {
-        threadPool.execute(new SupplierActor(connector, type, amount));
-    }
-
     public static void start(final Connector connector, final ExecutorService threadPool) {
         /* Create and display the form */
         java.awt.EventQueue.invokeLater(new Runnable() {

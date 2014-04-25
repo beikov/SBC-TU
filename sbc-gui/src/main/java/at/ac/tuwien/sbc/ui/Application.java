@@ -21,7 +21,7 @@ public class Application {
     
 //    public static void main(String[] args) {
 //        System.setProperty("mozartspaces.configurationFile", "mozartspaces-client.xml");
-//        Connector connector = SbcUtils.getConnector(4242, "xvsm");
+//        Connector connector = SbcUtils.getConnector(4242, "jms");
 //        ExecutorService threadPool = Executors.newCachedThreadPool();
 //        threadPool.submit(new AssemblyActor(connector));
 //        threadPool.submit(new QualityCheckerActor(connector));
