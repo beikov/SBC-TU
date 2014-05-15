@@ -24,7 +24,11 @@ public class MainFrame extends javax.swing.JFrame {
     private final ClockList clockList;
 
     private final SupplierTableModel supplierTableModel;
-    private final ClockTableModel clockTableModel;
+    private final AssembledClocksTableModel assembledTableModel;
+    private final CheckedClocksTableModel checkedTableModel;
+    private final DeliveredClocksTableModel deliveredTableModel;
+    private final DisassembledClocksTableModel disassembledTableModel;
+    private final AllClocksTableModel clockTableModel;
 
     /**
      * Creates new form App
@@ -38,7 +42,11 @@ public class MainFrame extends javax.swing.JFrame {
         this.counter = new ClockPartCounter();
         this.clockList = new ClockList();
         this.supplierTableModel = new SupplierTableModel();
-        this.clockTableModel = new ClockTableModel(clockList);
+        this.clockTableModel = new AllClocksTableModel(clockList);    
+        this.assembledTableModel = new AssembledClocksTableModel(clockList);
+        this.checkedTableModel = new CheckedClocksTableModel(clockList);
+        this.deliveredTableModel = new DeliveredClocksTableModel(clockList);
+        this.disassembledTableModel = new DisassembledClocksTableModel(clockList);
         initComponents();
 
         // Add cell renderer for supplier table
@@ -93,7 +101,19 @@ public class MainFrame extends javax.swing.JFrame {
                 java.awt.EventQueue.invokeLater(new Runnable() {
                     @Override
                     public void run() {
+                        assembledValue.setText(String.valueOf(
+                                clockList.getAssembledClocks().size()));
+                        checkedValue.setText(String.valueOf(
+                                clockList.getCheckedClocks().size()));
+                        deliveredValue.setText(String.valueOf(
+                                clockList.getDeliveredClocks().size()));
+                        disassembledValue.setText(String.valueOf(
+                                clockList.getDisassembledClocks().size()));
                         clockTableModel.fireTableDataChanged();
+                        assembledTableModel.fireTableDataChanged();
+                        checkedTableModel.fireTableDataChanged();
+                        deliveredTableModel.fireTableDataChanged();
+                        disassembledTableModel.fireTableDataChanged();
                     }
                 });
             }
@@ -115,9 +135,6 @@ public class MainFrame extends javax.swing.JFrame {
         jTabbedPane1 = new javax.swing.JTabbedPane();
         statusPanel1 = new javax.swing.JPanel();
         jPanel4 = new javax.swing.JPanel();
-        jScrollPane2 = new javax.swing.JScrollPane();
-        clockTable = new javax.swing.JTable();
-        jLabel8 = new javax.swing.JLabel();
         jPanel3 = new javax.swing.JPanel();
         jLabel1 = new javax.swing.JLabel();
         jLabel4 = new javax.swing.JLabel();
@@ -128,6 +145,26 @@ public class MainFrame extends javax.swing.JFrame {
         uhrwerkeValue = new javax.swing.JLabel();
         zeigerValue = new javax.swing.JLabel();
         armbaenderValue = new javax.swing.JLabel();
+        jTabbedPane2 = new javax.swing.JTabbedPane();
+        jScrollPane3 = new javax.swing.JScrollPane();
+        clockTable1 = new javax.swing.JTable();
+        jPanel5 = new javax.swing.JPanel();
+        jScrollPane2 = new javax.swing.JScrollPane();
+        clockTable = new javax.swing.JTable();
+        jLabel8 = new javax.swing.JLabel();
+        jScrollPane4 = new javax.swing.JScrollPane();
+        clockTable2 = new javax.swing.JTable();
+        jLabel9 = new javax.swing.JLabel();
+        jScrollPane5 = new javax.swing.JScrollPane();
+        clockTable3 = new javax.swing.JTable();
+        jLabel10 = new javax.swing.JLabel();
+        jScrollPane6 = new javax.swing.JScrollPane();
+        clockTable4 = new javax.swing.JTable();
+        jLabel11 = new javax.swing.JLabel();
+        assembledValue = new javax.swing.JLabel();
+        checkedValue = new javax.swing.JLabel();
+        disassembledValue = new javax.swing.JLabel();
+        deliveredValue = new javax.swing.JLabel();
         supplierPanel1 = new javax.swing.JPanel();
         jPanel1 = new javax.swing.JPanel();
         jComboBox1 = new javax.swing.JComboBox();
@@ -143,11 +180,6 @@ public class MainFrame extends javax.swing.JFrame {
         getContentPane().setLayout(new javax.swing.BoxLayout(getContentPane(), javax.swing.BoxLayout.LINE_AXIS));
 
         statusPanel1.setLayout(new javax.swing.BoxLayout(statusPanel1, javax.swing.BoxLayout.Y_AXIS));
-
-        clockTable.setModel(clockTableModel);
-        jScrollPane2.setViewportView(clockTable);
-
-        jLabel8.setText("Uhren");
 
         jPanel3.setMaximumSize(new java.awt.Dimension(1000, 116));
 
@@ -220,28 +252,127 @@ public class MainFrame extends javax.swing.JFrame {
                 .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
         );
 
+        clockTable1.setModel(clockTableModel);
+        jScrollPane3.setViewportView(clockTable1);
+
+        jTabbedPane2.addTab("Alle Uhren", jScrollPane3);
+
+        clockTable.setModel(assembledTableModel);
+        jScrollPane2.setViewportView(clockTable);
+
+        jLabel8.setText("Zusammengebaute Uhren:");
+
+        clockTable2.setModel(checkedTableModel);
+        jScrollPane4.setViewportView(clockTable2);
+
+        jLabel9.setText("Überprüfte Uhren:");
+
+        clockTable3.setModel(deliveredTableModel);
+        jScrollPane5.setViewportView(clockTable3);
+
+        jLabel10.setText("Gelieferte Uhren:");
+
+        clockTable4.setModel(disassembledTableModel);
+        jScrollPane6.setViewportView(clockTable4);
+
+        jLabel11.setText("Zerlegte Uhren:");
+
+        assembledValue.setText("0");
+
+        checkedValue.setText("0");
+
+        disassembledValue.setText("0");
+
+        deliveredValue.setText("0");
+
+        javax.swing.GroupLayout jPanel5Layout = new javax.swing.GroupLayout(jPanel5);
+        jPanel5.setLayout(jPanel5Layout);
+        jPanel5Layout.setHorizontalGroup(
+            jPanel5Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGroup(jPanel5Layout.createSequentialGroup()
+                .addGap(32, 32, 32)
+                .addGroup(jPanel5Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                    .addGroup(jPanel5Layout.createSequentialGroup()
+                        .addGroup(jPanel5Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                            .addComponent(jScrollPane2, javax.swing.GroupLayout.PREFERRED_SIZE, 635, javax.swing.GroupLayout.PREFERRED_SIZE)
+                            .addGroup(jPanel5Layout.createSequentialGroup()
+                                .addComponent(jLabel8)
+                                .addGap(18, 18, 18)
+                                .addComponent(assembledValue)))
+                        .addGap(18, 18, 18)
+                        .addGroup(jPanel5Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                            .addGroup(jPanel5Layout.createSequentialGroup()
+                                .addComponent(jLabel9)
+                                .addGap(18, 18, 18)
+                                .addComponent(checkedValue))
+                            .addComponent(jScrollPane4, javax.swing.GroupLayout.PREFERRED_SIZE, 635, javax.swing.GroupLayout.PREFERRED_SIZE)))
+                    .addGroup(jPanel5Layout.createSequentialGroup()
+                        .addGroup(jPanel5Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                            .addComponent(jScrollPane5, javax.swing.GroupLayout.PREFERRED_SIZE, 635, javax.swing.GroupLayout.PREFERRED_SIZE)
+                            .addGroup(jPanel5Layout.createSequentialGroup()
+                                .addComponent(jLabel10)
+                                .addGap(18, 18, 18)
+                                .addComponent(deliveredValue)))
+                        .addGap(18, 18, 18)
+                        .addGroup(jPanel5Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                            .addGroup(jPanel5Layout.createSequentialGroup()
+                                .addComponent(jLabel11)
+                                .addGap(18, 18, 18)
+                                .addComponent(disassembledValue))
+                            .addComponent(jScrollPane6, javax.swing.GroupLayout.PREFERRED_SIZE, 635, javax.swing.GroupLayout.PREFERRED_SIZE))))
+                .addContainerGap(326, Short.MAX_VALUE))
+        );
+        jPanel5Layout.setVerticalGroup(
+            jPanel5Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGroup(jPanel5Layout.createSequentialGroup()
+                .addGap(14, 14, 14)
+                .addGroup(jPanel5Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING)
+                    .addGroup(jPanel5Layout.createSequentialGroup()
+                        .addGroup(jPanel5Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                            .addComponent(jLabel9)
+                            .addComponent(checkedValue))
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+                        .addComponent(jScrollPane4, javax.swing.GroupLayout.PREFERRED_SIZE, 227, javax.swing.GroupLayout.PREFERRED_SIZE))
+                    .addGroup(jPanel5Layout.createSequentialGroup()
+                        .addGroup(jPanel5Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                            .addComponent(jLabel8)
+                            .addComponent(assembledValue))
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+                        .addComponent(jScrollPane2, javax.swing.GroupLayout.PREFERRED_SIZE, 227, javax.swing.GroupLayout.PREFERRED_SIZE)))
+                .addGap(47, 47, 47)
+                .addGroup(jPanel5Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                    .addComponent(jLabel10)
+                    .addComponent(jLabel11)
+                    .addComponent(disassembledValue)
+                    .addComponent(deliveredValue))
+                .addGap(18, 18, 18)
+                .addGroup(jPanel5Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                    .addComponent(jScrollPane5, javax.swing.GroupLayout.PREFERRED_SIZE, 227, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addComponent(jScrollPane6, javax.swing.GroupLayout.PREFERRED_SIZE, 227, javax.swing.GroupLayout.PREFERRED_SIZE))
+                .addContainerGap(105, Short.MAX_VALUE))
+        );
+
+        jTabbedPane2.addTab("Uhren nach Status", jPanel5);
+
         javax.swing.GroupLayout jPanel4Layout = new javax.swing.GroupLayout(jPanel4);
         jPanel4.setLayout(jPanel4Layout);
         jPanel4Layout.setHorizontalGroup(
             jPanel4Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addComponent(jScrollPane2, javax.swing.GroupLayout.DEFAULT_SIZE, 1671, Short.MAX_VALUE)
-            .addGroup(jPanel4Layout.createSequentialGroup()
-                .addContainerGap()
-                .addComponent(jLabel8)
-                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
             .addGroup(jPanel4Layout.createSequentialGroup()
                 .addComponent(jPanel3, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addGap(0, 0, Short.MAX_VALUE))
+            .addGroup(jPanel4Layout.createSequentialGroup()
+                .addContainerGap()
+                .addComponent(jTabbedPane2)
+                .addContainerGap())
         );
         jPanel4Layout.setVerticalGroup(
             jPanel4Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, jPanel4Layout.createSequentialGroup()
                 .addContainerGap()
                 .addComponent(jPanel3, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
-                .addComponent(jLabel8)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
-                .addComponent(jScrollPane2, javax.swing.GroupLayout.DEFAULT_SIZE, 687, Short.MAX_VALUE))
+                .addGap(18, 18, 18)
+                .addComponent(jTabbedPane2))
         );
 
         statusPanel1.add(jPanel4);
@@ -361,11 +492,21 @@ public class MainFrame extends javax.swing.JFrame {
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JLabel armbaenderValue;
+    private javax.swing.JLabel assembledValue;
+    private javax.swing.JLabel checkedValue;
     private javax.swing.JTable clockTable;
+    private javax.swing.JTable clockTable1;
+    private javax.swing.JTable clockTable2;
+    private javax.swing.JTable clockTable3;
+    private javax.swing.JTable clockTable4;
+    private javax.swing.JLabel deliveredValue;
+    private javax.swing.JLabel disassembledValue;
     private javax.swing.JLabel gehaeuseValue;
     private javax.swing.JButton jButton1;
     private javax.swing.JComboBox jComboBox1;
     private javax.swing.JLabel jLabel1;
+    private javax.swing.JLabel jLabel10;
+    private javax.swing.JLabel jLabel11;
     private javax.swing.JLabel jLabel2;
     private javax.swing.JLabel jLabel3;
     private javax.swing.JLabel jLabel4;
@@ -373,13 +514,20 @@ public class MainFrame extends javax.swing.JFrame {
     private javax.swing.JLabel jLabel6;
     private javax.swing.JLabel jLabel7;
     private javax.swing.JLabel jLabel8;
+    private javax.swing.JLabel jLabel9;
     private javax.swing.JPanel jPanel1;
     private javax.swing.JPanel jPanel2;
     private javax.swing.JPanel jPanel3;
     private javax.swing.JPanel jPanel4;
+    private javax.swing.JPanel jPanel5;
     private javax.swing.JScrollPane jScrollPane1;
     private javax.swing.JScrollPane jScrollPane2;
+    private javax.swing.JScrollPane jScrollPane3;
+    private javax.swing.JScrollPane jScrollPane4;
+    private javax.swing.JScrollPane jScrollPane5;
+    private javax.swing.JScrollPane jScrollPane6;
     private javax.swing.JTabbedPane jTabbedPane1;
+    private javax.swing.JTabbedPane jTabbedPane2;
     private javax.swing.JTextField jTextField1;
     private javax.swing.JPanel statusPanel1;
     private javax.swing.JPanel supplierPanel1;

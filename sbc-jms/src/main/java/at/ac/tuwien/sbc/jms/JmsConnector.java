@@ -14,10 +14,12 @@ import at.ac.tuwien.sbc.model.Clock;
 import at.ac.tuwien.sbc.model.ClockPart;
 import at.ac.tuwien.sbc.model.ClockPartType;
 import at.ac.tuwien.sbc.model.ClockQualityType;
+
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+
 import javax.jms.Connection;
 import javax.jms.JMSException;
 import javax.jms.Message;
@@ -28,6 +30,7 @@ import javax.jms.Queue;
 import javax.jms.QueueBrowser;
 import javax.jms.Session;
 import javax.jms.Topic;
+
 import org.apache.activemq.ActiveMQConnectionFactory;
 import org.apache.activemq.ActiveMQPrefetchPolicy;
 
@@ -45,7 +48,8 @@ public class JmsConnector implements Connector {
 
 	private static final String CLOCKPART_QUEUE = "queue/clockpart";
 	private static final String CLOCK_QUEUE = "queue/clock";
-
+	public static final String ID_QUEUE = "queue/id";
+	
 	private static final String IS_CHASSIS = "IS_CHASSIS";
 	private static final String IS_CLOCKWORK = "IS_CLOCKWORK";
 	private static final String IS_CLOCKHAND = "IS_CLOCKHAND";
@@ -56,12 +60,13 @@ public class JmsConnector implements Connector {
 	private static final String IS_LOW_QUALITY = "IS_LOW_QUALITY";
 	private static final String IS_DELIVERED = "IS_DELIVERED";
 	private static final String IS_DISASSEMBLED = "IS_DISASSEMBLED";
+	public static final String ID_COUNTER = "ID_COUNTER";
 
 	private Topic clockPartTopic, clockTopic;
-	private Queue clockPartQueue, clockQueue;
+	private Queue clockPartQueue, clockQueue, idQueue;
 
-	private MessageProducer clockPartQueueProducer, clockQueueProducer, clockPartTopicProducer, clockTopicProducer;
-	private MessageConsumer clockPartTopicConsumer, clockTopicConsumer;
+	private MessageProducer clockPartQueueProducer, clockQueueProducer, clockPartTopicProducer, clockTopicProducer, idProducer;
+	private MessageConsumer clockPartTopicConsumer, clockTopicConsumer, idConsumer;
 	private MessageConsumer chassisConsumer, clockworkConsumer, clockhandConsumer, wristbandConsumer, assembledConsumer, highQualityConsumer, medQualityConsumer, lowQualityConsumer;
 
 	private Session session, browserPartSession, browserClockSession;
@@ -145,14 +150,16 @@ public class JmsConnector implements Connector {
 
 	private void connect(int port) {
 		try {
-			//			ActiveMQConnectionFactory connectionFactory = new ActiveMQConnectionFactory("tcp://localhost:" + port);
-			ActiveMQConnectionFactory connectionFactory = new ActiveMQConnectionFactory(/*"tcp://localhost:" + port*/);
+			ActiveMQConnectionFactory connectionFactory = new ActiveMQConnectionFactory("tcp://localhost:" + port);
+//			ActiveMQConnectionFactory connectionFactory = new ActiveMQConnectionFactory();
+			
 			ActiveMQPrefetchPolicy policy = new ActiveMQPrefetchPolicy();
 			policy.setQueuePrefetch(0);
 			connectionFactory.setPrefetchPolicy(policy);
 			connection = connectionFactory.createConnection();
 			connection.start();
 			session = connection.createSession(true, Session.CLIENT_ACKNOWLEDGE);
+			
 		} catch (JMSException ex) {
 			throw new RuntimeException(ex);
 		}
@@ -193,6 +200,16 @@ public class JmsConnector implements Connector {
 		} catch (JMSException ex) {
 			throw new RuntimeException(ex);
 		}
+	}
+	
+	public void createSerialId() throws JMSException{
+		MessageProducer idProducer = session.createProducer(
+				session.createQueue(JmsConnector.CLOCK_QUEUE));
+		Integer startId = 0;
+		ObjectMessage message = session.createObjectMessage(startId);
+		message.setBooleanProperty(JmsConnector.ID_COUNTER, true);
+		idProducer.send(message);
+		System.out.println("sent id");
 	}
 
 	private void connectClockListener() {
@@ -237,6 +254,10 @@ public class JmsConnector implements Connector {
 			if (clockQueue == null) {
 				clockQueue = session.createQueue(CLOCK_QUEUE);
 			}
+			
+			if (idQueue == null) {
+				idQueue = session.createQueue(ID_QUEUE);
+			}
 
 			if (clockTopic == null) {
 				clockTopic = session.createTopic(CLOCK_TOPIC);
@@ -253,6 +274,14 @@ public class JmsConnector implements Connector {
 			}
 			if (wristbandConsumer == null) {
 				wristbandConsumer = session.createConsumer(clockPartQueue, IS_WRISTBAND + " = true");
+			}
+			
+			if (idConsumer == null) {
+				idConsumer = session.createConsumer(idQueue, ID_COUNTER + " = true");
+			}
+			
+			if (idProducer == null) {
+				idProducer = session.createProducer(idQueue);
 			}
 
 			if (clockQueueProducer == null) {
@@ -455,9 +484,27 @@ public class JmsConnector implements Connector {
 		connectAssembler();
 		transactional(new TransactionalWork() {
 
+	
 			@Override
 			public void doWork() throws JMSException {
-				Message msg = session.createObjectMessage(clock);
+				// get the serial actual serial id from the queue
+				System.out.println("before idReceive");
+				ObjectMessage message = (ObjectMessage)idConsumer.receive();
+				System.out.println("after idReceive");
+				Integer id = (Integer) message.getObject();
+				// set it for the new clock
+				clock.setSerialId(id);
+				id += 1;
+				
+				ObjectMessage msg = session.createObjectMessage(id);
+			
+				msg.setBooleanProperty(ID_COUNTER, true);
+				// and write the incremented serial id back into the queue
+				System.out.println("before idSend");
+				idProducer.send(msg);
+				System.out.println("after idSend");
+				
+				msg = session.createObjectMessage(clock);
 				msg.setBooleanProperty(IS_ASSEMBLED, true);
 				clockQueueProducer.send(msg);
 				clockTopicProducer.send(msg);

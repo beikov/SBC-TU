@@ -17,7 +17,8 @@ import java.util.UUID;
  */
 public class Clock implements Comparable<Clock>, Serializable  {
     
-    private final UUID id;
+	private final UUID id;
+    private int serialId;
     private final long createdTime;
     private long updatedTime;
     private final ClockPart chassis;
@@ -35,8 +36,8 @@ public class Clock implements Comparable<Clock>, Serializable  {
     private UUID delivererId;
 
     public Clock(ClockPart chassis, ClockPart clockWork, ClockPart wristband, ClockPart clockHand1, ClockPart clockHand2, UUID assemblerId) {
-        this.id = UUID.randomUUID();
-        this.createdTime = this.updatedTime = System.currentTimeMillis();
+    	this.id = UUID.randomUUID();
+    	this.createdTime = this.updatedTime = System.currentTimeMillis();
         this.chassis = chassis;
         this.clockWork = clockWork;
         this.wristband = wristband;
@@ -101,6 +102,14 @@ public class Clock implements Comparable<Clock>, Serializable  {
 
     public UUID getId() {
         return id;
+    }
+    
+    public int getSerialId(){
+    	return serialId;
+    }
+    
+    public void setSerialId(int serialId){
+    	this.serialId = serialId;
     }
 
     public ClockPart getChassis() {
@@ -180,7 +189,7 @@ public class Clock implements Comparable<Clock>, Serializable  {
         return true;
     }
 
-    public boolean isNewer(Clock clock) {
+	public boolean isNewer(Clock clock) {
         return updatedTime > clock.updatedTime;
     }
 

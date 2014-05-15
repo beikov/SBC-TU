@@ -57,6 +57,9 @@ public class MozartSpacesConnector implements Connector {
     private static final String DELIVERED_CLOCKS_CONTAINER_NAME = "Fabrik/AusgelieferteUhren";
     private static final String DISASSEMBLED_CLOCKS_CONTAINER_NAME = "Fabrik/SchlechteUhren";
 
+    private static final String ID_CONTAINER_NAME = "idcontainer";
+
+    
     private static final String PARTS_TYPE_COORDINATOR_NAME = "type";
     private static final String CLOCK_QUALITY_COORDINATOR_NAME = "quality";
 
@@ -71,6 +74,8 @@ public class MozartSpacesConnector implements Connector {
     private final ContainerReference checkedClocksContainer;
     private final ContainerReference deliveredClocksContainer;
     private final ContainerReference disassembledClocksContainer;
+    
+    private final ContainerReference idContainer;
 
     public MozartSpacesConnector(int port) {
         capi = new Capi(DefaultMzsCore.newInstance(0));
@@ -91,8 +96,31 @@ public class MozartSpacesConnector implements Connector {
             CLOCK_QUALITY_COORDINATOR_NAME), new FifoCoordinator());
         deliveredClocksContainer = getOrCreateContainer(DELIVERED_CLOCKS_CONTAINER_NAME, new FifoCoordinator());
         disassembledClocksContainer = getOrCreateContainer(DISASSEMBLED_CLOCKS_CONTAINER_NAME, new FifoCoordinator());
+        
+        idContainer = getOrCreateIdContainer(ID_CONTAINER_NAME);
     }
 
+    private ContainerReference getOrCreateIdContainer(String name){
+    	   try {
+               return capi.lookupContainer(name, uri, MAX_TIMEOUT_MILLIS, null);
+           } catch (MzsCoreException ex) {
+               try {
+            	   ContainerReference idContainer = capi.createContainer(name, uri, MzsConstants.Container.UNBOUNDED, Arrays.asList(new FifoCoordinator()), null, null);
+            	   // since id container got created we need to write the idCounter into it
+            	   Integer id = 0;
+            	   Entry entry = new Entry(id);
+            	   capi.write(idContainer, entry);
+            	   
+            	   return idContainer;
+               } catch (ContainerNameNotAvailableException ex2) {
+                   // Someone else was faster...
+                   return getOrCreateContainer(name);
+               } catch (MzsCoreException ex2) {
+                   throw new RuntimeException(ex2);
+               }
+           }
+    }
+    
     private ContainerReference getOrCreateContainer(String name, Coordinator... coordinators) {
         try {
             return capi.lookupContainer(name, uri, MAX_TIMEOUT_MILLIS, null);
@@ -360,12 +388,21 @@ public class MozartSpacesConnector implements Connector {
     }
 
     @Override
-    public void addAssembledClock(Clock clock) {
-        final Entry entry = new Entry(clock);
+    public void addAssembledClock(final Clock clock) {
+        
         transactional(new TransactionalWork() {
 
             @Override
             public void doWork(TransactionReference tx) throws MzsCoreException {
+                List<Selector> selectors = new ArrayList<Selector>();
+                selectors.add(FifoCoordinator.newSelector(1));
+            	Integer id = (Integer) capi.take(idContainer, selectors, MAX_TIMEOUT_MILLIS, tx)
+                        .get(0);
+            	clock.setSerialId(id);
+            	id += 1;
+            	Entry entry = new Entry(id);
+            	capi.write(idContainer, MzsConstants.RequestTimeout.ZERO, tx,entry);
+            	entry = new Entry(clock);
                 capi.write(assembledClocksContainer, MzsConstants.RequestTimeout.ZERO, tx, entry);
             }
         });
