@@ -1,8 +1,5 @@
 package at.ac.tuwien.sbc.distributor;
 
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
-
 import at.ac.tuwien.sbc.Connector;
 import at.ac.tuwien.sbc.util.SbcUtils;
 
@@ -18,8 +15,6 @@ public class DistributorApp
         }
         
         Connector connector = SbcUtils.getConnector(Integer.parseInt(args[0]), args[1]);
-        // Thread pool for suppliers
-        ExecutorService threadPool = Executors.newCachedThreadPool();
-        DistributorFrame.start(connector, threadPool);
+        DistributorFrame.start(connector);
     }
 }

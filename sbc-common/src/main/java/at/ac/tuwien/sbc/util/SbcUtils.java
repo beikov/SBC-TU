@@ -6,6 +6,12 @@
 package at.ac.tuwien.sbc.util;
 
 import at.ac.tuwien.sbc.Connector;
+import java.net.InetAddress;
+import java.net.NetworkInterface;
+import java.net.SocketException;
+import java.util.Enumeration;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 /**
  *
@@ -34,5 +40,24 @@ public final class SbcUtils {
         }
 
         throw new IllegalArgumentException("Could not create the connector", reason);
+    }
+    
+    public static String getLocalIpAddress() {
+        try {
+            Enumeration<NetworkInterface> networkInterfaces = NetworkInterface.getNetworkInterfaces();
+            while (networkInterfaces.hasMoreElements() ) {
+                NetworkInterface iface = networkInterfaces.nextElement();
+                if (iface.isUp() && !iface.isLoopback()) {
+                    Enumeration<InetAddress> addresses = iface.getInetAddresses();
+                    if (addresses.hasMoreElements()) {
+                        return addresses.nextElement().getHostAddress();
+                    }
+                }
+            }
+        } catch (SocketException ex) {
+            ex.printStackTrace(System.err);
+        }
+        
+        return InetAddress.getLoopbackAddress().getHostAddress();
     }
 }

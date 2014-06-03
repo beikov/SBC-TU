@@ -8,38 +8,51 @@ package at.ac.tuwien.sbc.jms;
 import at.ac.tuwien.sbc.ClockListener;
 import at.ac.tuwien.sbc.ClockPartListener;
 import at.ac.tuwien.sbc.Connector;
+import at.ac.tuwien.sbc.OrderListener;
 import at.ac.tuwien.sbc.Subscription;
 import at.ac.tuwien.sbc.TransactionalTask;
+import at.ac.tuwien.sbc.model.ClassicClock;
 import at.ac.tuwien.sbc.model.Clock;
 import at.ac.tuwien.sbc.model.ClockPart;
 import at.ac.tuwien.sbc.model.ClockPartType;
 import at.ac.tuwien.sbc.model.ClockQualityType;
+import at.ac.tuwien.sbc.model.ClockType;
+import at.ac.tuwien.sbc.model.Demand;
+import at.ac.tuwien.sbc.model.Order;
+import at.ac.tuwien.sbc.model.OrderPriority;
+import at.ac.tuwien.sbc.model.SingleClockOrder;
+import at.ac.tuwien.sbc.model.SportsClock;
+import at.ac.tuwien.sbc.model.TimezoneSportsClock;
 
 import java.util.ArrayList;
-import java.util.Collections;
+import java.util.Arrays;
+import java.util.EnumMap;
+import java.util.HashMap;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.UUID;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
-import javax.jms.Connection;
 import javax.jms.JMSException;
 import javax.jms.Message;
 import javax.jms.MessageConsumer;
 import javax.jms.MessageProducer;
 import javax.jms.ObjectMessage;
 import javax.jms.Queue;
-import javax.jms.QueueBrowser;
-import javax.jms.Session;
 import javax.jms.Topic;
 
-import org.apache.activemq.ActiveMQConnectionFactory;
-import org.apache.activemq.ActiveMQPrefetchPolicy;
 
 /**
  *
  * @author Christian
  */
-public class JmsConnector implements Connector {
+public class JmsConnector extends AbstractTransactionalJmsConnector implements Connector {
 
+    // Package private so that JmsServer can also see it
+	static final String ID_QUEUE = "queue/id";
+    
 	private static final long MAX_TIMEOUT_MILLIS = 2000;
 	private static final long MAX_TRANSACTION_TIMEOUT_MILLIS = 10000;
 
@@ -48,129 +61,218 @@ public class JmsConnector implements Connector {
 
 	private static final String CLOCKPART_QUEUE = "queue/clockpart";
 	private static final String CLOCK_QUEUE = "queue/clock";
-	public static final String ID_QUEUE = "queue/id";
+    private static final String ORDER_QUEUE = "queue/order";
+    private static final String SINGLE_CLOCK_ORDER_QUEUE = "queue/singleclockorder";
 	
-	private static final String IS_CHASSIS = "IS_CHASSIS";
-	private static final String IS_CLOCKWORK = "IS_CLOCKWORK";
-	private static final String IS_CLOCKHAND = "IS_CLOCKHAND";
-	private static final String IS_WRISTBAND = "IS_WRISTBAND";
 	private static final String IS_ASSEMBLED = "IS_ASSEMBLED";
-	private static final String IS_HIGH_QUALITY = "IS_HIGH_QUALITY";
-	private static final String IS_MED_QUALITY = "IS_MED_QUALITY";
-	private static final String IS_LOW_QUALITY = "IS_LOW_QUALITY";
 	private static final String IS_DELIVERED = "IS_DELIVERED";
 	private static final String IS_DISASSEMBLED = "IS_DISASSEMBLED";
 	public static final String ID_COUNTER = "ID_COUNTER";
 
 	private Topic clockPartTopic, clockTopic;
-	private Queue clockPartQueue, clockQueue, idQueue;
+	private Queue clockPartQueue, clockQueue, orderQueue, singleClockOrderQueue, idQueue;
 
-	private MessageProducer clockPartQueueProducer, clockQueueProducer, clockPartTopicProducer, clockTopicProducer, idProducer;
+	private MessageProducer clockPartQueueProducer, clockQueueProducer, clockPartTopicProducer, clockTopicProducer, orderQueueProducer, singleClockOrderQueueProducer, idProducer;
 	private MessageConsumer clockPartTopicConsumer, clockTopicConsumer, idConsumer;
-	private MessageConsumer chassisConsumer, clockworkConsumer, clockhandConsumer, wristbandConsumer, assembledConsumer, highQualityConsumer, medQualityConsumer, lowQualityConsumer;
+    
+    private final Map<ClockPartType, MessageConsumer> partTypeConsumers = new EnumMap<ClockPartType, MessageConsumer>(ClockPartType.class);
+    private final Map<ClockQualityType, MessageConsumer> clockQualityConsumers = new EnumMap<ClockQualityType, MessageConsumer>(ClockQualityType.class);
+    private final Map<OrderPriority, MessageConsumer> orderPriorityConsumers = new EnumMap<OrderPriority, MessageConsumer>(OrderPriority.class);
+//    private final Map<OrderPriority, Map<ClockType, MessageConsumer>> singleClockOrderPriorityAndTypeConsumers = new EnumMap<OrderPriority, Map<ClockType, MessageConsumer>>(OrderPriority.class);
+    private final Map<OrderPriority, MessageConsumer> singleClockOrderPriorityConsumers = new EnumMap<OrderPriority, MessageConsumer>(OrderPriority.class);
+	private MessageConsumer assembledConsumer;
 
-	private Session session, browserPartSession, browserClockSession;
-	private Connection connection;
-
-	private final ThreadLocal<Boolean> currentTransaction = new ThreadLocal<Boolean>();
-	private final ThreadLocal<Boolean> currentTransactionRollback = new ThreadLocal<Boolean>();
-
-	private boolean commit() {
-		try {
-			session.commit();
-			return false;
-		} catch (JMSException ex) {
-			throw new RuntimeException(ex);
-		} finally {
-			currentTransaction.remove();
-			currentTransactionRollback.remove();
-		}
+	public JmsConnector(int port) { 
+        super(port);
 	}
 
-	private void rollback() {
-		try {
-			session.rollback();
-		} catch (JMSException ex) {
-			throw new RuntimeException(ex);
-		} finally {
-			currentTransaction.remove();
-		}
+	private void connectOrder() throws JMSException {
+        orderQueue = createQueueIfNull(orderQueue, ORDER_QUEUE);
+        singleClockOrderQueue = createQueueIfNull(singleClockOrderQueue, SINGLE_CLOCK_ORDER_QUEUE);
+        
+        orderQueueProducer = createProducerIfNull(orderQueueProducer, orderQueue);
+        singleClockOrderQueueProducer = createProducerIfNull(singleClockOrderQueueProducer, singleClockOrderQueue);
+
+        if (orderPriorityConsumers.isEmpty()) {
+            for (OrderPriority priority : OrderPriority.values()) {
+                orderPriorityConsumers.put(priority, session.createConsumer(orderQueue, "priority='" + priority.name() + "'"));
+            }
+        }
+//        if (singleClockOrderPriorityAndTypeConsumers.isEmpty()) {
+//            for (OrderPriority priority : OrderPriority.values()) {
+//                Map<ClockType, MessageConsumer> map = new EnumMap<ClockType, MessageConsumer>(ClockType.class);
+//                singleClockOrderPriorityAndTypeConsumers.put(priority, map);
+//                for (ClockType type : ClockType.values()) {
+//                    map.put(type, session.createConsumer(orderQueue, "priority='" + priority.name() + "' AND type='" + type.name() + "'"));
+//                }
+//            }
+//        }
+        if (singleClockOrderPriorityConsumers.isEmpty()) {
+            for (OrderPriority priority : OrderPriority.values()) {
+                singleClockOrderPriorityConsumers.put(priority, session.createConsumer(orderQueue, "priority='" + priority.name() + "'"));
+            }
+        }
 	}
 
-	private boolean transactional(TransactionalWork work) {
-		boolean created = ensureCurrentTransaction();
-		currentTransactionRollback.set(Boolean.TRUE);
+    @Override
+    public Subscription subscribeForOrders(OrderListener listener) {
+        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+    }
 
-		try {
-			work.doWork();
+    @Override
+    public void addOrder(final Order order) {
+        transactional(new TransactionalWork() {
 
-			if (created) {
-				return commit();
-			} else {
-				// Indicates no timeout occurred
-				return false;
-			}
-		} catch (TimeoutException ex) {
-			created = false;
-			currentTransaction.remove();
-			currentTransactionRollback.remove();
-			return true;
-		} catch (RuntimeException ex) {
-			throw ex;
-		} catch (Error ex) {
-			throw ex;
-		} catch (Throwable ex) {
-			throw new RuntimeException(ex);
-		} finally {
-			if (created && Boolean.TRUE == currentTransactionRollback.get()) {
-				rollback();
-			}
-		}
-	}
+            @Override
+            public void doWork() throws JMSException {
+                for (ClockType type : ClockType.values()) {
+                    for (int i = 0; i < order.getNeededClocksOfType(type); i++) {
+                        ObjectMessage msg = session.createObjectMessage(new SingleClockOrder(order.getId(), type, order.getPriority()));
+                        msg.setStringProperty("type", type.name());
+                        msg.setStringProperty("priority", order.getPriority().name());
+                        singleClockOrderQueueProducer.send(msg);
+                    }
+                }
+                
+                ObjectMessage msg = session.createObjectMessage(order);
+                msg.setStringProperty("priority", order.getPriority().name());
+                orderQueueProducer.send(msg);
+            }
+        });
+    }
 
-	/**
-	 * Returns true if the call resulted in creating the transaction.
-	 *
-	 * @param timeoutInMillis
-	 * @return
-	 */
-	private boolean ensureCurrentTransaction() {
-		Boolean tx = currentTransaction.get();
-		if (tx == null) {
-			tx = Boolean.TRUE;
-			currentTransaction.set(tx);
-			return true;
-		}
-		return false;
-	}
+//    @Override
+//    public List<ClockType> getPossibleClockTypes(List<ClockType> wantedTypes) {
+//		final List<ClockType> possibleClockTypes = new ArrayList<ClockType>();
+//        List<ClockPart> clockParts = queueAsList(CLOCKPART_QUEUE);
+//        Iterator<ClockPart> iter = clockParts.iterator();
+//        Map<ClockPartType, Integer> foundClockParts = new EnumMap<ClockPartType, Integer>(ClockPartType.class);
+//        
+//        for (ClockType clockType : wantedTypes) {
+//            Map<ClockPartType, Integer> missingClockParts = new EnumMap<ClockPartType, Integer>(clockType.getNeededParts());
+//            
+//            // Precalculate the count of missing clock parts by comparing needed with found clock parts
+//            for (Map.Entry<ClockPartType, Integer> entry : foundClockParts.entrySet()) {
+//                Integer neededCount = missingClockParts.get(entry.getKey());
+//                
+//                if (neededCount != null) {
+//                    if (entry.getValue() >= neededCount) {
+//                        missingClockParts.remove(entry.getKey());
+//                    } else {
+//                        missingClockParts.put(entry.getKey(), neededCount - entry.getValue());
+//                    }
+//                }
+//            }
+//            
+//            while (!missingClockParts.isEmpty() && iter.hasNext()) {
+//                ClockPart p = iter.next();
+//                
+//                // Update overall counters
+//                Integer currentCount = foundClockParts.get(p.getType());
+//                foundClockParts.put(p.getType(), currentCount == null ? 1 : currentCount + 1);
+//                
+//                // Update counters for the current clock type
+//                Integer missingCount = missingClockParts.get(p.getType());
+//                
+//                if (missingCount != null) {
+//                    if (missingCount == 1) {
+//                        missingClockParts.remove(p.getType());
+//                    } else {
+//                        missingClockParts.put(p.getType(), missingCount - 1);
+//                    }
+//                }
+//            }
+//            
+//            if (missingClockParts.isEmpty()) {
+//                possibleClockTypes.add(clockType);
+//            }
+//        }
+//        
+//        return possibleClockTypes;
+//    }
 
-	public JmsConnector(int port) {
-		connect(port);
-	}
+//    @Override
+//    public Order getPossibleOrderByPriority(final List<ClockType> possibleClockTypes) {
+//        Finder<Order> finder = new Finder<Order>() {
+//
+//            @Override
+//            public boolean accept(Order order) {
+//                for(ClockType t : possibleClockTypes){
+//                    if(order.isClockTypeNeeded(t) ){
+//                        return true;
+//                    }
+//                }
+//                
+//                return false;
+//            }
+//        };
+//        Order order = findInQueue(ORDER_QUEUE, "priority='" + OrderPriority.HOCH.name() + "'", finder);
+//        order = order != null ? order : (Order) findInQueue(ORDER_QUEUE, "priority='" + OrderPriority.MITTEL.name() + "'", finder);
+//        order = order != null ? order : (Order) findInQueue(ORDER_QUEUE, "priority='" + OrderPriority.NIEDRIG.name() + "'", finder);
+//        return order;
+//    }
 
-	private void connect(int port) {
-		try {
-			ActiveMQConnectionFactory connectionFactory = new ActiveMQConnectionFactory("tcp://localhost:" + port);
-//			ActiveMQConnectionFactory connectionFactory = new ActiveMQConnectionFactory();
-			
-			ActiveMQPrefetchPolicy policy = new ActiveMQPrefetchPolicy();
-			policy.setQueuePrefetch(0);
-			connectionFactory.setPrefetchPolicy(policy);
-			connection = connectionFactory.createConnection();
-			connection.start();
-			session = connection.createSession(true, Session.CLIENT_ACKNOWLEDGE);
-			
-		} catch (JMSException ex) {
-			throw new RuntimeException(ex);
-		}
-	}
+    @Override
+    public boolean takeSingleClockOrder(final OrderPriority priority, final TransactionalTask<SingleClockOrder> transactionalTask) {
+        try {
+            final Boolean[] done = { false };
+            connectOrder();
+            
+//            Map<ClockType, MessageConsumer> consumerMap = singleClockOrderPriorityAndTypeConsumers.get(priority);
+//            for (ClockType type : possibleClockTypes) {
+//                    ObjectMessage message = (ObjectMessage) consumerMap.get(type).receiveNoWait();
+//                    if (message != null) {
+//                        return (SingleClockOrder) message.getObject();
+//                    }
+//            }
+            transactional(new TransactionalWork() {
+
+                @Override
+                public void doWork() throws JMSException {
+                    ObjectMessage message = (ObjectMessage) singleClockOrderPriorityConsumers.get(priority).receiveNoWait();
+                    if (message != null) {
+                        transactionalTask.doWork((SingleClockOrder) message.getObject());
+                        done[0] = true;
+                    }
+                }
+            });
+            
+            return done[0];
+        } catch (JMSException ex) {
+            throw new RuntimeException(ex);
+        }
+    }
+
+    @Override
+    public void connectDistributor(UUID distributorId) {
+        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+    }
+
+    @Override
+    public void setDemand(UUID distributorId, Map<ClockType, Integer> demandPerType) {
+        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+    }
+
+    @Override
+    public Subscription subscribeForDistributorDeliveries(ClockListener listener) {
+        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+    }
+
+    @Override
+    public void takeDemandedClock(TransactionalTask<Map<Demand, Clock>> transactionalTask) {
+        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+    }
+
+    @Override
+    public void deliverDemandedClock(Demand demand, Clock clock) {
+        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+    }
 
 	@Override
 	public Subscription subscribeForClockParts(ClockPartListener listener) {
 		try {
 			connectClockPartListener();
-			JmsClockPartListener cpListener = new JmsClockPartListener(listener);
-			clockPartTopicConsumer.setMessageListener(cpListener);
+			clockPartTopicConsumer.setMessageListener(new JmsClockPartListener(listener));
 			return new JmsSubscription(clockPartTopicConsumer);
 		} catch (JMSException ex) {
 			throw new RuntimeException(ex);
@@ -181,211 +283,101 @@ public class JmsConnector implements Connector {
 	public Subscription subscribeForClocks(ClockListener listener) {
 		try {
 			connectClockListener();
-			JmsClockListener cListener = new JmsClockListener(listener);
-			clockTopicConsumer.setMessageListener(cListener);
+			clockTopicConsumer.setMessageListener(new JmsClockListener(listener));
 			return new JmsSubscription(clockTopicConsumer);
 		} catch (JMSException ex) {
 			throw new RuntimeException(ex);
 		}
 	}
 
-	private void connectClockPartListener() {
-		try {
-			if (clockPartTopic == null) {
-				clockPartTopic = session.createTopic(CLOCKPART_TOPIC);
-			}
-			if (clockPartTopicConsumer == null) {
-				clockPartTopicConsumer = session.createConsumer(clockPartTopic);
-			}
-		} catch (JMSException ex) {
-			throw new RuntimeException(ex);
-		}
+	private void connectClockPartListener() throws JMSException {
+        clockPartTopic = createTopicIfNull(clockPartTopic, CLOCKPART_TOPIC);
+        clockPartTopicConsumer = createConsumerIfNull(clockPartTopicConsumer, clockPartTopic);
+	}
+
+	private void connectClockListener() throws JMSException {
+        clockTopic = createTopicIfNull(clockTopic, CLOCK_TOPIC);
+        clockTopicConsumer = createConsumerIfNull(clockTopicConsumer, clockTopic);
 	}
 	
-	public void createSerialId() throws JMSException{
-		MessageProducer idProducer = session.createProducer(
-				session.createQueue(JmsConnector.CLOCK_QUEUE));
-		Integer startId = 0;
-		ObjectMessage message = session.createObjectMessage(startId);
-		message.setBooleanProperty(JmsConnector.ID_COUNTER, true);
-		idProducer.send(message);
+	private long getNextId() throws JMSException{
+        connectIdSequence();
+        // The server creates the first message so we can just wait without a timeout
+        ObjectMessage message = (ObjectMessage) idConsumer.receive();
+        Long id = (Long) message.getObject();
+        
+        ObjectMessage msg = session.createObjectMessage(Long.valueOf(id + 1));
+        idProducer.send(msg);
+        
+        return id;
 	}
 
-	private void connectClockListener() {
-		try {
-			if (clockTopic == null) {
-				clockTopic = session.createTopic(CLOCK_TOPIC);
-			}
-			if (clockTopicConsumer == null) {
-				clockTopicConsumer = session.createConsumer(clockTopic);
-			}
-		} catch (JMSException ex) {
-			throw new RuntimeException(ex);
-		}
+	private void connectSupplier() throws JMSException {
+        clockPartQueue = createQueueIfNull(clockPartQueue, CLOCKPART_QUEUE);
+        clockPartQueueProducer = createProducerIfNull(clockPartQueueProducer, clockPartQueue);
+
+        clockPartTopic = createTopicIfNull(clockPartTopic, CLOCKPART_TOPIC);
+        clockPartTopicProducer = createProducerIfNull(clockPartTopicProducer, clockPartTopic);
 	}
 
-	private void connectSupplier() {
-		try {
-			if (clockPartQueue == null) {
-				clockPartQueue = session.createQueue(CLOCKPART_QUEUE);
-			}
+	private void connectIdSequence() throws JMSException {
+        idQueue = createQueueIfNull(idQueue, ID_QUEUE);
+        idConsumer = createConsumerIfNull(idConsumer, idQueue);
+        idProducer = createProducerIfNull(idProducer, idQueue);
+    }
 
-			if (clockPartQueueProducer == null) {
-				clockPartQueueProducer = session.createProducer(clockPartQueue);
-			}
-
-			if (clockPartTopic == null) {
-				clockPartTopic = session.createTopic(CLOCKPART_TOPIC);
-			}
-			if (clockPartTopicProducer == null) {
-				clockPartTopicProducer = session.createProducer(clockPartTopic);
-			}
-		} catch (JMSException ex) {
-			throw new RuntimeException(ex);
-		}
+	private void connectAssembler() throws JMSException {
+        connectIdSequence();
+        
+        clockQueue = createQueueIfNull(clockQueue, CLOCK_QUEUE);
+        clockTopic = createTopicIfNull(clockTopic, CLOCK_TOPIC);
+        clockPartQueue = createQueueIfNull(clockPartQueue, CLOCKPART_QUEUE);
+        clockPartTopic = createTopicIfNull(clockPartTopic, CLOCKPART_TOPIC);
+        
+        clockQueueProducer = createProducerIfNull(clockQueueProducer, clockQueue);
+        clockTopicProducer = createProducerIfNull(clockTopicProducer, clockTopic);
+        clockPartTopicProducer = createProducerIfNull(clockPartTopicProducer, clockPartTopic);
+        
+        if (partTypeConsumers.isEmpty()) {
+            for (ClockPartType type : ClockPartType.values()) {
+                partTypeConsumers.put(type, session.createConsumer(clockPartQueue, "type='" + type.name() + "'"));
+            }
+        }
 	}
 
-	private void connectAssembler() {
-		try {
-			if (clockPartQueue == null) {
-				clockPartQueue = session.createQueue(CLOCKPART_QUEUE);
-			}
-			if (clockQueue == null) {
-				clockQueue = session.createQueue(CLOCK_QUEUE);
-			}
-			
-			if (idQueue == null) {
-				idQueue = session.createQueue(ID_QUEUE);
-			}
-
-			if (clockTopic == null) {
-				clockTopic = session.createTopic(CLOCK_TOPIC);
-			}
-
-			if (chassisConsumer == null) {
-				chassisConsumer = session.createConsumer(clockPartQueue, IS_CHASSIS + " = true");
-			}
-			if (clockworkConsumer == null) {
-				clockworkConsumer = session.createConsumer(clockPartQueue, IS_CLOCKWORK + " = true");
-			}
-			if (clockhandConsumer == null) {
-				clockhandConsumer = session.createConsumer(clockPartQueue, IS_CLOCKHAND + " = true");
-			}
-			if (wristbandConsumer == null) {
-				wristbandConsumer = session.createConsumer(clockPartQueue, IS_WRISTBAND + " = true");
-			}
-			
-			if (idConsumer == null) {
-				idConsumer = session.createConsumer(idQueue, ID_COUNTER + " = true");
-			}
-			
-			if (idProducer == null) {
-				idProducer = session.createProducer(idQueue);
-			}
-
-			if (clockQueueProducer == null) {
-				clockQueueProducer = session.createProducer(clockQueue);
-			}
-
-			if (clockTopicProducer == null) {
-				clockTopicProducer = session.createProducer(clockTopic);
-			}
-
-			if (clockPartTopic == null) {
-				clockPartTopic = session.createTopic(CLOCKPART_TOPIC);
-			}
-
-			if (clockPartTopicProducer == null) {
-				clockPartTopicProducer = session.createProducer(clockPartTopic);
-			}
-		} catch (JMSException ex) {
-			throw new RuntimeException(ex);
-		}
-	}
-
-	private void connectChecker() {
+	private void connectChecker() throws JMSException {
 		connectSupplier();
-		try {
-			if (clockQueue == null) {
-				clockQueue = session.createQueue(CLOCK_QUEUE);
-			}
-
-			if (assembledConsumer == null) {
-				assembledConsumer = session.createConsumer(clockQueue, IS_ASSEMBLED + " = true");
-			}
-
-			if (clockQueueProducer == null) {
-				clockQueueProducer = session.createProducer(clockQueue);
-			}
-
-			if (clockTopic == null) {
-				clockTopic = session.createTopic(CLOCK_TOPIC);
-			}
-
-			if (clockTopicProducer == null) {
-				clockTopicProducer = session.createProducer(clockTopic);
-			}
-
-		} catch (JMSException ex) {
-			throw new RuntimeException(ex);
-		}
+        clockQueue = createQueueIfNull(clockQueue, CLOCK_QUEUE);
+        clockTopic = createTopicIfNull(clockTopic, CLOCK_TOPIC);
+        clockQueueProducer = createProducerIfNull(clockQueueProducer, clockQueue);
+        clockTopicProducer = createProducerIfNull(clockTopicProducer, clockTopic);
+        
+        assembledConsumer = createConsumerIfNull(assembledConsumer, clockQueue, IS_ASSEMBLED + " = true");
 	}
 
-	private void connectDeliverer() {
-		try {
-			if (clockQueue == null) {
-				clockQueue = session.createQueue(CLOCK_QUEUE);
-			}
-			if (clockTopic == null) {
-				clockTopic = session.createTopic(CLOCK_TOPIC);
-			}
-
-			if (highQualityConsumer == null) {
-				highQualityConsumer = session.createConsumer(clockQueue, IS_HIGH_QUALITY + " = true");
-			}
-			if (medQualityConsumer == null) {
-				medQualityConsumer = session.createConsumer(clockQueue, IS_MED_QUALITY + " = true");
-			}
-			if (lowQualityConsumer == null) {
-				lowQualityConsumer = session.createConsumer(clockQueue, IS_LOW_QUALITY + " = true");
-			}
-
-			if (clockTopicProducer == null) {
-				clockTopicProducer = session.createProducer(clockTopic);
-			}
-
-			if (clockQueueProducer == null){
-				clockQueueProducer = session.createProducer(clockQueue);
-			}
-
-		} catch (JMSException ex) {
-			throw new RuntimeException(ex);
-		}
+	private void connectDeliverer() throws JMSException {
+        clockQueue = createQueueIfNull(clockQueue, CLOCK_QUEUE);
+        clockTopic = createTopicIfNull(clockTopic, CLOCK_TOPIC);
+        clockQueueProducer = createProducerIfNull(clockQueueProducer, clockQueue);
+        clockTopicProducer = createProducerIfNull(clockTopicProducer, clockTopic);
+        
+        if (clockQualityConsumers.isEmpty()) {
+            for (ClockQualityType type : ClockQualityType.values()) {
+                clockQualityConsumers.put(type, session.createConsumer(clockQueue, "quality='" + type.name() + "'"));
+            }
+        }
 	}
 
 	@Override
 	public void addParts(final List<ClockPart> parts) {
-		connectSupplier();
 		transactional(new TransactionalWork() {
 
 			@Override
 			public void doWork() throws JMSException {
+                connectSupplier();
 				for (ClockPart cp : parts) {
 					ObjectMessage message = session.createObjectMessage(cp);
-					switch (cp.getType()) {
-					case GEHAEUSE:
-						message.setBooleanProperty(IS_CHASSIS, true);
-						break;
-					case UHRWERK:
-						message.setBooleanProperty(IS_CLOCKWORK, true);
-						break;
-					case ZEIGER:
-						message.setBooleanProperty(IS_CLOCKHAND, true);
-						break;
-					case LEDERARMBAND:
-						message.setBooleanProperty(IS_WRISTBAND, true);
-						break;
-					}
+                    message.setStringProperty("type", cp.getType().name());
 					clockPartQueueProducer.send(message);
 					clockPartTopicProducer.send(message);
 				}
@@ -395,29 +387,16 @@ public class JmsConnector implements Connector {
 
 	@Override
 	public void takeParts(final Map<ClockPartType, Integer> neededClockParts, final TransactionalTask<List<ClockPart>> transactionalTask) {
-		connectAssembler();
 		transactional(new TransactionalWork() {
 
 			@Override
 			public void doWork() throws JMSException {
+                connectAssembler();
 				List<ClockPart> parts = new ArrayList<ClockPart>();
 				for (ClockPartType t : neededClockParts.keySet()) {
 					ObjectMessage message = null;
 					for (int i = 0, upper = neededClockParts.get(t); i < upper; i++) {
-						switch (t) {
-						case GEHAEUSE:
-							message = (ObjectMessage) chassisConsumer.receive(/*MAX_TIMEOUT_MILLIS*/);
-							break;
-						case UHRWERK:
-							message = (ObjectMessage) clockworkConsumer.receive(/*MAX_TIMEOUT_MILLIS*/);
-							break;
-						case ZEIGER:
-							message = (ObjectMessage) clockhandConsumer.receive(/*MAX_TIMEOUT_MILLIS*/);
-							break;
-						case LEDERARMBAND:
-							message = (ObjectMessage) wristbandConsumer.receive(/*MAX_TIMEOUT_MILLIS*/);
-							break;
-						}
+                        message = (ObjectMessage) partTypeConsumers.get(t).receive(/*MAX_TIMEOUT_MILLIS*/);
 
 						if (message == null) {
 							throw new TimeoutException();
@@ -438,11 +417,11 @@ public class JmsConnector implements Connector {
 
 	@Override
 	public void takeAssembled(final TransactionalTask<Clock> transactionalTask) {
-		connectChecker();
 		transactional(new TransactionalWork() {
 
 			@Override
 			public void doWork() throws JMSException {
+                connectChecker();
 				ObjectMessage message = (ObjectMessage) assembledConsumer.receive();
 				transactionalTask.doWork((Clock) message.getObject());
 			}
@@ -452,23 +431,12 @@ public class JmsConnector implements Connector {
 
 	@Override
 	public boolean takeChecked(final ClockQualityType type, final long timeout, final TransactionalTask<Clock> transactionalTask) {
-		connectDeliverer();
 		return transactional(new TransactionalWork() {
 
 			@Override
 			public void doWork() throws JMSException {
-				MessageConsumer consumer = null;
-				switch (type) {
-				case A:
-					consumer = highQualityConsumer;
-					break;
-				case B:
-					consumer = medQualityConsumer;
-					break;
-				case C:
-					consumer = lowQualityConsumer;
-					break;
-				}
+                connectDeliverer();
+				MessageConsumer consumer = clockQualityConsumers.get(type);
 				ObjectMessage message = (ObjectMessage) consumer.receive(timeout);
 				if (message == null) {
 					throw new TimeoutException();
@@ -480,26 +448,13 @@ public class JmsConnector implements Connector {
 
 	@Override
 	public void addAssembledClock(final Clock clock) {
-		connectAssembler();
 		transactional(new TransactionalWork() {
 
-	
 			@Override
 			public void doWork() throws JMSException {
-				// get the serial actual serial id from the queue
-				ObjectMessage message = (ObjectMessage)idConsumer.receive();
-				Integer id = (Integer) message.getObject();
-				// set it for the new clock
-				clock.setSerialId(id);
-				id += 1;
-				
-				ObjectMessage msg = session.createObjectMessage(id);
-			
-				msg.setBooleanProperty(ID_COUNTER, true);
-				// and write the incremented serial id back into the queue
-				idProducer.send(msg);
-				
-				msg = session.createObjectMessage(clock);
+                connectAssembler();
+                clock.setSerialId(getNextId());
+				ObjectMessage msg = session.createObjectMessage(clock);
 				msg.setBooleanProperty(IS_ASSEMBLED, true);
 				clockQueueProducer.send(msg);
 				clockTopicProducer.send(msg);
@@ -510,23 +465,13 @@ public class JmsConnector implements Connector {
 
 	@Override
 	public void addCheckedClock(final Clock clock, final ClockQualityType type) {
-		connectChecker();
 		transactional(new TransactionalWork() {
 
 			@Override
 			public void doWork() throws JMSException {
+                connectChecker();
 				ObjectMessage message = session.createObjectMessage(clock);
-				switch (type) {
-				case A:
-					message.setBooleanProperty(IS_HIGH_QUALITY, true);
-					break;
-				case B:
-					message.setBooleanProperty(IS_MED_QUALITY, true);
-					break;
-				case C:
-					message.setBooleanProperty(IS_LOW_QUALITY, true);
-					break;
-				}
+                message.setStringProperty("quality", type.name());
 				clockQueueProducer.send(message);
 				clockTopicProducer.send(message);
 			}
@@ -535,11 +480,11 @@ public class JmsConnector implements Connector {
 
 	@Override
 	public void addDeliveredClock(final Clock clock) {
-		connectDeliverer();
 		transactional(new TransactionalWork() {
 
 			@Override
 			public void doWork() throws JMSException {
+                connectDeliverer();
 				Message msg = session.createObjectMessage(clock);
 				msg.setBooleanProperty(IS_DELIVERED, true);
 				clockTopicProducer.send(msg);
@@ -550,11 +495,11 @@ public class JmsConnector implements Connector {
 
 	@Override
 	public void addDisassembledClock(final Clock clock) {
-		connectDeliverer();
 		transactional(new TransactionalWork() {
 
 			@Override
 			public void doWork() throws JMSException {
+                connectDeliverer();
 				Message msg = session.createObjectMessage(clock);
 				msg.setBooleanProperty(IS_DISASSEMBLED, true);
 				clockTopicProducer.send(msg);
@@ -565,66 +510,17 @@ public class JmsConnector implements Connector {
 
 	@Override
 	public List<ClockPart> getClockParts() {
-		try {
-			QueueBrowser clockPartBrowser = createClockPartBrowser();
-			List<ObjectMessage> list = Collections.list(clockPartBrowser.getEnumeration());
-			List<ClockPart> clockParts = new ArrayList<ClockPart>();
-			for (ObjectMessage m : list) {
-				clockParts.add((ClockPart) m.getObject());
-			}
-			clockPartBrowser.close();
-			browserPartSession.close();
-			return clockParts;
-		} catch (JMSException ex) {
-			throw new RuntimeException(ex);
-		}
+        return queueAsList(CLOCKPART_QUEUE);
 	}
 
 	@Override
 	public List<Clock> getClocks() {
-		try {
-			QueueBrowser clockBrowser = createClockBrowser();
-			List<ObjectMessage> list = Collections.list(clockBrowser.getEnumeration());
-			List<Clock> clocks = new ArrayList<Clock>();
-			for (ObjectMessage m : list) {
-				clocks.add((Clock) m.getObject());
-			}
-			clockBrowser.close();
-			browserClockSession.close();
-			return clocks;
-		} catch (JMSException ex) {
-			throw new RuntimeException(ex);
-		}
+        return queueAsList(CLOCK_QUEUE);
 	}
 
-	private QueueBrowser createClockBrowser() {
-		try {
-			if( browserClockSession == null ){
-				browserClockSession = connection.createSession(false, Session.AUTO_ACKNOWLEDGE);
-			}
-
-			if (clockQueue == null) {
-				clockQueue = session.createQueue(CLOCK_QUEUE);
-			}
-			return browserClockSession.createBrowser(clockQueue);
-		} catch (JMSException ex) {
-			throw new RuntimeException(ex);
-		}
-	}
-
-	private QueueBrowser createClockPartBrowser() {
-		try {
-			if( browserPartSession == null ){
-				browserPartSession = connection.createSession(false, Session.AUTO_ACKNOWLEDGE);
-			}
-
-			if (clockPartQueue == null) {
-				clockPartQueue = session.createQueue(CLOCKPART_QUEUE);
-			}
-			return browserPartSession.createBrowser(clockPartQueue);
-		} catch (JMSException ex) {
-			throw new RuntimeException(ex);
-		}
+	@Override
+	public List<Order> getOrders() {
+        return queueAsList(ORDER_QUEUE);
 	}
 
 }

@@ -1,26 +1,27 @@
 package at.ac.tuwien.sbc.distributor;
 
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import at.ac.tuwien.sbc.model.Clock;
 import at.ac.tuwien.sbc.model.ClockType;
+import java.util.Queue;
+import java.util.concurrent.ConcurrentLinkedQueue;
 
 public class ClockList {
 
-	private List<Clock> clocks;
-	private AtomicInteger classicClocks;
-	private AtomicInteger sportsClocks;
-	private AtomicInteger timezoneClocks;
-	private AtomicInteger orderedClassicClocks;
-	private AtomicInteger orderedSportsClocks;
-	private AtomicInteger orderedTimezoneClocks;
+	private final Queue<Clock> clocks;
+	private final AtomicInteger classicClocks;
+	private final AtomicInteger sportsClocks;
+	private final AtomicInteger timezoneClocks;
+	private final AtomicInteger orderedClassicClocks;
+	private final AtomicInteger orderedSportsClocks;
+	private final AtomicInteger orderedTimezoneClocks;
 	
 
 	public ClockList(){
-		clocks = Collections.synchronizedList(new ArrayList<Clock>());
+		clocks = new ConcurrentLinkedQueue<Clock>();
 		classicClocks = new AtomicInteger(0);
 		sportsClocks = new AtomicInteger(0);
 		timezoneClocks = new AtomicInteger(0);
@@ -30,7 +31,7 @@ public class ClockList {
 	}
 
 	public List<Clock> getClocks() {
-		return clocks;
+		return new ArrayList<Clock>(clocks);
 	}
 
 	public void addAll(List<Clock> clocks) {
@@ -44,14 +45,20 @@ public class ClockList {
 		this.clocks.addAll(clocks);
 	}
 
-	public void remove(int index){
-		Clock removedClock = clocks.remove(index);
+	public boolean removeAny(){
+        Clock removedClock = clocks.poll();
+        
+        if (removedClock == null) {
+            return false;
+        }
 
 		switch(removedClock.getType()){
 		case KLASSISCH: classicClocks.decrementAndGet(); break;
 		case SPORT: sportsClocks.decrementAndGet(); break;
 		case ZEITZONEN_SPORT: timezoneClocks.decrementAndGet(); break;
 		}
+        
+        return true;
 	}
 	
 	public int getClockCount(ClockType type){
@@ -63,17 +70,30 @@ public class ClockList {
 		return 0;
 	}
 	
-	public int getOrderedClockCount(ClockType type){
+	public int getDemandCount(ClockType type){
+		switch(type){
+		case KLASSISCH:	return orderedClassicClocks.get() - classicClocks.get();
+		case SPORT: return orderedSportsClocks.get() - sportsClocks.get();
+		case ZEITZONEN_SPORT: return orderedTimezoneClocks.get() - timezoneClocks.get();
+		}
+		return 0;
+	}
+    
+    public void setOrderCount(ClockType type, int value) {
+		switch(type){
+		case KLASSISCH: orderedClassicClocks.set(value);
+		case SPORT: orderedSportsClocks.set(value);
+		case ZEITZONEN_SPORT: orderedTimezoneClocks.set(value);
+		}
+    }
+	
+	public int getOrderCount(ClockType type){
 		switch(type){
 		case KLASSISCH:	return orderedClassicClocks.get();
 		case SPORT: return orderedSportsClocks.get();
 		case ZEITZONEN_SPORT: return orderedTimezoneClocks.get();
 		}
 		return 0;
-	}
-	
-	public int size(){
-		return clocks.size();
 	}
 }
 

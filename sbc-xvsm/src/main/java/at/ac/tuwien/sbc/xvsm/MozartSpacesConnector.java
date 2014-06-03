@@ -59,6 +59,12 @@ import at.ac.tuwien.sbc.model.OrderPriority;
 import at.ac.tuwien.sbc.model.SingleClockOrder;
 import at.ac.tuwien.sbc.model.SportsClock;
 import at.ac.tuwien.sbc.model.TimezoneSportsClock;
+import java.net.InetAddress;
+import java.net.NetworkInterface;
+import java.net.SocketException;
+import java.util.Enumeration;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 /**
  *
@@ -467,13 +473,6 @@ public class MozartSpacesConnector implements Connector {
 			}
 		});
 	}
-
-
-	@Override
-	public void takeParts(OrderPriority lastProducedPriority,
-			TransactionalTask<OrderPriority> transactionalTask) {
-		transactionalTask.doWork(lastProducedPriority);
-	}
 	
 	@Override
 	public void takeAssembled(final TransactionalTask<Clock> transactionalTask) {
@@ -599,149 +598,38 @@ public class MozartSpacesConnector implements Connector {
 	}
 	
 	@Override
-	public List<ClockType> getPossibleClockTypes(final List<ClockType> wantedTypes) {
+	public boolean takeSingleClockOrder(final OrderPriority priority, final TransactionalTask<SingleClockOrder> transactionalTask) {
+        final List<Selector> selectors = new ArrayList<Selector>();
+        final Boolean[] done = { false };
+        Query query = new Query().filter(Property.forName("priority").equalTo(priority));
 
-		final List<ClockType> possibleClockTypes = new ArrayList<ClockType>();
-		transactional(new TransactionalWork() {
-
-			@Override
-			public void doWork(TransactionReference tx) throws MzsCoreException {
-				for (ClockType clockType : wantedTypes) {
-					boolean typePossible = true;
-					Map<ClockPartType, Integer> neededClockParts = null;
-					switch(clockType){
-					case KLASSISCH:			neededClockParts = ClassicClock.NEEDED_PARTS;	break;
-					case SPORT:				neededClockParts = SportsClock.NEEDED_PARTS;	break;
-					case ZEITZONEN_SPORT:	neededClockParts = TimezoneSportsClock.NEEDED_PARTS; break;
-					}
-					for (Map.Entry<ClockPartType, Integer> entry : neededClockParts.entrySet()) {
-						List<? extends Selector> selectors = Arrays.asList(LabelCoordinator.newSelector(entry.getKey()
-								.name(), entry.getValue(), PARTS_TYPE_COORDINATOR_NAME));
-						try{
-							capi.test(partsContainer, selectors, MzsConstants.RequestTimeout.ZERO, tx);
-						} catch (CountNotMetException e) {
-							typePossible = false;
-							break;
-						}
-					}
-					if(typePossible){
-						possibleClockTypes.add(clockType);
-					}
-				}
-			}
-		});
-
-		return possibleClockTypes;
-	}
-
-	@Override
-	public Order getPossibleOrderByPriority(final List<ClockType> possibleClockTypes) {
-
-		final Property priority = Property.forName("priority");
-		final List<Order> orders = new ArrayList<Order>();
-		transactional(new TransactionalWork() {
-			@Override
-			public void doWork(TransactionReference tx) throws MzsCoreException {
-				Query query = new Query().filter(priority.equalTo(OrderPriority.HOCH));
-				orders.addAll( (List) capi.read(orderContainer, Arrays.asList(QueryCoordinator.newSelector(query)), 0, null) );
-				Order order = orders.get(0);
-				boolean retain = false;
-				for(ClockType t : possibleClockTypes){
-					if( order.isClockTypeNeeded(t) ){
-						retain = true;
-					}
-				}
-				if(!retain){
-					orders.removeAll(orders);
-				}
-			}
-		});
-		if(orders.isEmpty()){
-			transactional(new TransactionalWork() {
-				@Override
-				public void doWork(TransactionReference tx) throws MzsCoreException {
-					Query query = new Query().filter(priority.equalTo(OrderPriority.MITTEL));
-					orders.addAll( (List) capi.read(orderContainer, Arrays.asList(QueryCoordinator.newSelector(query)), 0, null) );
-					Order order = orders.get(0);
-					boolean retain = false;
-					for(ClockType t : possibleClockTypes){
-						if( order.isClockTypeNeeded(t) ){
-							retain = true;
-						}
-					}
-					if(!retain){
-						orders.removeAll(orders);
-					}
-				}
-			});
-
-		}
-		if(orders.isEmpty()){
-			transactional(new TransactionalWork() {
-				@Override
-				public void doWork(TransactionReference tx) throws MzsCoreException {
-					Query query = new Query().filter(priority.equalTo(OrderPriority.NIEDRIG));
-					orders.addAll( (List) capi.read(orderContainer, Arrays.asList(QueryCoordinator.newSelector(query)), 0, null) );
-					Order order = orders.get(0);
-					boolean retain = false;
-					for(ClockType t : possibleClockTypes){
-						if( order.isClockTypeNeeded(t) ){
-							retain = true;
-						}
-					}
-					if(!retain){
-						orders.removeAll(orders);
-					}
-				}
-			});
-
-		}
-
-
-		return (orders.isEmpty()) ? null : orders.get(0);
-	}
-	
-	@Override
-	public SingleClockOrder getSingleClockOrder(final OrderPriority hoch,
-			final List<ClockType> possibleClockTypes) {
-
-		final Property priority = Property.forName("priority");
-		final Property type = Property.forName("neededType");
-		final List<SingleClockOrder> singleOrders = new ArrayList<SingleClockOrder>();
+        selectors.add(QueryCoordinator.newSelector(query, 1));
+        selectors.add(FifoCoordinator.newSelector(1));
 
 		transactional(new TransactionalWork() {
 			@Override
 			public void doWork(TransactionReference tx) throws MzsCoreException {
-				for(ClockType t : possibleClockTypes){
-					Query query = new Query().filter(priority.equalTo(hoch));
-					query.filter(type.equalTo(t));
-					List<Selector> selectors = new ArrayList<Selector>();
-
-					selectors.add(FifoCoordinator.newSelector(1));
-					selectors.add(QueryCoordinator.newSelector(query,1));
-
-
-
-					try{
-						singleOrders.addAll( (List) capi.take(singleClockOrderContainer, selectors, 0, null) );
-					} catch (MzsCoreException e){
-						//okay we found no matching order
-					}
-					if(!singleOrders.isEmpty()){
-						break;
-					}
-				}
-			}
+                List<SingleClockOrder> singleOrders = null;
+                
+                try{
+                    singleOrders = capi.take(singleClockOrderContainer, selectors, 0, tx);
+                } catch (MzsCoreException e){
+                    //okay we found no matching order
+                }
+                
+                if (singleOrders != null && singleOrders.size() > 0) {
+                    transactionalTask.doWork(singleOrders.get(0));
+                    done[0] = true;
+                }
+            }
 		});
 
-		return (singleOrders.size() > 0) ? singleOrders.get(0) : null;
-
-
+		return done[0];
 	}
-
+    
 	@Override
 	public void connectDistributor(UUID distributorId) {
-		distributorCapi = new Capi(DefaultMzsCore.newInstance(0));
+        distributorCapi = new Capi(DefaultMzsCore.newInstance(0));
 		distributorURI = URI.create("xvsm://localhost:"+port+"/"+distributorId);
 		Runtime.getRuntime()
 		.addShutdownHook(new Thread() {
@@ -801,11 +689,10 @@ public class MozartSpacesConnector implements Connector {
 
 	@Override
 	public void takeDemandedClock(final TransactionalTask<Map<Demand, Clock>> transactionalTask) {
-
 		transactional( new TransactionalWork() {
 			@Override
 			public void doWork(TransactionReference tx) throws MzsCoreException {
-				UUID distributorID = (UUID) capi.take(distributors, Arrays.asList(FifoCoordinator.newSelector(1)), MAX_TIMEOUT_MILLIS,null).get(0);
+				UUID distributorID = (UUID) capi.take(distributors, Arrays.asList(FifoCoordinator.newSelector(1)), MAX_TIMEOUT_MILLIS,tx).get(0);
 			
 //				//System.out.println("found distributor: "+distributorID);
 				try {
@@ -815,7 +702,7 @@ public class MozartSpacesConnector implements Connector {
 					e.printStackTrace();
 				}
 				Entry entry = new Entry(distributorID);
-				capi.write(entry, distributors, MAX_TIMEOUT_MILLIS, null);
+				capi.write(entry, distributors, MAX_TIMEOUT_MILLIS, tx);
 				
 //				//System.out.println("trying to take demand");
 				Demand demand = (Demand) capi.take(distributorDemandContainer, Arrays.asList(FifoCoordinator.newSelector(1)), MAX_TIMEOUT_MILLIS, tx).get(0);

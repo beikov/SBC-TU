@@ -46,6 +46,8 @@ public interface Connector {
     
     public boolean takeChecked(ClockQualityType type, long timeout, TransactionalTask<Clock> transactionalTask);
 
+	public boolean takeSingleClockOrder(OrderPriority priority, TransactionalTask<SingleClockOrder> transactionalTask);
+
     public void addAssembledClock(Clock clock);
     
     public void addCheckedClock(Clock clock, ClockQualityType type);
@@ -56,16 +58,7 @@ public interface Connector {
     
 	public void addOrder(Order order);
     
-	public List<ClockType> getPossibleClockTypes(List<ClockType> wantedTypes);
-
-	public Order getPossibleOrderByPriority(
-			List<ClockType> possibleClockTypes);
-
-	public void takeParts(OrderPriority lastProducedPriority,
-			TransactionalTask<OrderPriority> transactionalTask);
-
-	public SingleClockOrder getSingleClockOrder(OrderPriority priority,
-			List<ClockType> possibleClockTypes);
+    // Distributer stuff
 
 	public void connectDistributor(UUID distributorId);
 

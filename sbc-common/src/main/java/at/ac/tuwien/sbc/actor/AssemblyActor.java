@@ -32,9 +32,11 @@ import at.ac.tuwien.sbc.util.SbcUtils;
 public class AssemblyActor extends AbstractActor {
 
 	OrderPriority lastPriority = null;
+    private final Random random;
 
 	public AssemblyActor(Connector connector) {
 		super(connector);
+        this.random = new Random();
 	}
 
 	public static void main(String[] args) throws Exception {
@@ -57,83 +59,45 @@ public class AssemblyActor extends AbstractActor {
 	public void run() {
 
 		while (!Thread.interrupted()) {
-
 			// Wait for 1-3 seconds
 			sleepForSeconds(1, 3);
+            
+            TransactionalTask<SingleClockOrder> productionTask = new TransactionalTask<SingleClockOrder>() {
 
-			connector.takeParts(lastPriority, new TransactionalTask<OrderPriority>() {
+                @Override
+                public void doWork(SingleClockOrder order) {
+					produceClock(order.getNeededType(), order.getOrderId());
+                }
+                
+            };
+            
+            // First try high priority single clock orders
+            boolean done = connector.takeSingleClockOrder(OrderPriority.HOCH, productionTask);
+            // If none can be found try middle priority single clock orders
+            done = done ? true : connector.takeSingleClockOrder(OrderPriority.MITTEL, productionTask);
 
-				@Override
-				public void doWork(OrderPriority lastPriority) {
+            // If none can be found check if a low priority single clock order should be tried
+            if(!done && AssemblyActor.this.lastPriority == null){
+                // Try low priority single clock orders
+                done = connector.takeSingleClockOrder(OrderPriority.NIEDRIG, productionTask);
+                // Remember that we tried low priority so we can alternate
+                AssemblyActor.this.lastPriority = OrderPriority.NIEDRIG;
+            }
 
-					List<ClockType> wantedTypes = new ArrayList<ClockType>();
-					wantedTypes.add(ClockType.KLASSISCH);
-					wantedTypes.add(ClockType.SPORT);
-					wantedTypes.add(ClockType.ZEITZONEN_SPORT);
-
-					//check which clocktypes are possible
-					List<ClockType> possibleClockTypes = connector.getPossibleClockTypes(wantedTypes);
-
-					//if no clock possible return
-					if(possibleClockTypes.isEmpty()){
-						//System.out.println("no clocktype possible at the moment");
-						return;
-					}
-
-					//select single watch order with high priority and a clocktype that is possible
-					SingleClockOrder sOrder = connector.getSingleClockOrder(OrderPriority.HOCH, possibleClockTypes);
-
-					//if none was found with high priority try mid priority
-					if(sOrder == null){
-						sOrder = connector.getSingleClockOrder(OrderPriority.MITTEL, possibleClockTypes);
-					}
-
-					//if neither a high nor a medium priority order is available determine if a low priority order should be processed
-					if(sOrder == null && AssemblyActor.this.lastPriority == null){
-						//System.out.println("trying for lowPrior");
-						sOrder = connector.getSingleClockOrder(OrderPriority.NIEDRIG, possibleClockTypes);
-						AssemblyActor.this.lastPriority = OrderPriority.NIEDRIG;
-					}
-
-					Random r = new Random();
-					ClockType typeToProduce = null;
-					if(sOrder != null){
-						typeToProduce = sOrder.getNeededType();
-						//System.out.println("getting type: "+typeToProduce.toString()+" for priority: "+sOrder.getPriority());
-					}else{
-						typeToProduce = possibleClockTypes.get(r.nextInt(possibleClockTypes.size()));
-						AssemblyActor.this.lastPriority = null;
-						//System.out.println("getting type: "+typeToProduce.toString()+" for priority: NO ORDER");
-					}
-
-					//take the parts and produce the clock
-					UUID orderId = ( sOrder != null) ? sOrder.getOrderId() : null;
-
-					//System.out.println("processed for order: "+orderId);
-					produceClock(typeToProduce, orderId);
-
-				}
-
-			});
+            if (!done) {
+                AssemblyActor.this.lastPriority = null;
+                produceClock(getRandomClockType(), null);
+            }
 		}
 	}
+    
+    private ClockType getRandomClockType() {
+        ClockType[] types = ClockType.values();
+        return types[random.nextInt(types.length)];
+    }
 
 	private void produceClock(final ClockType typeToProduce, final UUID orderId){
-		Map<ClockPartType, Integer> neededParts = null;
-
-		switch(typeToProduce){
-		case KLASSISCH:	
-			neededParts = ClassicClock.NEEDED_PARTS; 
-			break;
-		case SPORT:		
-			neededParts = SportsClock.NEEDED_PARTS; 
-			break;
-		case ZEITZONEN_SPORT: 
-			neededParts = TimezoneSportsClock.NEEDED_PARTS; 
-			break;
-		}
-
-		connector.takeParts(neededParts, new TransactionalTask<List<ClockPart>>() {
+		connector.takeParts(typeToProduce.getNeededParts(), new TransactionalTask<List<ClockPart>>() {
 
 			@Override
 			public void doWork(List<ClockPart> clockParts) {

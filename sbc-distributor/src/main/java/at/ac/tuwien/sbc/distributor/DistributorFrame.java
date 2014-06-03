@@ -16,6 +16,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 
 import at.ac.tuwien.sbc.Connector;
 import at.ac.tuwien.sbc.model.ClockType;
+import java.util.EnumMap;
 
 /**
  *
@@ -23,41 +24,17 @@ import at.ac.tuwien.sbc.model.ClockType;
  */
 public class DistributorFrame extends javax.swing.JFrame {
 
-	private Connector connector;
+	private final UUID id;
+	private final Connector connector;
+    
+	private final ClockList clockList;
+	private final ClockTableModel clockTableModel;
+    
+    private final Runnable updateCountAction = new Runnable() {
 
-	private UUID id;
-
-	private ClockTableModel clockTableModel;
-	private ClockList clockList;
-	private AtomicInteger orderedClassicClocks;
-	private AtomicInteger orderedSportsClocks;
-	private AtomicInteger orderedTimezoneClocks;
-	
-//	private List<Clock> clockList;
-
-
-	/**
-	 * Creates new form DistributorGui
-	 */
-	public DistributorFrame(Connector connector2, ExecutorService threadPool) {
-		this.id = UUID.randomUUID();
-
-		clockList = new ClockList();
-		clockTableModel = new ClockTableModel(clockList);
-		
-		orderedClassicClocks = new AtomicInteger(0);
-		orderedSportsClocks = new AtomicInteger(0);
-		orderedTimezoneClocks = new AtomicInteger(0);
-
-		connector = connector2;
-
-		connector.connectDistributor(id);
-
-		final DistributorClockListener clockListener = new DistributorClockListener(clockList, new Runnable() {
-
-			@Override
-			public void run() {
-				java.awt.EventQueue.invokeLater(new Runnable() {
+        @Override
+        public void run() {
+            java.awt.EventQueue.invokeLater(new Runnable() {
 					@Override
 					public void run() {
 						clockTableModel.fireTableDataChanged();
@@ -66,38 +43,27 @@ public class DistributorFrame extends javax.swing.JFrame {
 						timezoneClockCount.setText(String.valueOf(clockList.getClockCount(ClockType.ZEITZONEN_SPORT)));
 					}
 				});
-			}
-		});
-		
-		new Thread(){
-			@Override
-			public void run(){
-				Random r = new Random();
-				while(true){
-					try {
-						sleep(15000);
-					} catch (InterruptedException e) {
-						// TODO Auto-generated catch block
-						e.printStackTrace();
-					}
-					if(clockList.size()>0){
-						clockList.remove(r.nextInt(clockList.size()));
-						//System.out.println("removed clock from list");
-						java.awt.EventQueue.invokeLater(new Runnable() {
-							@Override
-							public void run() {
-								clockTableModel.fireTableDataChanged();
-								classicClockCount.setText(String.valueOf(clockList.getClockCount(ClockType.KLASSISCH)));
-								sportsClockCount.setText(String.valueOf(clockList.getClockCount(ClockType.SPORT)));
-								timezoneClockCount.setText(String.valueOf(clockList.getClockCount(ClockType.ZEITZONEN_SPORT)));
-								
-							}
-						});
-						orderClocks();
-					}
-				}
-			}
-		}.start();
+        }
+    };
+
+
+	/**
+	 * Creates new form DistributorGui
+	 */
+	public DistributorFrame(Connector connector) {
+		this.id = UUID.randomUUID();
+		this.connector = connector;
+
+		clockList = new ClockList();
+		clockTableModel = new ClockTableModel(clockList);
+
+        connector.connectDistributor(id);
+
+		final DistributorClockListener clockListener = new DistributorClockListener(clockList, updateCountAction);
+		final ClockConsumer clockConsumer = new ClockConsumer(clockList, updateCountAction);
+        final Thread clockConsumerThread = new Thread(clockConsumer);
+        clockConsumerThread.setDaemon(true);
+		clockConsumerThread.start();
 
 		// Subscribe before retrieving data or else we might miss notifications
 		connector.subscribeForDistributorDeliveries(clockListener);
@@ -105,30 +71,27 @@ public class DistributorFrame extends javax.swing.JFrame {
 		initComponents();
 	}
 	
-	private void orderClocks(){
-		final Map<ClockType, Integer> demand = new HashMap<ClockType, Integer>();
-		int classicDemand = Integer.parseInt(classicClockDemandTextField.getText()) - clockList.getClockCount(ClockType.KLASSISCH) - clockList.getOrderedClockCount(ClockType.KLASSISCH);
-		int sportsDemand = Integer.parseInt(sportsClockDemandTextField.getText()) - clockList.getClockCount(ClockType.SPORT) - clockList.getOrderedClockCount(ClockType.SPORT);
-		int timezoneDemand = Integer.parseInt(timezoneClockDemandTextField.getText()) - clockList.getClockCount(ClockType.ZEITZONEN_SPORT) -  clockList.getOrderedClockCount(ClockType.ZEITZONEN_SPORT);
-
+	private void updateOrderCounts(){
+        clockList.setOrderCount(ClockType.KLASSISCH, Integer.parseInt(classicClockDemandTextField.getText()));
+        clockList.setOrderCount(ClockType.SPORT, Integer.parseInt(sportsClockDemandTextField.getText()));
+        clockList.setOrderCount(ClockType.ZEITZONEN_SPORT, Integer.parseInt(timezoneClockDemandTextField.getText()));
+        
+		final Map<ClockType, Integer> demand = new EnumMap<ClockType, Integer>(ClockType.class);
+		int classicDemand = clockList.getDemandCount(ClockType.KLASSISCH);
+		int sportsDemand = clockList.getDemandCount(ClockType.SPORT);
+		int timezoneDemand = clockList.getDemandCount(ClockType.ZEITZONEN_SPORT);
+        
 		if(classicDemand > 0 ){
 			demand.put(ClockType.KLASSISCH, classicDemand);
-			orderedClassicClocks.addAndGet(classicDemand);
 		}
 		if(sportsDemand > 0 ){
 			demand.put(ClockType.SPORT, sportsDemand);
-			orderedSportsClocks.addAndGet(sportsDemand);
 		}
 		if(timezoneDemand > 0 ){
 			demand.put(ClockType.ZEITZONEN_SPORT, timezoneDemand);
-			orderedTimezoneClocks.addAndGet(timezoneDemand);
 		}
 		
-		//System.out.println("ordered: "+orderedClassicClocks.get()+":"+orderedSportsClocks.get()+":"+orderedTimezoneClocks.get());
-		
 		connector.setDemand(id, demand);
-		
-		
 	}
 
 	/**
@@ -153,7 +116,7 @@ public class DistributorFrame extends javax.swing.JFrame {
         jLabel11 = new javax.swing.JLabel();
         jScrollPane1 = new javax.swing.JScrollPane();
         jTable1 = new javax.swing.JTable();
-        jButton1 = new javax.swing.JButton();
+        updateDemandButton = new javax.swing.JButton();
 
         setDefaultCloseOperation(javax.swing.WindowConstants.EXIT_ON_CLOSE);
 
@@ -166,35 +129,10 @@ public class DistributorFrame extends javax.swing.JFrame {
         jLabel4.setText("Sportuhren mit zweiter Zeitzone:");
 
         sportsClockDemandTextField.setText("0");
-        sportsClockDemandTextField.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                sportsClockDemandTextFieldActionPerformed(evt);
-            }
-        });
-        sportsClockDemandTextField.addFocusListener(new java.awt.event.FocusAdapter() {
-            public void focusLost(java.awt.event.FocusEvent evt) {
-                sportsClockDemandTextFieldFocusLost(evt);
-            }
-        });
 
         classicClockDemandTextField.setText("0");
-        classicClockDemandTextField.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                classicClockDemandTextFieldActionPerformed(evt);
-            }
-        });
-        classicClockDemandTextField.addFocusListener(new java.awt.event.FocusAdapter() {
-            public void focusLost(java.awt.event.FocusEvent evt) {
-                classicClockDemandTextFieldFocusLost(evt);
-            }
-        });
 
         timezoneClockDemandTextField.setText("0");
-        timezoneClockDemandTextField.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                timezoneClockDemandTextFieldActionPerformed(evt);
-            }
-        });
 
         classicClockCount.setText("0");
 
@@ -207,10 +145,10 @@ public class DistributorFrame extends javax.swing.JFrame {
         jTable1.setModel(clockTableModel);
         jScrollPane1.setViewportView(jTable1);
 
-        jButton1.setText("verändern");
-        jButton1.addMouseListener(new java.awt.event.MouseAdapter() {
+        updateDemandButton.setText("verändern");
+        updateDemandButton.addMouseListener(new java.awt.event.MouseAdapter() {
             public void mouseReleased(java.awt.event.MouseEvent evt) {
-                jButton1MouseReleased(evt);
+                updateDemandButtonMouseReleased(evt);
             }
         });
 
@@ -237,7 +175,7 @@ public class DistributorFrame extends javax.swing.JFrame {
                                     .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                                     .addComponent(timezoneClockDemandTextField, javax.swing.GroupLayout.PREFERRED_SIZE, 60, javax.swing.GroupLayout.PREFERRED_SIZE)))
                             .addComponent(jLabel1, javax.swing.GroupLayout.PREFERRED_SIZE, 169, javax.swing.GroupLayout.PREFERRED_SIZE)
-                            .addComponent(jButton1, javax.swing.GroupLayout.PREFERRED_SIZE, 103, javax.swing.GroupLayout.PREFERRED_SIZE))
+                            .addComponent(updateDemandButton, javax.swing.GroupLayout.PREFERRED_SIZE, 103, javax.swing.GroupLayout.PREFERRED_SIZE))
                         .addGap(111, 111, 111)
                         .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                             .addGroup(layout.createSequentialGroup()
@@ -283,7 +221,7 @@ public class DistributorFrame extends javax.swing.JFrame {
                                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 20, Short.MAX_VALUE)
                                 .addComponent(timezoneClockCount)))
                         .addGap(14, 14, 14)
-                        .addComponent(jButton1)
+                        .addComponent(updateDemandButton)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)))
                 .addComponent(jScrollPane1, javax.swing.GroupLayout.PREFERRED_SIZE, 468, javax.swing.GroupLayout.PREFERRED_SIZE))
         );
@@ -291,48 +229,23 @@ public class DistributorFrame extends javax.swing.JFrame {
         pack();
     }// </editor-fold>//GEN-END:initComponents
 
-	private void classicClockDemandTextFieldActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_classicClockDemandTextFieldActionPerformed
-		// TODO add your handling code here:
-	}//GEN-LAST:event_classicClockDemandTextFieldActionPerformed
-
-	private void timezoneClockDemandTextFieldActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_timezoneClockDemandTextFieldActionPerformed
-		// TODO add your handling code here:
-	}//GEN-LAST:event_timezoneClockDemandTextFieldActionPerformed
-
-	private void sportsClockDemandTextFieldActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_sportsClockDemandTextFieldActionPerformed
-		// TODO add your handling code here:
-	}//GEN-LAST:event_sportsClockDemandTextFieldActionPerformed
-
-	private void jButton1MouseReleased(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_jButton1MouseReleased
-
-		
-
-		EventQueue.invokeLater( new Runnable(){
+	private void updateDemandButtonMouseReleased(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_updateDemandButtonMouseReleased
+        EventQueue.invokeLater( new Runnable(){
 
 			@Override
 			public void run() {
-				orderClocks();
-			
+				updateOrderCounts();
 			}
 		
 		});
 
 
-	}//GEN-LAST:event_jButton1MouseReleased
-
-    private void classicClockDemandTextFieldFocusLost(java.awt.event.FocusEvent evt) {//GEN-FIRST:event_classicClockDemandTextFieldFocusLost
-        // TODO add your handling code here:
-    }//GEN-LAST:event_classicClockDemandTextFieldFocusLost
-
-    private void sportsClockDemandTextFieldFocusLost(java.awt.event.FocusEvent evt) {//GEN-FIRST:event_sportsClockDemandTextFieldFocusLost
-        // TODO add your handling code here:
-    }//GEN-LAST:event_sportsClockDemandTextFieldFocusLost
+	}//GEN-LAST:event_updateDemandButtonMouseReleased
 
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JLabel classicClockCount;
     private javax.swing.JTextField classicClockDemandTextField;
-    private javax.swing.JButton jButton1;
     private javax.swing.JLabel jLabel1;
     private javax.swing.JLabel jLabel11;
     private javax.swing.JLabel jLabel2;
@@ -344,15 +257,16 @@ public class DistributorFrame extends javax.swing.JFrame {
     private javax.swing.JTextField sportsClockDemandTextField;
     private javax.swing.JLabel timezoneClockCount;
     private javax.swing.JTextField timezoneClockDemandTextField;
+    private javax.swing.JButton updateDemandButton;
     // End of variables declaration//GEN-END:variables
 
 
-	public static void start(final Connector connector, final ExecutorService threadPool) {
+	public static void start(final Connector connector) {
 		/* Create and display the form */
 		java.awt.EventQueue.invokeLater(new Runnable() {
 			@Override
 			public void run() {
-				new DistributorFrame(connector, threadPool).setVisible(true);
+				new DistributorFrame(connector).setVisible(true);
 			}
 		});
 	}

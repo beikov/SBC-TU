@@ -1,6 +1,5 @@
 package at.ac.tuwien.sbc.distributor;
 
-import java.util.ArrayList;
 import java.util.List;
 
 import javax.swing.table.AbstractTableModel;
@@ -10,7 +9,7 @@ import at.ac.tuwien.sbc.model.Clock;
 public class ClockTableModel extends AbstractTableModel {
 
 	//    private final ClockList clockList;
-	private ClockList clockList;
+	private final ClockList clockList;
 	private List<Clock> clocks;
 	private final String[] columnNames = { "Seriennummer","Uhrtyp"};
 	private final Class<?>[] columnTypes = { String.class, String.class};
@@ -54,9 +53,7 @@ public class ClockTableModel extends AbstractTableModel {
 
 	@Override
 	public void fireTableDataChanged() {
-		//System.out.println("table data changed");
 		this.clocks = clockList.getClocks();
-		//System.out.println("now having: "+clocks.size()+" clocks");
 		super.fireTableDataChanged();
 	}
 

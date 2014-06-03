@@ -18,7 +18,7 @@ import java.util.UUID;
 public abstract class Clock implements Comparable<Clock>, Serializable  {
     
 	private final UUID id;
-    private int serialId;
+    private long serialId;
     private final long createdTime;
     private long updatedTime;
     private final ClockPart chassis;
@@ -108,11 +108,11 @@ public abstract class Clock implements Comparable<Clock>, Serializable  {
         return id;
     }
     
-    public int getSerialId(){
+    public long getSerialId(){
     	return serialId;
     }
     
-    public void setSerialId(int serialId){
+    public void setSerialId(long serialId){
     	this.serialId = serialId;
     }
 
