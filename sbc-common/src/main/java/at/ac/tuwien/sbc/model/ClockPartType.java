@@ -14,5 +14,6 @@ public enum ClockPartType {
     GEHAEUSE,
     UHRWERK,
     ZEIGER,
-    ARMBAND
+    LEDERARMBAND,
+    METALLARMBAND
 }

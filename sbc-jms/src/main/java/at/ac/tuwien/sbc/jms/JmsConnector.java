@@ -209,7 +209,6 @@ public class JmsConnector implements Connector {
 		ObjectMessage message = session.createObjectMessage(startId);
 		message.setBooleanProperty(JmsConnector.ID_COUNTER, true);
 		idProducer.send(message);
-		System.out.println("sent id");
 	}
 
 	private void connectClockListener() {
@@ -383,7 +382,7 @@ public class JmsConnector implements Connector {
 					case ZEIGER:
 						message.setBooleanProperty(IS_CLOCKHAND, true);
 						break;
-					case ARMBAND:
+					case LEDERARMBAND:
 						message.setBooleanProperty(IS_WRISTBAND, true);
 						break;
 					}
@@ -415,7 +414,7 @@ public class JmsConnector implements Connector {
 						case ZEIGER:
 							message = (ObjectMessage) clockhandConsumer.receive(/*MAX_TIMEOUT_MILLIS*/);
 							break;
-						case ARMBAND:
+						case LEDERARMBAND:
 							message = (ObjectMessage) wristbandConsumer.receive(/*MAX_TIMEOUT_MILLIS*/);
 							break;
 						}
@@ -488,9 +487,7 @@ public class JmsConnector implements Connector {
 			@Override
 			public void doWork() throws JMSException {
 				// get the serial actual serial id from the queue
-				System.out.println("before idReceive");
 				ObjectMessage message = (ObjectMessage)idConsumer.receive();
-				System.out.println("after idReceive");
 				Integer id = (Integer) message.getObject();
 				// set it for the new clock
 				clock.setSerialId(id);
@@ -500,9 +497,7 @@ public class JmsConnector implements Connector {
 			
 				msg.setBooleanProperty(ID_COUNTER, true);
 				// and write the incremented serial id back into the queue
-				System.out.println("before idSend");
 				idProducer.send(msg);
-				System.out.println("after idSend");
 				
 				msg = session.createObjectMessage(clock);
 				msg.setBooleanProperty(IS_ASSEMBLED, true);

@@ -15,7 +15,7 @@ import java.util.UUID;
  *
  * @author Christian
  */
-public class Clock implements Comparable<Clock>, Serializable  {
+public abstract class Clock implements Comparable<Clock>, Serializable  {
     
 	private final UUID id;
     private int serialId;
@@ -27,6 +27,8 @@ public class Clock implements Comparable<Clock>, Serializable  {
     private final ClockPart clockHand1;
     private final ClockPart clockHand2;
     private final UUID assemblerId;
+    private final ClockType type;
+    private UUID orderId;
     
     private ClockStatus status;
     
@@ -35,7 +37,7 @@ public class Clock implements Comparable<Clock>, Serializable  {
     
     private UUID delivererId;
 
-    public Clock(ClockPart chassis, ClockPart clockWork, ClockPart wristband, ClockPart clockHand1, ClockPart clockHand2, UUID assemblerId) {
+    public Clock(ClockPart chassis, ClockPart clockWork, ClockPart wristband, ClockPart clockHand1, ClockPart clockHand2, UUID assemblerId, ClockType type) {
     	this.id = UUID.randomUUID();
     	this.createdTime = this.updatedTime = System.currentTimeMillis();
         this.chassis = chassis;
@@ -45,7 +47,9 @@ public class Clock implements Comparable<Clock>, Serializable  {
         this.clockHand2 = clockHand2;
         this.assemblerId = assemblerId;
         this.status = ClockStatus.ASSEMBLED;
+        this.type = type;
     }
+    
     
     public void check(UUID qualityCheckerId, int quality) {
         if (qualityCheckerId == null) {
@@ -139,6 +143,10 @@ public class Clock implements Comparable<Clock>, Serializable  {
     public ClockStatus getStatus() {
         return status;
     }
+    
+    public ClockType getType() {
+    	return type;
+    }
 
     public int getQuality() {
         return quality;
@@ -150,6 +158,14 @@ public class Clock implements Comparable<Clock>, Serializable  {
 
     public UUID getDelivererId() {
         return delivererId;
+    }
+    
+    public void setOrderId(UUID orderId){
+    	this.orderId = orderId;
+    }
+    
+    public UUID getOrderId(){
+    	return orderId;
     }
 
     @Override

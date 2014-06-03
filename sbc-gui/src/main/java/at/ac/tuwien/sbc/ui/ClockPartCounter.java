@@ -15,62 +15,74 @@ import java.util.concurrent.atomic.AtomicInteger;
  */
 public final class ClockPartCounter {
 
-    private final AtomicInteger chassisCounter = new AtomicInteger();
-    private final AtomicInteger wristbandCounter = new AtomicInteger();
-    private final AtomicInteger clockHandCounter = new AtomicInteger();
-    private final AtomicInteger clockWorkCounter = new AtomicInteger();
+	private final AtomicInteger chassisCounter = new AtomicInteger();
+	private final AtomicInteger leatherWristbandCounter = new AtomicInteger();
+	private final AtomicInteger metalWristbandCounter = new AtomicInteger();
+	private final AtomicInteger clockHandCounter = new AtomicInteger();
+	private final AtomicInteger clockWorkCounter = new AtomicInteger();
 
-    public void increment(Collection<ClockPart> clockParts) {
-        for (ClockPart clockPart : clockParts) {
-            switch (clockPart.getType()) {
-                case ARMBAND:
-                    wristbandCounter.incrementAndGet();
-                    break;
-                case GEHAEUSE:
-                    chassisCounter.incrementAndGet();
-                    break;
-                case UHRWERK:
-                    clockWorkCounter.incrementAndGet();
-                    break;
-                case ZEIGER:
-                    clockHandCounter.incrementAndGet();
-                    break;
-            }
-        }
-    }
+	public void increment(Collection<ClockPart> clockParts) {
+		for (ClockPart clockPart : clockParts) {
+			switch (clockPart.getType()) {
+			case LEDERARMBAND:
+				leatherWristbandCounter.incrementAndGet();
+				break;
+			case GEHAEUSE:
+				chassisCounter.incrementAndGet();
+				break;
+			case UHRWERK:
+				clockWorkCounter.incrementAndGet();
+				break;
+			case ZEIGER:
+				clockHandCounter.incrementAndGet();
+				break;
+			case METALLARMBAND:
+				metalWristbandCounter.incrementAndGet();
+				break;
 
-    public void decrement(Collection<ClockPart> clockParts) {
-        for (ClockPart clockPart : clockParts) {
-            switch (clockPart.getType()) {
-                case ARMBAND:
-                    wristbandCounter.decrementAndGet();
-                    break;
-                case GEHAEUSE:
-                    chassisCounter.decrementAndGet();
-                    break;
-                case UHRWERK:
-                    clockWorkCounter.decrementAndGet();
-                    break;
-                case ZEIGER:
-                    clockHandCounter.decrementAndGet();
-                    break;
-            }
-        }
-    }
+			}
+		}
+	}
 
-    public AtomicInteger getChassisCounter() {
-        return chassisCounter;
-    }
+	public void decrement(Collection<ClockPart> clockParts) {
+		for (ClockPart clockPart : clockParts) {
+			switch (clockPart.getType()) {
+			case LEDERARMBAND:
+				leatherWristbandCounter.decrementAndGet();
+				break;
+			case GEHAEUSE:
+				chassisCounter.decrementAndGet();
+				break;
+			case UHRWERK:
+				clockWorkCounter.decrementAndGet();
+				break;
+			case ZEIGER:
+				clockHandCounter.decrementAndGet();
+				break;
+			case METALLARMBAND:
+				metalWristbandCounter.decrementAndGet();
+				break;
+			}
+		}
+	}
 
-    public AtomicInteger getWristbandCounter() {
-        return wristbandCounter;
-    }
+	public AtomicInteger getChassisCounter() {
+		return chassisCounter;
+	}
 
-    public AtomicInteger getClockHandCounter() {
-        return clockHandCounter;
-    }
+	public AtomicInteger getLeatherWristbandCounter() {
+		return leatherWristbandCounter;
+	}
+	
+	public AtomicInteger getMetalWristbandCounter() {
+		return metalWristbandCounter;
+	}
 
-    public AtomicInteger getClockWorkCounter() {
-        return clockWorkCounter;
-    }
+	public AtomicInteger getClockHandCounter() {
+		return clockHandCounter;
+	}
+
+	public AtomicInteger getClockWorkCounter() {
+		return clockWorkCounter;
+	}
 }
