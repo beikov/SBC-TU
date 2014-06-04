@@ -5,6 +5,7 @@
  */
 package at.ac.tuwien.sbc.jms;
 
+import java.net.URI;
 import javax.jms.Connection;
 import javax.jms.JMSException;
 import javax.jms.MessageProducer;
@@ -38,6 +39,19 @@ public class JmsServer {
         while (System.in.read() != -1);
     }
 
+    public static URI startServer() {
+        try {
+            BrokerService broker = new BrokerService();
+            broker.addConnector("tcp://localhost:0");
+            broker.deleteAllMessages();
+            broker.start();
+            return broker.getTransportConnectorByScheme("tcp")
+                .getUri();
+        } catch (Exception ex) {
+            throw new RuntimeException(ex);
+        }
+    }
+
     private static void createIdSequence(int port) throws JMSException {
         ActiveMQConnectionFactory connectionFactory = new ActiveMQConnectionFactory("tcp://localhost:" + port);
 
@@ -49,7 +63,7 @@ public class JmsServer {
         Session session = connection.createSession(true, Session.CLIENT_ACKNOWLEDGE);
 
         MessageProducer idProducer = session.createProducer(
-            session.createQueue(JmsConnector.ID_QUEUE));
+            session.createQueue(JmsConstants.ID_QUEUE));
 
         ObjectMessage message = session.createObjectMessage(SEQUENCE_START);
         idProducer.send(message);

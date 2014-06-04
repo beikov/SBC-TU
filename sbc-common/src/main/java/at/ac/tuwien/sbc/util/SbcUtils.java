@@ -6,10 +6,12 @@
 package at.ac.tuwien.sbc.util;
 
 import at.ac.tuwien.sbc.Connector;
+import at.ac.tuwien.sbc.DistributorConnector;
 import java.net.InetAddress;
 import java.net.NetworkInterface;
 import java.net.SocketException;
 import java.util.Enumeration;
+import java.util.UUID;
 
 /**
  *
@@ -31,6 +33,29 @@ public final class SbcUtils {
                     .loadClass("at.ac.tuwien.sbc.jms.JmsConnector")
                     .getConstructor(int.class)
                     .newInstance(port);
+            }
+            throw new IllegalArgumentException("Unsupported type: " + type);
+        } catch (Exception ex) {
+            reason = ex;
+        }
+
+        throw new IllegalArgumentException("Could not create the connector", reason);
+    }
+
+    public static DistributorConnector getDistributorConnector(UUID distributorId, int port, String type) {
+        Exception reason = null;
+
+        try {
+            if ("xvsm".equals(type)) {
+                return (DistributorConnector) SbcUtils.class.getClassLoader()
+                    .loadClass("at.ac.tuwien.sbc.xvsm.MozartSpacesDistributorConnector")
+                    .getConstructor(UUID.class, int.class)
+                    .newInstance(distributorId, port);
+            } else if ("jms".equals(type)) {
+                return (DistributorConnector) SbcUtils.class.getClassLoader()
+                    .loadClass("at.ac.tuwien.sbc.jms.JmsDistributorConnector")
+                    .getConstructor(UUID.class, int.class)
+                    .newInstance(distributorId, port);
             }
             throw new IllegalArgumentException("Unsupported type: " + type);
         } catch (Exception ex) {

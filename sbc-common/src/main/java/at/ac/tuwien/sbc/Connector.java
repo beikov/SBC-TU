@@ -9,14 +9,11 @@ import at.ac.tuwien.sbc.model.Clock;
 import at.ac.tuwien.sbc.model.ClockPart;
 import at.ac.tuwien.sbc.model.ClockPartType;
 import at.ac.tuwien.sbc.model.ClockQualityType;
-import at.ac.tuwien.sbc.model.ClockType;
-import at.ac.tuwien.sbc.model.Demand;
 import at.ac.tuwien.sbc.model.Order;
 import at.ac.tuwien.sbc.model.OrderPriority;
 import at.ac.tuwien.sbc.model.SingleClockOrder;
 import java.util.List;
 import java.util.Map;
-import java.util.UUID;
 
 /**
  *
@@ -57,16 +54,6 @@ public interface Connector {
     public void addOrder(Order order);
 
     // Distributer stuff
-    public void connectDistributor(UUID distributorId);
-
-    public void setDemand(UUID distributorId, Map<ClockType, Integer> demandPerType);
-
-    public Subscription subscribeForDistributorDeliveries(ClockListener listener);
-
-    public void takeDemandedClock(TransactionalTask<Map<Demand, Clock>> transactionalTask);
-
-    public void deliverDemandedClock(Demand demand, Clock clock);
-
-    public void removeClockFromStock(Clock removedClock);
+    public void deliverDemandedClock();
 
 }

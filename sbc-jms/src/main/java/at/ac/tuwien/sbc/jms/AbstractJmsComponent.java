@@ -5,6 +5,7 @@
  */
 package at.ac.tuwien.sbc.jms;
 
+import java.net.URI;
 import java.util.Enumeration;
 import java.util.LinkedList;
 import java.util.List;
@@ -27,13 +28,31 @@ import org.apache.activemq.ActiveMQPrefetchPolicy;
  */
 public abstract class AbstractJmsComponent {
 
+    private final String serverHost;
+    private final int serverPort;
+    private final URI serverUri;
+//    private final String localHost;
+//	private final int localPort;
     private final Connection connection;
     protected final Session session;
     protected final JmsTransactionManager tm;
 
-    public AbstractJmsComponent(int port) {
+    private static URI getUri(String serverHost, int serverPort) {
+        return URI.create("tcp://" + serverHost + ":" + serverPort);
+    }
+
+    public AbstractJmsComponent(int serverPort) {
+        this("localhost", serverPort);
+    }
+
+    public AbstractJmsComponent(String serverHost, int serverPort/* , String localHost, int localPort */) {
+        this.serverHost = serverHost;
+        this.serverPort = serverPort;
+        this.serverUri = getUri(serverHost, serverPort);
+//        this.localHost = localHost;
+//        this.localPort = localPort;
         try {
-            ActiveMQConnectionFactory connectionFactory = new ActiveMQConnectionFactory("tcp://localhost:" + port);
+            ActiveMQConnectionFactory connectionFactory = new ActiveMQConnectionFactory(serverUri);
 //			ActiveMQConnectionFactory connectionFactory = new ActiveMQConnectionFactory();
 
             ActiveMQPrefetchPolicy policy = new ActiveMQPrefetchPolicy();
@@ -49,13 +68,26 @@ public abstract class AbstractJmsComponent {
     }
 
     public AbstractJmsComponent(Session session) {
+        this.serverHost = null;
+        this.serverPort = -1;
+        this.serverUri = null;
+//        this.localHost = null;
+//        this.localPort = null;
         this.connection = null;
         this.session = session;
         this.tm = new JmsTransactionManager(session);
     }
-    
+
     protected Session createSession() throws JMSException {
         return connection.createSession(true, Session.AUTO_ACKNOWLEDGE);
+    }
+
+    protected void close() {
+        try {
+            connection.close();
+        } catch (JMSException ex) {
+            // Ignore
+        }
     }
 
     protected Topic createTopicIfNull(Session session, Topic t, String name) throws JMSException {
@@ -66,16 +98,19 @@ public abstract class AbstractJmsComponent {
         return q == null ? session.createQueue(name) : q;
     }
 
-    protected MessageConsumer createConsumerIfNull(Session session, MessageConsumer consumer, Destination destination) throws JMSException {
+    protected MessageConsumer createConsumerIfNull(Session session, MessageConsumer consumer, Destination destination) throws
+        JMSException {
         return consumer == null ? session.createConsumer(destination) : consumer;
     }
 
-    protected MessageConsumer createConsumerIfNull(Session session, MessageConsumer consumer, Destination destination, String selector) throws
+    protected MessageConsumer createConsumerIfNull(Session session, MessageConsumer consumer, Destination destination, String selector)
+        throws
         JMSException {
         return consumer == null ? session.createConsumer(destination, selector) : consumer;
     }
 
-    protected MessageProducer createProducerIfNull(Session session, MessageProducer producer, Destination destination) throws JMSException {
+    protected MessageProducer createProducerIfNull(Session session, MessageProducer producer, Destination destination) throws
+        JMSException {
         return producer == null ? session.createProducer(destination) : producer;
     }
 

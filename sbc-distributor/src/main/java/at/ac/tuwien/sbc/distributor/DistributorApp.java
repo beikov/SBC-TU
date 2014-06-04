@@ -1,7 +1,8 @@
 package at.ac.tuwien.sbc.distributor;
 
-import at.ac.tuwien.sbc.Connector;
+import at.ac.tuwien.sbc.DistributorConnector;
 import at.ac.tuwien.sbc.util.SbcUtils;
+import java.util.UUID;
 
 /**
  * Hello world!
@@ -14,7 +15,8 @@ public class DistributorApp {
             throw new IllegalArgumentException("Usage: Application PORT (xvsm|jms)");
         }
 
-        Connector connector = SbcUtils.getConnector(Integer.parseInt(args[0]), args[1]);
-        DistributorFrame.start(connector);
+        UUID id = UUID.randomUUID();
+        DistributorConnector connector = SbcUtils.getDistributorConnector(id, Integer.parseInt(args[0]), args[1]);
+        DistributorFrame.start(id, connector);
     }
 }

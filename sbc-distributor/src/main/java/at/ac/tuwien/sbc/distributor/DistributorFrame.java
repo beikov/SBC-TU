@@ -5,7 +5,7 @@
  */
 package at.ac.tuwien.sbc.distributor;
 
-import at.ac.tuwien.sbc.Connector;
+import at.ac.tuwien.sbc.DistributorConnector;
 import at.ac.tuwien.sbc.model.ClockType;
 import java.awt.EventQueue;
 import java.util.EnumMap;
@@ -19,7 +19,7 @@ import java.util.UUID;
 public class DistributorFrame extends javax.swing.JFrame {
 
     private final UUID id;
-    private final Connector connector;
+    private final DistributorConnector connector;
 
     private final ClockList clockList;
     private final ClockTableModel clockTableModel;
@@ -43,14 +43,12 @@ public class DistributorFrame extends javax.swing.JFrame {
     /**
      * Creates new form DistributorGui
      */
-    public DistributorFrame(Connector connector) {
-        this.id = UUID.randomUUID();
+    public DistributorFrame(UUID id, DistributorConnector connector) {
+        this.id = id;
         this.connector = connector;
 
         clockList = new ClockList();
         clockTableModel = new ClockTableModel(clockList);
-
-        connector.connectDistributor(id);
 
         final DistributorClockListener clockListener = new DistributorClockListener(clockList, updateCountAction);
         final ClockConsumer clockConsumer = new ClockConsumer(clockList, updateCountAction, connector);
@@ -83,7 +81,7 @@ public class DistributorFrame extends javax.swing.JFrame {
             demand.put(ClockType.ZEITZONEN_SPORT, timezoneDemand);
         }
 
-        connector.setDemand(id, demand);
+        connector.setDemand(demand);
     }
 
     /**
@@ -250,12 +248,12 @@ public class DistributorFrame extends javax.swing.JFrame {
     private javax.swing.JButton updateDemandButton;
     // End of variables declaration//GEN-END:variables
 
-    public static void start(final Connector connector) {
+    public static void start(final UUID id, final DistributorConnector connector) {
         /* Create and display the form */
         java.awt.EventQueue.invokeLater(new Runnable() {
             @Override
             public void run() {
-                new DistributorFrame(connector).setVisible(true);
+                new DistributorFrame(id, connector).setVisible(true);
             }
         });
     }

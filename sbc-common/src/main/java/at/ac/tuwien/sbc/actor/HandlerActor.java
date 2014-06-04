@@ -1,11 +1,7 @@
 package at.ac.tuwien.sbc.actor;
 
 import at.ac.tuwien.sbc.Connector;
-import at.ac.tuwien.sbc.TransactionalTask;
-import at.ac.tuwien.sbc.model.Clock;
-import at.ac.tuwien.sbc.model.Demand;
 import at.ac.tuwien.sbc.util.SbcUtils;
-import java.util.Map;
 
 public class HandlerActor extends AbstractActor {
 
@@ -35,16 +31,7 @@ public class HandlerActor extends AbstractActor {
         while (!Thread.interrupted()) {
 //			sleepForSeconds(1, 2); //TODO remove
 
-            connector.takeDemandedClock(new TransactionalTask<Map<Demand, Clock>>() {
-                @Override
-                public void doWork(Map<Demand, Clock> param) {
-                    Demand demand = (Demand) param.keySet()
-                        .toArray()[0];
-                    Clock clock = (Clock) param.values()
-                        .toArray()[0];
-                    connector.deliverDemandedClock(demand, clock);
-                }
-            });
+            connector.deliverDemandedClock();
         }
 
     }

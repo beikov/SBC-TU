@@ -5,7 +5,7 @@
  */
 package at.ac.tuwien.sbc.distributor;
 
-import at.ac.tuwien.sbc.Connector;
+import at.ac.tuwien.sbc.DistributorConnector;
 import at.ac.tuwien.sbc.model.Clock;
 import java.util.Random;
 
@@ -18,9 +18,9 @@ public class ClockConsumer implements Runnable {
     private final Random random = new Random();
     private final ClockList clockList;
     private final Runnable removedListener;
-    private final Connector connector;
+    private final DistributorConnector connector;
 
-    public ClockConsumer(ClockList clockList, Runnable removedListener, Connector connector) {
+    public ClockConsumer(ClockList clockList, Runnable removedListener, DistributorConnector connector) {
         this.clockList = clockList;
         this.removedListener = removedListener;
         this.connector = connector;
