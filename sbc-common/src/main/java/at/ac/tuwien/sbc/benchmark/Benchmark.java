@@ -59,7 +59,19 @@ public class Benchmark {
         threads.add(new Thread(delivererA));
         threads.add(new Thread(delivererb));
         
+        Thread.UncaughtExceptionHandler eh = new Thread.UncaughtExceptionHandler() {
+
+            @Override
+            public void uncaughtException(Thread t, Throwable e) {
+                Throwable cause = e.getCause();
+                if (cause == null || !(cause instanceof InterruptedException)) {
+                    t.getThreadGroup().uncaughtException(t, e);
+                }
+            }
+        };
+        
         for (Thread t : threads) {
+            t.setUncaughtExceptionHandler(eh);
             t.start();
         }
 
@@ -67,16 +79,16 @@ public class Benchmark {
         
         Thread.sleep(60000);
         
-        for (Thread t : threads) {
-            t.interrupt();
-        }
-        
         int count = 0;
         
         for (Clock c : connector.getClocks()) {
             if (c.getStatus() == ClockStatus.DELIVERED) {
                 count++;
             }
+        }
+        
+        for (Thread t : threads) {
+            t.interrupt();
         }
         
         System.out.println("Throughput: " + count);
