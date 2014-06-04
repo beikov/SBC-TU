@@ -29,9 +29,11 @@ public class HandlerActor extends AbstractActor {
     @Override
     public void run() {
         while (!Thread.interrupted()) {
-//			sleepForSeconds(1, 2); //TODO remove
-
-            connector.deliverDemandedClock();
+            try {
+                connector.deliverDemandedClock();
+            } catch (RuntimeException ex) {
+                ex.printStackTrace(System.err);
+            }
         }
 
     }

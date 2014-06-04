@@ -180,6 +180,7 @@ public class JmsConnector extends AbstractJmsComponent implements Connector {
                 }
 
                 msg = session.createObjectMessage(distributorDemand);
+                msg.setStringProperty("id", distributorDemand.getDestinationName());
                 distributorDemandQueueProducer.send(msg);
             }
         });
@@ -356,8 +357,7 @@ public class JmsConnector extends AbstractJmsComponent implements Connector {
 
         clockQueue = createQueueIfNull(clockQueue, JmsConstants.CLOCK_QUEUE);
         deliveredConsumer = createConsumerIfNull(deliveredConsumer, clockQueue, JmsConstants.IS_DELIVERED + "=true AND "
-                                                 + JmsConstants.IS_ORDERED
-                                                 + "=true");
+                                                 + JmsConstants.IS_ORDERED + "=false");
     }
 
     @Override

@@ -30,6 +30,8 @@ public class JmsDistributorStockConnector extends AbstractJmsComponent {
     private Queue distributorStockQueue;
     private Topic distributorStockTopic;
 
+    private MessageProducer distributorStockQueueProducer;
+    private MessageProducer distributorStockTopicProducer;
     private MessageConsumer distributorStockTopicConsumer;
 
     public JmsDistributorStockConnector(URI distributorUri, String destinationName) throws JMSException {
@@ -38,6 +40,8 @@ public class JmsDistributorStockConnector extends AbstractJmsComponent {
                                                   + destinationName);
         distributorStockTopic = createTopicIfNull(distributorStockTopic, JmsConstants.DISTRIBUTOR_STOCK_TOPIC_PREFIX
                                                   + destinationName);
+        distributorStockQueueProducer = createProducerIfNull(distributorStockQueueProducer, distributorStockQueue);
+        distributorStockTopicProducer = createProducerIfNull(distributorStockTopicProducer, distributorStockTopic);
     }
 
     public Map<ClockType, Integer> getDistributorStock() throws JMSException {
@@ -65,7 +69,7 @@ public class JmsDistributorStockConnector extends AbstractJmsComponent {
                 MessageConsumer distributorStockQueueConsumer = null;
 
                 try {
-                    distributorStockQueueConsumer = createConsumerIfNull(null, distributorStockQueue, "id=" + removedClock
+                    distributorStockQueueConsumer = session.createConsumer(distributorStockQueue, "id=" + removedClock
                                                                          .getSerialId());
                     distributorStockQueueConsumer.receive();
                 } finally {
@@ -77,19 +81,17 @@ public class JmsDistributorStockConnector extends AbstractJmsComponent {
         });
     }
 
-    public void deliver(Clock clock) throws JMSException {
-        MessageProducer producer = null;
+    public void deliver(final Clock clock) throws JMSException {
+        tm.transactional(new TransactionalWork() {
 
-        try {
-            producer = session.createProducer(distributorStockQueue);
-            ObjectMessage msg = session.createObjectMessage(clock);
-            msg.setLongProperty("id", clock.getSerialId());
-            producer.send(msg);
-        } finally {
-            if (producer != null) {
-                producer.close();
+            @Override
+            public void doWork() throws JMSException {
+                ObjectMessage msg = session.createObjectMessage(clock);
+                msg.setLongProperty("id", clock.getSerialId());
+                distributorStockQueueProducer.send(msg);
+                distributorStockTopicProducer.send(msg);
             }
-        }
+        });
     }
 
     public Subscription subscribeForDistributorDeliveries(ClockListener listener) {

@@ -35,6 +35,7 @@ public class Application {
         Connector connector = SbcUtils.getConnector(Integer.parseInt(args[0]), args[1]);
         // Thread pool for suppliers
         ExecutorService threadPool = Executors.newCachedThreadPool();
+        System.out.println("Starting FactoryGUI...");
         MainFrame.start(connector, threadPool);
     }
 }

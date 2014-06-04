@@ -15,6 +15,8 @@ import java.net.URI;
 import java.util.EnumMap;
 import java.util.Map;
 import java.util.UUID;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import javax.jms.JMSException;
 import javax.jms.MessageConsumer;
 import javax.jms.MessageProducer;
@@ -54,7 +56,7 @@ public class JmsDistributorConnector extends AbstractJmsComponent implements Dis
         connectDistributor0();
 
         // Start distributor server
-        distributorUri = JmsServer.startServer();
+        distributorUri = JmsServer.startServer(distributorId.toString());
         // The following uses the first ip address it can find as host instead of localhost
         // distributorURI = URI.create("tcp://" + SbcUtils.getLocalIpAddress() + ":" + distributorURI.getPort());
 
@@ -119,11 +121,21 @@ public class JmsDistributorConnector extends AbstractJmsComponent implements Dis
 
     @Override
     public void removeClockFromStock(final Clock removedClock) {
-        stockConnector.removeClockFromStock(removedClock);
+        try {
+            connectDistributor();
+            stockConnector.removeClockFromStock(removedClock);
+        } catch (JMSException ex) {
+            throw new RuntimeException(ex);
+        }
     }
 
     @Override
     public Subscription subscribeForDistributorDeliveries(ClockListener listener) {
-        return stockConnector.subscribeForDistributorDeliveries(listener);
+        try {
+            connectDistributor();
+            return stockConnector.subscribeForDistributorDeliveries(listener);
+        } catch (JMSException ex) {
+            throw new RuntimeException(ex);
+        }
     }
 }

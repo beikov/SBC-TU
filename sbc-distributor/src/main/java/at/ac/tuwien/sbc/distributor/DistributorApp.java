@@ -17,6 +17,7 @@ public class DistributorApp {
 
         UUID id = UUID.randomUUID();
         DistributorConnector connector = SbcUtils.getDistributorConnector(id, Integer.parseInt(args[0]), args[1]);
+        System.out.println("Starting DistributerGUI with id " + id.toString());
         DistributorFrame.start(id, connector);
     }
 }
