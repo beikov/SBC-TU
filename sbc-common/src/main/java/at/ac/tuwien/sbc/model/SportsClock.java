@@ -1,8 +1,9 @@
 package at.ac.tuwien.sbc.model;
 
+import java.io.Serializable;
 import java.util.UUID;
 
-public class SportsClock extends Clock{
+public class SportsClock extends Clock implements Serializable{
 	
 	public SportsClock(ClockPart chassis, ClockPart clockWork,
 			ClockPart wristband, ClockPart clockHand1, ClockPart clockHand2,

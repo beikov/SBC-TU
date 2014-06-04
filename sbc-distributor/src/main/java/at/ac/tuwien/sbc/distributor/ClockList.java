@@ -45,11 +45,11 @@ public class ClockList {
 		this.clocks.addAll(clocks);
 	}
 
-	public boolean removeAny(){
+	public Clock removeAny(){
         Clock removedClock = clocks.poll();
         
         if (removedClock == null) {
-            return false;
+            return removedClock;
         }
 
 		switch(removedClock.getType()){
@@ -58,7 +58,7 @@ public class ClockList {
 		case ZEITZONEN_SPORT: timezoneClocks.decrementAndGet(); break;
 		}
         
-        return true;
+        return removedClock;
 	}
 	
 	public int getClockCount(ClockType type){

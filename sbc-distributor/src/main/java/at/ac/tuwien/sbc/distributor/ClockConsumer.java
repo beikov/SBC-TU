@@ -6,6 +6,10 @@
 package at.ac.tuwien.sbc.distributor;
 
 import java.util.Random;
+import java.util.UUID;
+
+import at.ac.tuwien.sbc.Connector;
+import at.ac.tuwien.sbc.model.Clock;
 
 /**
  *
@@ -16,10 +20,14 @@ public class ClockConsumer implements Runnable {
     private final Random random = new Random();
     private final ClockList clockList;
     private final Runnable removedListener;
+    private final Connector connector;
+    private final UUID distributorId;
 
-    public ClockConsumer(ClockList clockList, Runnable removedListener) {
+    public ClockConsumer(ClockList clockList, Runnable removedListener, Connector connector, UUID distributorId) {
         this.clockList = clockList;
         this.removedListener = removedListener;
+        this.connector = connector;
+        this.distributorId = distributorId;
     }
 
     private void sleepForSeconds(int from, int to) {
@@ -35,7 +43,9 @@ public class ClockConsumer implements Runnable {
     public void run() {
         while (true) {
             sleepForSeconds(5, 10);
-            if (clockList.removeAny()) {
+            Clock removedClock = clockList.removeAny();
+            if(removedClock != null){
+            	connector.removeClockFromStock(distributorId, removedClock);
                 removedListener.run();
             }
         }

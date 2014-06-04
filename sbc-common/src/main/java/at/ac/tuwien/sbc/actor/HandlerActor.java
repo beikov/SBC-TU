@@ -34,6 +34,8 @@ public class HandlerActor extends AbstractActor{
 	@Override
 	public void run() {
 		while (!Thread.interrupted()) {
+//			sleepForSeconds(1, 2); //TODO remove
+			
 			connector.takeDemandedClock(new TransactionalTask<Map<Demand, Clock>>() {
 				@Override
 				public void doWork(Map<Demand, Clock> param) {

@@ -60,12 +60,11 @@ public class DistributorFrame extends javax.swing.JFrame {
         connector.connectDistributor(id);
 
 		final DistributorClockListener clockListener = new DistributorClockListener(clockList, updateCountAction);
-		final ClockConsumer clockConsumer = new ClockConsumer(clockList, updateCountAction);
+		final ClockConsumer clockConsumer = new ClockConsumer(clockList, updateCountAction, connector, id);
         final Thread clockConsumerThread = new Thread(clockConsumer);
         clockConsumerThread.setDaemon(true);
 		clockConsumerThread.start();
 
-		// Subscribe before retrieving data or else we might miss notifications
 		connector.subscribeForDistributorDeliveries(clockListener);
 
 		initComponents();
@@ -92,6 +91,7 @@ public class DistributorFrame extends javax.swing.JFrame {
 		}
 		
 		connector.setDemand(id, demand);
+		//System.out.println("set demand");
 	}
 
 	/**

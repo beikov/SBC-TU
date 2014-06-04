@@ -1,9 +1,10 @@
 package at.ac.tuwien.sbc.model;
 
+import java.io.Serializable;
 import java.util.List;
 import java.util.UUID;
 
-public class TimezoneSportsClock extends Clock{
+public class TimezoneSportsClock extends Clock implements Serializable{
 	
 	private final ClockPart clockHand3;
 	

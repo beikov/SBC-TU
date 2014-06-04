@@ -69,6 +69,8 @@ public interface Connector {
 	public void takeDemandedClock(TransactionalTask<Map<Demand, Clock>> transactionalTask);
 
 	public void deliverDemandedClock(Demand demand, Clock clock);
+
+	public void removeClockFromStock(UUID distributorId, Clock removedClock);
 	
 	
 
