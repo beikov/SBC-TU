@@ -21,6 +21,7 @@ public class MozartSpacesConstants {
     public static final String DELIVERED_CLOCKS_CONTAINER_NAME = "Fabrik/AusgelieferteUhren";
     public static final String CHECKED_CLOCKS_CONTAINER_NAME = "Fabrik/GepruefteUhren";
     public static final String DISASSEMBLED_CLOCKS_CONTAINER_NAME = "Fabrik/SchlechteUhren";
+    public static final String DELIVERED_TO_DISTRIBUTORS_CONTAINER_NAME = "Fabrik/AnGrosshaendlerGelieferteUhren";
 
     public static final String SINGLE_CLOCK_ORDER_CONTAINER_NAME = "Fabrik/EinzelneUhrenBestellungen";
     public static final String ORDER_CONTAINER_NAME = "Fabrik/Bestellungen";

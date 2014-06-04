@@ -58,6 +58,7 @@ public class MozartSpacesConnector extends AbstractMozartSpacesComponent impleme
     private final ContainerReference disassembledClocksContainer;
     private final ContainerReference orderContainer;
     private final ContainerReference singleClockOrderContainer;
+    private final ContainerReference clocksDeliveredToDistributorsContainer;
 
     private ContainerReference distributorDemandContainer;
 
@@ -89,9 +90,15 @@ public class MozartSpacesConnector extends AbstractMozartSpacesComponent impleme
                                                              MozartSpacesConstants.ORDER_PRIORITY_COORDINATOR_NAME),
                                                          new FifoCoordinator());
 
+        clocksDeliveredToDistributorsContainer = getOrCreateContainer(
+        												capi, MozartSpacesConstants.DELIVERED_TO_DISTRIBUTORS_CONTAINER_NAME, 
+        												new FifoCoordinator());
+        
         distributorDemandContainer = getOrCreateContainer(capi, MozartSpacesConstants.DISTRIBUTOR_DEMAND_CONTAINER_NAME,
                                                           new QueryCoordinator(),
                                                           new FifoCoordinator());
+        
+        
     }
 
     @Override
@@ -170,6 +177,8 @@ public class MozartSpacesConnector extends AbstractMozartSpacesComponent impleme
                                            IsolationLevel.READ_COMMITTED, null));
             clocks.addAll((List) capi.read(disassembledClocksContainer, selectors, MzsConstants.RequestTimeout.INFINITE, null,
                                            IsolationLevel.READ_COMMITTED, null));
+            clocks.addAll((List) capi.read(clocksDeliveredToDistributorsContainer, selectors, MzsConstants.RequestTimeout.INFINITE,null,
+            								IsolationLevel.READ_COMMITTED,null));
             return clocks;
         } catch (MzsCoreException ex) {
             throw new RuntimeException(ex);
@@ -453,6 +462,8 @@ public class MozartSpacesConnector extends AbstractMozartSpacesComponent impleme
 
                             if (clock != null) {
                                 stockConnector.deliver(clock);
+                                Entry entry = new Entry(clock);
+                                capi.write(disassembledClocksContainer, MzsConstants.RequestTimeout.ZERO, tx, entry);
                                 break;
                             }
                         }
