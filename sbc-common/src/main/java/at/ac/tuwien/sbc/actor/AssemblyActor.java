@@ -27,11 +27,9 @@ import java.util.UUID;
 public class AssemblyActor extends AbstractActor {
 
     OrderPriority lastPriority = null;
-    private final Random random;
 
     public AssemblyActor(Connector connector) {
         super(connector);
-        this.random = new Random();
     }
 
     public static void main(String[] args) throws Exception {
@@ -89,7 +87,7 @@ public class AssemblyActor extends AbstractActor {
 
     private ClockType getRandomClockType() {
         ClockType[] types = ClockType.values();
-        return types[random.nextInt(types.length)];
+        return types[random.get().nextInt(types.length)];
     }
 
     private void produceClock(final ClockType typeToProduce, final UUID orderId) {

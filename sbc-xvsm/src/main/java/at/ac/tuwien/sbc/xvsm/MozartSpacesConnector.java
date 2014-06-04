@@ -597,7 +597,7 @@ public class MozartSpacesConnector implements Connector {
                 List<SingleClockOrder> singleOrders = null;
 
                 try {
-                    singleOrders = capi.take(singleClockOrderContainer, selectors, 0, tx);
+                    singleOrders = capi.take(singleClockOrderContainer, selectors, MzsConstants.RequestTimeout.ZERO, tx);
                 } catch (MzsCoreException e) {
                     //okay we found no matching order
                 }

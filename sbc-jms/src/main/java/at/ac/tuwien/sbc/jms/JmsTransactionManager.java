@@ -41,6 +41,7 @@ public class JmsTransactionManager {
             throw new RuntimeException(ex);
         } finally {
             currentTransaction.remove();
+            currentTransactionRollback.remove();
         }
     }
 
@@ -58,10 +59,12 @@ public class JmsTransactionManager {
                 return false;
             }
         } catch (TimeoutException ex) {
-            created = false;
-            currentTransaction.remove();
-            currentTransactionRollback.remove();
-            return true;
+            if (!created) {
+                // Propagate the timeout to the outermost block
+                throw ex;
+            } else {
+                return true;
+            }
         } catch (RuntimeException ex) {
             throw ex;
         } catch (Error ex) {
