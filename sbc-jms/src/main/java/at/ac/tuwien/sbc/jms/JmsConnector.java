@@ -168,6 +168,12 @@ public class JmsConnector extends AbstractJmsComponent implements Connector {
 
                             if (clock != null) {
                                 stockConnector.deliver(clock);
+                                
+                                // Push the clock back but marked as "done" by setting IS_ORDERED to true
+                                msg = session.createObjectMessage(clock);
+                                msg.setBooleanProperty(JmsConstants.IS_DELIVERED, true);
+                                msg.setBooleanProperty(JmsConstants.IS_ORDERED, true);
+                                clockQueueProducer.send(msg);
                                 break;
                             }
                         }
@@ -356,6 +362,7 @@ public class JmsConnector extends AbstractJmsComponent implements Connector {
         distributorDemandQueueConsumer = createConsumerIfNull(distributorDemandQueueConsumer, distributorDemandQueue);
 
         clockQueue = createQueueIfNull(clockQueue, JmsConstants.CLOCK_QUEUE);
+        clockQueueProducer = createProducerIfNull(clockQueueProducer, clockQueue);
         deliveredConsumer = createConsumerIfNull(deliveredConsumer, clockQueue, JmsConstants.IS_DELIVERED + "=true AND "
                                                  + JmsConstants.IS_ORDERED + "=false");
     }
