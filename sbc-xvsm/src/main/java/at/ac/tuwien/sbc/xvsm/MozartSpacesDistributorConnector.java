@@ -12,13 +12,16 @@ import at.ac.tuwien.sbc.model.Clock;
 import at.ac.tuwien.sbc.model.ClockType;
 import at.ac.tuwien.sbc.model.DistributorDemand;
 import java.net.URI;
+import java.util.ArrayList;
 import java.util.EnumMap;
+import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 import org.mozartspaces.capi3.FifoCoordinator;
 import org.mozartspaces.capi3.Property;
 import org.mozartspaces.capi3.Query;
 import org.mozartspaces.capi3.QueryCoordinator;
+import org.mozartspaces.capi3.Selector;
 import org.mozartspaces.core.Capi;
 import org.mozartspaces.core.ContainerReference;
 import org.mozartspaces.core.DefaultMzsCore;
@@ -92,10 +95,13 @@ public class MozartSpacesDistributorConnector extends AbstractMozartSpacesCompon
         tm.transactional(new TransactionalWork() {
             @Override
             public void doWork(TransactionReference tx) throws MzsCoreException {
-                Query query = new Query().filter(Property.forName("distributorId")
-                    .equalTo(distributorId));
-                capi.delete(distributorDemandContainer, QueryCoordinator.newSelector(query),
-                            MozartSpacesConstants.MAX_TIMEOUT_MILLIS, tx);
+                List<Selector> selectors = new ArrayList<Selector>();
+                Query query = new Query()
+                    .filter(Property.forName("uri").equalTo(distributorUri))
+                    .filter(Property.forName("destinationName").equalTo(distributorId.toString()));
+                selectors.add(QueryCoordinator.newSelector(query, MzsConstants.Selecting.COUNT_ALL));
+                
+                capi.delete(distributorDemandContainer, selectors, MzsConstants.RequestTimeout.TRY_ONCE, tx);
                 capi.write(entry, distributorDemandContainer, MozartSpacesConstants.MAX_TIMEOUT_MILLIS, tx);
             }
         });

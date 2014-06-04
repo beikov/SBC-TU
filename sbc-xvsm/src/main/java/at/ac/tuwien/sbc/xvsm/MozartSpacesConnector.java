@@ -60,7 +60,6 @@ public class MozartSpacesConnector extends AbstractMozartSpacesComponent impleme
     private final ContainerReference singleClockOrderContainer;
 
     private ContainerReference distributorDemandContainer;
-    private ContainerReference distributorStockContainer;
 
     public MozartSpacesConnector(int serverPort) {
         this("localhost", serverPort);
@@ -407,25 +406,23 @@ public class MozartSpacesConnector extends AbstractMozartSpacesComponent impleme
         return done[0];
     }
 
-    private Clock takeDeliveredClockOfNoOrder(ClockType type) {
-        final List<Selector> selectors = new ArrayList<Selector>();
-        Query query = new Query().filter(Property.forName("type")
-            .equalTo(type));
-        query.filter(Property.forName("orderId")
-            .equalTo(null));
-        selectors.add(QueryCoordinator.newSelector(query, 1));
-        final List<Clock> clock = new ArrayList<Clock>();
+    private Clock takeDeliveredClockOfNoOrder(final ClockType type) {
+        final List<Clock> clocks = new ArrayList<Clock>();
 
         tm.transactional(new TransactionalWork() {
 
             @Override
             public void doWork(TransactionReference tx) throws MzsCoreException {
-                clock
-                    .addAll((List) capi.take(deliveredClocksContainer, selectors, MozartSpacesConstants.MAX_TIMEOUT_MILLIS, tx));
+                List<Selector> selectors = new ArrayList<Selector>();
+                Query query = new Query()
+                    .filter(Property.forName("type").equalTo(type))
+                    .filter(Property.forName("orderId").equalTo(null));
+                selectors.add(QueryCoordinator.newSelector(query, 1));
+                clocks.addAll((List) capi.take(deliveredClocksContainer, selectors, MozartSpacesConstants.MAX_TIMEOUT_MILLIS, tx));
             }
         });
 
-        return (clock.size() > 0) ? clock.get(0) : null;
+        return (clocks.size() > 0) ? clocks.get(0) : null;
 
     }
 
@@ -465,10 +462,9 @@ public class MozartSpacesConnector extends AbstractMozartSpacesComponent impleme
                     if (stockConnector != null) {
                         stockConnector.close();
                     }
+                    
+                    capi.write(distributorDemandContainer, MzsConstants.RequestTimeout.INFINITE, tx, new Entry(distributorDemand));
                 }
-
-                Entry entry = new Entry(distributorDemand);
-                capi.write(entry, distributorDemandContainer, MozartSpacesConstants.MAX_TIMEOUT_MILLIS, tx);
             }
         });
 
