@@ -5,12 +5,12 @@ import java.util.EnumMap;
 import java.util.Map;
 
 public enum ClockType {
-	KLASSISCH(1, 0, 1, 1, 2),
-	SPORT(0, 1, 1, 1, 2),
-	ZEITZONEN_SPORT(0, 1, 1, 1, 3);
-    
-    
-	private final Map<ClockPartType, Integer> neededParts;
+
+    KLASSISCH(1, 0, 1, 1, 2),
+    SPORT(0, 1, 1, 1, 2),
+    ZEITZONEN_SPORT(0, 1, 1, 1, 3);
+
+    private final Map<ClockPartType, Integer> neededParts;
 
     private ClockType(int lederarmband, int metallarmband, int gehaeuse, int uhrwerk, int zeiger) {
         Map<ClockPartType, Integer> map = new EnumMap<ClockPartType, Integer>(ClockPartType.class);
@@ -26,12 +26,12 @@ public enum ClockType {
         if (count < 1) {
             return;
         }
-        
+
         map.put(clockPartType, count);
     }
 
     public Map<ClockPartType, Integer> getNeededParts() {
         return neededParts;
     }
-    
+
 }

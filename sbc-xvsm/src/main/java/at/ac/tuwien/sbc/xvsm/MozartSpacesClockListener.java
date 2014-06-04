@@ -5,20 +5,18 @@
  */
 package at.ac.tuwien.sbc.xvsm;
 
-import java.io.Serializable;
-import java.util.ArrayList;
-import java.util.List;
-
-import org.mozartspaces.core.Entry;
-import org.mozartspaces.notifications.Notification;
-import org.mozartspaces.notifications.NotificationListener;
-import org.mozartspaces.notifications.Operation;
-
 import at.ac.tuwien.sbc.ClockListener;
 import at.ac.tuwien.sbc.model.ClassicClock;
 import at.ac.tuwien.sbc.model.Clock;
 import at.ac.tuwien.sbc.model.SportsClock;
 import at.ac.tuwien.sbc.model.TimezoneSportsClock;
+import java.io.Serializable;
+import java.util.ArrayList;
+import java.util.List;
+import org.mozartspaces.core.Entry;
+import org.mozartspaces.notifications.Notification;
+import org.mozartspaces.notifications.NotificationListener;
+import org.mozartspaces.notifications.Operation;
 
 /**
  *
@@ -43,13 +41,13 @@ public class MozartSpacesClockListener implements NotificationListener {
                 clocks.add((ClassicClock) entry);
             } else if (entry instanceof SportsClock) {
                 clocks.add((SportsClock) entry);
-            } else if (entry instanceof TimezoneSportsClock){
+            } else if (entry instanceof TimezoneSportsClock) {
                 clocks.add((TimezoneSportsClock) entry);
-            }else {
+            } else {
                 clocks.add((Clock) ((Entry) entry).getValue());
             }
         }
-        
+
         if (operation == Operation.WRITE) {
             listener.onClocksUpdated(clocks);
         }

@@ -112,24 +112,24 @@
                 </plugins>
             </build>
         </profile>
-		<profile>
-			<id>handler</id>
-			<build>
-				<plugins>
-					<plugin>
-						<groupId>org.codehaus.mojo</groupId>
-						<artifactId>exec-maven-plugin</artifactId>
-						<configuration>
-							<mainClass>at.ac.tuwien.sbc.actor.HandlerActor</mainClass>
-							<arguments>
-								<argument>${server.port}</argument>
-								<argument>jms</argument>
-							</arguments>
-						</configuration>
-					</plugin>
-				</plugins>
-			</build>
-		</profile>
+        <profile>
+            <id>handler</id>
+            <build>
+                <plugins>
+                    <plugin>
+                        <groupId>org.codehaus.mojo</groupId>
+                        <artifactId>exec-maven-plugin</artifactId>
+                        <configuration>
+                            <mainClass>at.ac.tuwien.sbc.actor.HandlerActor</mainClass>
+                            <arguments>
+                                <argument>${server.port}</argument>
+                                <argument>jms</argument>
+                            </arguments>
+                        </configuration>
+                    </plugin>
+                </plugins>
+            </build>
+        </profile>
         <profile>
             <id>server</id>
             <build>

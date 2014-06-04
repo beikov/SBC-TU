@@ -6,59 +6,56 @@ import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 
-public class Order implements Serializable{
-	private final UUID id;
-	private final Map<ClockType,Integer[]> neededClocks;
-	private final List<Clock> clocks;
-	private final OrderPriority priority;
-	
-	public Order(Map<ClockType,Integer[]> neededClocks , OrderPriority priority){
-		this.id = UUID.randomUUID();
-		this.neededClocks = neededClocks;
-		this.priority = priority;
-		clocks = new ArrayList<Clock>();
-	}
+public class Order implements Serializable {
 
-	public UUID getId() {
-		return id;
-	}
+    private final UUID id;
+    private final Map<ClockType, Integer[]> neededClocks;
+    private final List<Clock> clocks;
+    private final OrderPriority priority;
 
-	public Map<ClockType, Integer[]> getNeededClocks() {
-		return neededClocks;
-	}
+    public Order(Map<ClockType, Integer[]> neededClocks, OrderPriority priority) {
+        this.id = UUID.randomUUID();
+        this.neededClocks = neededClocks;
+        this.priority = priority;
+        clocks = new ArrayList<Clock>();
+    }
 
-	public List<Clock> getClocks() {
-		return clocks;
-	}
+    public UUID getId() {
+        return id;
+    }
 
-	public OrderPriority getPriority() {
-		return priority;
-	}
-	
-	public int getNeededClocksOfType(ClockType type){
-		Integer needed = neededClocks.get(type)[0]; 
-		return ( needed != null ) ? needed : 0;
-	}
-	
-	public boolean isClockTypeNeeded(ClockType type){
-		Integer needed = neededClocks.get(type)[0]; 
-		return ( needed != null ) ? needed > 0 : false;
-	}
+    public Map<ClockType, Integer[]> getNeededClocks() {
+        return neededClocks;
+    }
 
-	@Override
-	public String toString() {
-		return "Order [id=" + id + ", neededClocks=" + neededClocks
-				+ ", clocks=" + clocks + ", priority=" + priority + "]";
-	}
+    public List<Clock> getClocks() {
+        return clocks;
+    }
 
-	public void addFinishedClock(Clock clock) {
-		Integer[] needed = neededClocks.get(clock.getType());
-		needed[1] += 1;
-		neededClocks.put(clock.getType(), needed);
-	}
+    public OrderPriority getPriority() {
+        return priority;
+    }
 
-	
-	
+    public int getNeededClocksOfType(ClockType type) {
+        Integer needed = neededClocks.get(type)[0];
+        return (needed != null) ? needed : 0;
+    }
 
-	
+    public boolean isClockTypeNeeded(ClockType type) {
+        Integer needed = neededClocks.get(type)[0];
+        return (needed != null) ? needed > 0 : false;
+    }
+
+    @Override
+    public String toString() {
+        return "Order [id=" + id + ", neededClocks=" + neededClocks
+            + ", clocks=" + clocks + ", priority=" + priority + "]";
+    }
+
+    public void addFinishedClock(Clock clock) {
+        Integer[] needed = neededClocks.get(clock.getType());
+        needed[1] += 1;
+        neededClocks.put(clock.getType(), needed);
+    }
+
 }

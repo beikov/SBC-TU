@@ -5,21 +5,16 @@
  */
 package at.ac.tuwien.sbc.ui;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.concurrent.ExecutorService;
-
-import javax.swing.JButton;
-
 import at.ac.tuwien.sbc.Connector;
-import at.ac.tuwien.sbc.OrderListener;
 import at.ac.tuwien.sbc.actor.SupplierActor;
 import at.ac.tuwien.sbc.model.ClockPartType;
 import at.ac.tuwien.sbc.model.ClockType;
 import at.ac.tuwien.sbc.model.Order;
 import at.ac.tuwien.sbc.model.OrderPriority;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.concurrent.ExecutorService;
+import javax.swing.JButton;
 
 /**
  *
@@ -49,14 +44,14 @@ public class MainFrame extends javax.swing.JFrame {
      * @param threadPool
      */
     public MainFrame(Connector connector, final ExecutorService threadPool) {
-    	this.orderList = new OrderList();
-    	
+        this.orderList = new OrderList();
+
         this.connector = connector;
         this.threadPool = threadPool;
         this.counter = new ClockPartCounter();
         this.clockList = new ClockList();
         this.supplierTableModel = new SupplierTableModel();
-        this.clockTableModel = new AllClocksTableModel(clockList);    
+        this.clockTableModel = new AllClocksTableModel(clockList);
         this.assembledTableModel = new AssembledClocksTableModel(clockList);
         this.checkedTableModel = new CheckedClocksTableModel(clockList);
         this.deliveredTableModel = new DeliveredClocksTableModel(clockList);
@@ -119,13 +114,17 @@ public class MainFrame extends javax.swing.JFrame {
                     @Override
                     public void run() {
                         assembledValue.setText(String.valueOf(
-                                clockList.getAssembledClocks().size()));
+                            clockList.getAssembledClocks()
+                            .size()));
                         checkedValue.setText(String.valueOf(
-                                clockList.getCheckedClocks().size()));
+                            clockList.getCheckedClocks()
+                            .size()));
                         deliveredValue.setText(String.valueOf(
-                                clockList.getDeliveredClocks().size()));
+                            clockList.getDeliveredClocks()
+                            .size()));
                         disassembledValue.setText(String.valueOf(
-                                clockList.getDisassembledClocks().size()));
+                            clockList.getDisassembledClocks()
+                            .size()));
                         clockTableModel.fireTableDataChanged();
                         assembledTableModel.fireTableDataChanged();
                         checkedTableModel.fireTableDataChanged();
@@ -139,22 +138,21 @@ public class MainFrame extends javax.swing.JFrame {
         // Subscribe before retrieving data or else we might miss notifications
         connector.subscribeForClocks(clockListener);
         clockListener.onClocksUpdated(connector.getClocks());
-        
-        
+
         final CollectingOrderListener orderListener = new CollectingOrderListener(orderList, new Runnable() {
-			@Override
-			public void run() {
-				java.awt.EventQueue.invokeLater(new Runnable() {
-					@Override
-					public void run() {
-						orderTableModel.fireTableDataChanged();
-					}
-				});
-			}
-		});
+            @Override
+            public void run() {
+                java.awt.EventQueue.invokeLater(new Runnable() {
+                    @Override
+                    public void run() {
+                        orderTableModel.fireTableDataChanged();
+                    }
+                });
+            }
+        });
         connector.subscribeForOrders(orderListener);
         orderListener.onOrderAdded(connector.getOrders());
-        
+
     }
 
     /**
@@ -671,22 +669,29 @@ public class MainFrame extends javax.swing.JFrame {
     }//GEN-LAST:event_classicAmountTextFieldActionPerformed
 
     private void jButton2MouseReleased(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_jButton2MouseReleased
-    	Map<ClockType, Integer[]> neededClocks = new HashMap<ClockType, Integer[]>();
-    	neededClocks.put(ClockType.KLASSISCH, new Integer[]{Integer.parseInt(classicAmountTextField.getText()),0});
-    	neededClocks.put(ClockType.SPORT, new Integer[]{Integer.parseInt(sportAmountTextField.getText()),0});
-    	neededClocks.put(ClockType.ZEITZONEN_SPORT, new Integer[]{Integer.parseInt(timeZoneSportAmountTextField.getText()),0});
-    	
-    	OrderPriority priority = null;
-    	
-    	switch(priorityComboBox.getSelectedIndex()){
-    	case 0:	priority = OrderPriority.NIEDRIG; break;
-    	case 1: priority = OrderPriority.MITTEL; break;
-    	case 2: priority = OrderPriority.HOCH; break;
-    	}
-    	
-    	Order order = new Order(neededClocks, priority);
-    	
-    	connector.addOrder(order);
+        Map<ClockType, Integer[]> neededClocks = new HashMap<ClockType, Integer[]>();
+        neededClocks.put(ClockType.KLASSISCH, new Integer[]{ Integer.parseInt(classicAmountTextField.getText()), 0 });
+        neededClocks.put(ClockType.SPORT, new Integer[]{ Integer.parseInt(sportAmountTextField.getText()), 0 });
+        neededClocks
+            .put(ClockType.ZEITZONEN_SPORT, new Integer[]{ Integer.parseInt(timeZoneSportAmountTextField.getText()), 0 });
+
+        OrderPriority priority = null;
+
+        switch (priorityComboBox.getSelectedIndex()) {
+            case 0:
+                priority = OrderPriority.NIEDRIG;
+                break;
+            case 1:
+                priority = OrderPriority.MITTEL;
+                break;
+            case 2:
+                priority = OrderPriority.HOCH;
+                break;
+        }
+
+        Order order = new Order(neededClocks, priority);
+
+        connector.addOrder(order);
     }//GEN-LAST:event_jButton2MouseReleased
 
     public static void start(final Connector connector, final ExecutorService threadPool) {

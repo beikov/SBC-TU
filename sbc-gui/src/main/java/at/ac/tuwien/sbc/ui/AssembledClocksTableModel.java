@@ -17,7 +17,7 @@ public class AssembledClocksTableModel extends AbstractTableModel {
 
     private final ClockList clockList;
     private List<Clock> clocks;
-    private final String[] columnNames = { "Seriennummer", "Zusammengebaut von"};
+    private final String[] columnNames = { "Seriennummer", "Zusammengebaut von" };
     private final Class<?>[] columnTypes = { String.class, String.class };
 
     public AssembledClocksTableModel(ClockList clockList) {
@@ -48,12 +48,15 @@ public class AssembledClocksTableModel extends AbstractTableModel {
     @Override
     public Object getValueAt(int rowIndex, int columnIndex) {
         Clock clock = clocks.get(rowIndex);
-        
+
         switch (columnIndex) {
-            case 0: return String.valueOf(clock.getSerialId());
-            case 1: return clock.getAssemblerId().toString();
+            case 0:
+                return String.valueOf(clock.getSerialId());
+            case 1:
+                return clock.getAssemblerId()
+                    .toString();
         }
-        
+
         return null;
     }
 

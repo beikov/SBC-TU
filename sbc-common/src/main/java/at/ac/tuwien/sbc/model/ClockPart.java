@@ -3,7 +3,6 @@
  * To change this template file, choose Tools | Templates
  * and open the template in the editor.
  */
-
 package at.ac.tuwien.sbc.model;
 
 import java.io.Serializable;
@@ -14,7 +13,7 @@ import java.util.UUID;
  * @author Christian
  */
 public class ClockPart implements Serializable {
-    
+
     private final UUID id;
     private final ClockPartType type;
     private final UUID supplierId;

@@ -23,20 +23,21 @@ public class DelivererActor extends AbstractActor {
         super(connector);
         this.type = type;
     }
-    
+
     public static void main(String[] args) throws Exception {
         if (args.length != 3) {
             throw new IllegalArgumentException("Usage: DeliveryActor PORT (xvsm|jms) (A|B)");
         }
-        
+
         Connector connector = SbcUtils.getConnector(Integer.parseInt(args[0]), args[1]);
         AbstractActor actor = new DelivererActor(connector, ClockQualityType.valueOf(args[2]));
         Thread t = new Thread(actor);
         t.start();
-        
-        System.out.println("Starting " + actor.getClass().getSimpleName() + " with id " + actor.getId());
+
+        System.out.println("Starting " + actor.getClass()
+            .getSimpleName() + " with id " + actor.getId());
         System.out.println("Press CTRL+C to shutdown...");
-        while(System.in.read() != -1);
+        while (System.in.read() != -1);
         t.interrupt();
     }
 

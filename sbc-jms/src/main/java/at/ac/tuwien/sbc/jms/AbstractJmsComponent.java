@@ -3,7 +3,6 @@
  * To change this template file, choose Tools | Templates
  * and open the template in the editor.
  */
-
 package at.ac.tuwien.sbc.jms;
 
 import java.util.Enumeration;
@@ -26,88 +25,39 @@ import org.apache.activemq.ActiveMQPrefetchPolicy;
  *
  * @author Christian
  */
-public abstract class AbstractTransactionalJmsConnector {
-    
-	private final ThreadLocal<Boolean> currentTransaction = new ThreadLocal<Boolean>();
-	private final ThreadLocal<Boolean> currentTransactionRollback = new ThreadLocal<Boolean>();
-    
-	protected final Session session;
-	protected final Connection connection;
+public abstract class AbstractJmsComponent {
 
-    public AbstractTransactionalJmsConnector(int port) {
-		try {
-			ActiveMQConnectionFactory connectionFactory = new ActiveMQConnectionFactory("tcp://localhost:" + port);
+    private final Connection connection;
+    protected final Session session;
+    protected final JmsTransactionManager tm;
+
+    public AbstractJmsComponent(int port) {
+        try {
+            ActiveMQConnectionFactory connectionFactory = new ActiveMQConnectionFactory("tcp://localhost:" + port);
 //			ActiveMQConnectionFactory connectionFactory = new ActiveMQConnectionFactory();
-			
-			ActiveMQPrefetchPolicy policy = new ActiveMQPrefetchPolicy();
-			policy.setQueuePrefetch(0);
-			connectionFactory.setPrefetchPolicy(policy);
-			connection = connectionFactory.createConnection();
-			connection.start();
-			session = connection.createSession(true, Session.CLIENT_ACKNOWLEDGE);
-			
-		} catch (JMSException ex) {
-			throw new RuntimeException(ex);
-		}
+
+            ActiveMQPrefetchPolicy policy = new ActiveMQPrefetchPolicy();
+            policy.setQueuePrefetch(0);
+            connectionFactory.setPrefetchPolicy(policy);
+            connection = connectionFactory.createConnection();
+            connection.start();
+            session = connection.createSession(true, Session.CLIENT_ACKNOWLEDGE);
+            tm = new JmsTransactionManager(session);
+        } catch (JMSException ex) {
+            throw new RuntimeException(ex);
+        }
     }
 
-	protected boolean commit() {
-		try {
-			session.commit();
-			return false;
-		} catch (JMSException ex) {
-			throw new RuntimeException(ex);
-		} finally {
-			currentTransaction.remove();
-			currentTransactionRollback.remove();
-		}
-	}
+    public AbstractJmsComponent(Session session) {
+        this.connection = null;
+        this.session = session;
+        this.tm = new JmsTransactionManager(session);
+    }
 
-	protected void rollback() {
-		try {
-			session.rollback();
-		} catch (JMSException ex) {
-			throw new RuntimeException(ex);
-		} finally {
-			currentTransaction.remove();
-		}
-	}
-
-	protected boolean transactional(TransactionalWork work) {
-		boolean created = ensureCurrentTransaction();
-		currentTransactionRollback.set(Boolean.TRUE);
-
-		try {
-			work.doWork();
-
-			if (created) {
-				return commit();
-			} else {
-				// Indicates no timeout occurred
-				return false;
-			}
-		} catch (TimeoutException ex) {
-			created = false;
-			currentTransaction.remove();
-			currentTransactionRollback.remove();
-			return true;
-		} catch (RuntimeException ex) {
-			throw ex;
-		} catch (Error ex) {
-			throw ex;
-		} catch (Throwable ex) {
-			throw new RuntimeException(ex);
-		} finally {
-			if (created && Boolean.TRUE == currentTransactionRollback.get()) {
-				rollback();
-			}
-		}
-	}
-    
     protected Topic createTopicIfNull(Topic t, String name) throws JMSException {
         return t == null ? session.createTopic(name) : t;
     }
-    
+
     protected Queue createQueueIfNull(Queue q, String name) throws JMSException {
         return q == null ? session.createQueue(name) : q;
     }
@@ -116,88 +66,37 @@ public abstract class AbstractTransactionalJmsConnector {
         return consumer == null ? session.createConsumer(destination) : consumer;
     }
 
-    protected MessageConsumer createConsumerIfNull(MessageConsumer consumer, Destination destination, String selector) throws JMSException {
+    protected MessageConsumer createConsumerIfNull(MessageConsumer consumer, Destination destination, String selector) throws
+        JMSException {
         return consumer == null ? session.createConsumer(destination, selector) : consumer;
     }
 
     protected MessageProducer createProducerIfNull(MessageProducer producer, Destination destination) throws JMSException {
         return producer == null ? session.createProducer(destination) : producer;
     }
-    
+
     protected static interface Finder<T> {
+
         public boolean accept(T element);
     }
-    
+
     protected <T> T findInQueue(String name, String selector) {
         Session s = null;
-        
+
         try {
             s = connection.createSession(false, Session.AUTO_ACKNOWLEDGE);
             QueueBrowser browser = s.createBrowser(s.createQueue(name), selector);
             Enumeration<ObjectMessage> enumeration = browser.getEnumeration();
-            
+
             if (enumeration.hasMoreElements()) {
-                return (T) enumeration.nextElement().getObject();
+                return (T) enumeration.nextElement()
+                    .getObject();
             }
-            
+
             return null;
-		} catch (JMSException ex) {
-			throw new RuntimeException(ex);
-		} finally {
-            if (s != null) {
-                try {
-                    s.close();
-                } catch (JMSException ex) {
-                    // Ignore
-                }
-            }
-        }
-    }
-    
-    protected <T> T findInQueue(String name, String selector, Finder<T> finder) {
-        Session s = null;
-        
-        try {
-            s = connection.createSession(false, Session.AUTO_ACKNOWLEDGE);
-            QueueBrowser browser = s.createBrowser(s.createQueue(name), selector);
-            Enumeration<ObjectMessage> enumeration = browser.getEnumeration();
-            while (enumeration.hasMoreElements()) {
-                T object = (T) enumeration.nextElement().getObject();
-                if (finder.accept(object)) {
-                    return object;
-                }
-            }
-            
-            return null;
-		} catch (JMSException ex) {
-			throw new RuntimeException(ex);
-		} finally {
-            if (s != null) {
-                try {
-                    s.close();
-                } catch (JMSException ex) {
-                    // Ignore
-                }
-            }
-        }
-    }
-    
-    protected <T> List<T> queueAsList(String name) {
-        Session s = null;
-        
-        try {
-            s = connection.createSession(false, Session.AUTO_ACKNOWLEDGE);
-            Enumeration<ObjectMessage> enumeration = s.createBrowser(s.createQueue(name)).getEnumeration();
-            List<T> list = new LinkedList<T>();
-            
-            while (enumeration.hasMoreElements()) {
-                list.add((T) enumeration.nextElement().getObject());
-            }
-            
-            return list;
-		} catch (JMSException ex) {
-			throw new RuntimeException(ex);
-		} finally {
+        } catch (JMSException ex) {
+            throw new RuntimeException(ex);
+        } finally {
             if (s != null) {
                 try {
                     s.close();
@@ -208,19 +107,60 @@ public abstract class AbstractTransactionalJmsConnector {
         }
     }
 
-	/**
-	 * Returns true if the call resulted in creating the transaction.
-	 *
-	 * @param timeoutInMillis
-	 * @return
-	 */
-	private boolean ensureCurrentTransaction() {
-		Boolean tx = currentTransaction.get();
-		if (tx == null) {
-			tx = Boolean.TRUE;
-			currentTransaction.set(tx);
-			return true;
-		}
-		return false;
-	}
+    protected <T> T findInQueue(String name, String selector, Finder<T> finder) {
+        Session s = null;
+
+        try {
+            s = connection.createSession(false, Session.AUTO_ACKNOWLEDGE);
+            QueueBrowser browser = s.createBrowser(s.createQueue(name), selector);
+            Enumeration<ObjectMessage> enumeration = browser.getEnumeration();
+            while (enumeration.hasMoreElements()) {
+                T object = (T) enumeration.nextElement()
+                    .getObject();
+                if (finder.accept(object)) {
+                    return object;
+                }
+            }
+
+            return null;
+        } catch (JMSException ex) {
+            throw new RuntimeException(ex);
+        } finally {
+            if (s != null) {
+                try {
+                    s.close();
+                } catch (JMSException ex) {
+                    // Ignore
+                }
+            }
+        }
+    }
+
+    protected <T> List<T> queueAsList(String name) {
+        Session s = null;
+
+        try {
+            s = connection.createSession(false, Session.AUTO_ACKNOWLEDGE);
+            Enumeration<ObjectMessage> enumeration = s.createBrowser(s.createQueue(name))
+                .getEnumeration();
+            List<T> list = new LinkedList<T>();
+
+            while (enumeration.hasMoreElements()) {
+                list.add((T) enumeration.nextElement()
+                    .getObject());
+            }
+
+            return list;
+        } catch (JMSException ex) {
+            throw new RuntimeException(ex);
+        } finally {
+            if (s != null) {
+                try {
+                    s.close();
+                } catch (JMSException ex) {
+                    // Ignore
+                }
+            }
+        }
+    }
 }

@@ -3,7 +3,6 @@
  * To change this template file, choose Tools | Templates
  * and open the template in the editor.
  */
-
 package at.ac.tuwien.sbc;
 
 /**
@@ -11,6 +10,6 @@ package at.ac.tuwien.sbc;
  * @author Christian
  */
 public interface Subscription {
-    
+
     public void cancel();
 }

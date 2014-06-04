@@ -10,10 +10,10 @@
       c) classpath
 -->
 <mozartspacesCoreConfig>
-<!-- This default configuration is also contained in the code and used when no configuration file is found -->
+    <!-- This default configuration is also contained in the code and used when no configuration file is found -->
 
-	<!-- Determines whether the core has an embedded space or is just a client -->
-	<embeddedSpace>true</embeddedSpace>
+    <!-- Determines whether the core has an embedded space or is just a client -->
+    <embeddedSpace>true</embeddedSpace>
 	
     <!-- Core Processor (XP) configuration -->
     <coreProcessor>
@@ -30,7 +30,7 @@
     <!-- Serializer configuration, multiple serializers are supported -->
     <serializers>
         <!-- 
-		    Serializer name - the supported values are:
+                    Serializer name - the supported values are:
             * javabuiltin: built-in binary serialization
             Serializers below are not in the core but extra modules:
             * jaxb: XML marshalling with JAXB, compliant with XVSMP schema
@@ -59,11 +59,11 @@
             -->
             <tcpsocket scheme="xvsm">
                 <!-- 
-                	The number of threads for the receiver/sender thread pool:
-                	* The configuration vales are as for the XP thread pool.
-                	* The default configuration (1000 threads) allows 500 open connections.
-                	* Adjust, when many connections are open!
-                	* You need at least 2 threads for each (open) connection.
+                        The number of threads for the receiver/sender thread pool:
+                        * The configuration vales are as for the XP thread pool.
+                        * The default configuration (1000 threads) allows 500 open connections.
+                        * Adjust, when many connections are open!
+                        * You need at least 2 threads for each (open) connection.
                 -->
                 <threads>1000</threads>
                 <!-- exclusive port to listen for incoming connections -->
@@ -83,7 +83,7 @@
     <!-- example above with variables, expanded to "xvsm://localhost:9876" -->
 
     <!-- Configuration of the entry copier -->
-	<!-- copyContext: should the request context also be copied? -->
+    <!-- copyContext: should the request context also be copied? -->
     <entryCopier copyContext="false">
 		
         <!-- supported elements are one of the following elements: -->
@@ -99,33 +99,33 @@
         <!-- <cloning /> -->
     </entryCopier>
 
-	<!-- Configuration of custom coordinators -->
-	<coordinators>
-		<!-- This is an example for illustration. The AnyCoordinator is a predefined, integrated coordinator -->
-		<coordinator>
-			<!-- The coordinator API class (must implement Coordinator) -->
-			<apiClass>org.mozartspaces.capi3.AnyCoordinator</apiClass>
-			<!-- The selector API class (must implement Selector) -->
-			<apiSelectorClass>org.mozartspaces.capi3.AnyCoordinator$AnySelector</apiSelectorClass>
-			<!-- The CAPI-3 coordinator translator class (must implement CoordinatorTranslator) -->
-			<capi3TranslatorClass>org.mozartspaces.capi3.javanative.coordination.DefaultAnyCoordinator$AnyCoordinatorTranslator</capi3TranslatorClass>
-			<!-- The CAPI-3 selector translator class (must implement SelectorTranslator) -->
-			<capi3SelectorTranslatorClass>org.mozartspaces.capi3.javanative.coordination.DefaultAnyCoordinator$AnySelectorTranslator</capi3SelectorTranslatorClass>
-			<!-- Custom coordinators are currently not supported by the JAXB serializer! -->
-			<!-- The elements below are currently not supported! -->
-			<!-- 
-			<jaxbCreator>org.mozartspaces.xvsmp.util.AnyCoordinatorMapper$AnyCoordinatorCreator</jaxbCreator>
-			<jaxbSelectorCreator>org.mozartspaces.xvsmp.util.AnyCoordinatorMapper$AnySelectorCreator</jaxbSelectorCreator>
-			<jaxbCoordDataCreator>org.mozartspaces.xvsmp.util.AnyCoordinatorMapper$AnyDataCreator</jaxbCoordDataCreator>
-			 -->
-		</coordinator>
-	</coordinators>
+    <!-- Configuration of custom coordinators -->
+    <coordinators>
+        <!-- This is an example for illustration. The AnyCoordinator is a predefined, integrated coordinator -->
+        <coordinator>
+            <!-- The coordinator API class (must implement Coordinator) -->
+            <apiClass>org.mozartspaces.capi3.AnyCoordinator</apiClass>
+            <!-- The selector API class (must implement Selector) -->
+            <apiSelectorClass>org.mozartspaces.capi3.AnyCoordinator$AnySelector</apiSelectorClass>
+            <!-- The CAPI-3 coordinator translator class (must implement CoordinatorTranslator) -->
+            <capi3TranslatorClass>org.mozartspaces.capi3.javanative.coordination.DefaultAnyCoordinator$AnyCoordinatorTranslator</capi3TranslatorClass>
+            <!-- The CAPI-3 selector translator class (must implement SelectorTranslator) -->
+            <capi3SelectorTranslatorClass>org.mozartspaces.capi3.javanative.coordination.DefaultAnyCoordinator$AnySelectorTranslator</capi3SelectorTranslatorClass>
+            <!-- Custom coordinators are currently not supported by the JAXB serializer! -->
+            <!-- The elements below are currently not supported! -->
+            <!-- 
+           <jaxbCreator>org.mozartspaces.xvsmp.util.AnyCoordinatorMapper$AnyCoordinatorCreator</jaxbCreator>
+           <jaxbSelectorCreator>org.mozartspaces.xvsmp.util.AnyCoordinatorMapper$AnySelectorCreator</jaxbSelectorCreator>
+           <jaxbCoordDataCreator>org.mozartspaces.xvsmp.util.AnyCoordinatorMapper$AnyDataCreator</jaxbCoordDataCreator>
+            -->
+        </coordinator>
+    </coordinators>
     
     <!-- 
-		CAPI-3 implementation to use, the supported values are:
-	    * javanative: implementation using only JDK classes (collections)
-		In previous internal development versions a now abandoned database implementation ("db") was supported.
-	-->
+            CAPI-3 implementation to use, the supported values are:
+        * javanative: implementation using only JDK classes (collections)
+            In previous internal development versions a now abandoned database implementation ("db") was supported.
+    -->
     <capi3>javanative</capi3>
 
 </mozartspacesCoreConfig>

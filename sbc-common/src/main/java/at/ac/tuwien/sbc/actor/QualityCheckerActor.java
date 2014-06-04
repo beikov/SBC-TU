@@ -20,20 +20,21 @@ public class QualityCheckerActor extends AbstractActor {
     public QualityCheckerActor(Connector connector) {
         super(connector);
     }
-    
+
     public static void main(String[] args) throws Exception {
         if (args.length != 2) {
             throw new IllegalArgumentException("Usage: Application PORT (xvsm|jms)");
         }
-        
+
         Connector connector = SbcUtils.getConnector(Integer.parseInt(args[0]), args[1]);
         AbstractActor actor = new QualityCheckerActor(connector);
         Thread t = new Thread(actor);
         t.start();
-        
-        System.out.println("Starting " + actor.getClass().getSimpleName() + " with id " + actor.getId());
+
+        System.out.println("Starting " + actor.getClass()
+            .getSimpleName() + " with id " + actor.getId());
         System.out.println("Press CTRL+C to shutdown...");
-        while(System.in.read() != -1);
+        while (System.in.read() != -1);
         t.interrupt();
     }
 
@@ -45,7 +46,7 @@ public class QualityCheckerActor extends AbstractActor {
                 @Override
                 public void doWork(Clock clock) {
                     clock.check(id, random.get()
-                        .nextInt(10) + 1);
+                                .nextInt(10) + 1);
                     connector.addCheckedClock(clock, ClockQualityType.fromQuality(clock.getQuality()));
                 }
 

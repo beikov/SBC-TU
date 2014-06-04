@@ -20,7 +20,7 @@ public class CountingClockPartListener implements ClockPartListener {
     private final ClockPartCounter counter;
     private final Runnable listener;
     private final Set<ClockPart> collectedClockParts = new HashSet<ClockPart>();
-    
+
     private volatile boolean collect = true;
 
     public CountingClockPartListener(ClockPartCounter counter, Runnable listener) {
@@ -38,7 +38,7 @@ public class CountingClockPartListener implements ClockPartListener {
                     collectedClockParts.addAll(clockParts);
                 }
             }
-        } 
+        }
         if (!shouldCollect) {
             counter.increment(clockParts);
             listener.run();
@@ -55,7 +55,7 @@ public class CountingClockPartListener implements ClockPartListener {
                     collectedClockParts.removeAll(clockParts);
                 }
             }
-        } 
+        }
         if (!shouldCollect) {
             counter.decrement(clockParts);
             listener.run();

@@ -3,7 +3,6 @@
  * To change this template file, choose Tools | Templates
  * and open the template in the editor.
  */
-
 package at.ac.tuwien.sbc.actor;
 
 import at.ac.tuwien.sbc.Connector;
@@ -15,16 +14,16 @@ import java.util.UUID;
  * @author Christian
  */
 public abstract class AbstractActor implements Runnable {
-    
+
     protected static final ThreadLocal<Random> random = new ThreadLocal<Random>() {
 
         @Override
         protected Random initialValue() {
             return new Random();
         }
-        
+
     };
-    
+
     protected final UUID id;
     protected final Connector connector;
 
@@ -32,15 +31,16 @@ public abstract class AbstractActor implements Runnable {
         this.id = UUID.randomUUID();
         this.connector = connector;
     }
-    
+
     public UUID getId() {
         return id;
     }
-    
+
     protected void sleepForSeconds(int from, int to) {
         try {
             // Wait an amount of seconds between from and to
-            Thread.sleep(from * 1000 + random.get().nextInt((to - from) * 1000));
+            Thread.sleep(from * 1000 + random.get()
+                .nextInt((to - from) * 1000));
         } catch (InterruptedException ex) {
             // Do nothing here since we are just waiting artificially
         }

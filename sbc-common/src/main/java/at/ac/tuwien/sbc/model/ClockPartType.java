@@ -3,7 +3,6 @@
  * To change this template file, choose Tools | Templates
  * and open the template in the editor.
  */
-
 package at.ac.tuwien.sbc.model;
 
 /**
@@ -11,6 +10,7 @@ package at.ac.tuwien.sbc.model;
  * @author Christian
  */
 public enum ClockPartType {
+
     GEHAEUSE,
     UHRWERK,
     ZEIGER,

@@ -3,7 +3,6 @@
  * To change this template file, choose Tools | Templates
  * and open the template in the editor.
  */
-
 package at.ac.tuwien.sbc.ui;
 
 import at.ac.tuwien.sbc.ClockListener;
@@ -15,12 +14,12 @@ import java.util.List;
  * @author Christian
  */
 public class CollectingClockListener implements ClockListener {
-    
+
     private final Runnable listener;
     private final ClockList clockList;
 
     public CollectingClockListener(ClockList clockList, Runnable listener) {
-        this.clockList = clockList; 
+        this.clockList = clockList;
         this.listener = listener;
     }
 
@@ -29,5 +28,5 @@ public class CollectingClockListener implements ClockListener {
         clockList.addClocks(clocks);
         listener.run();
     }
-    
+
 }

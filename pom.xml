@@ -1,133 +1,133 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
-	<modelVersion>4.0.0</modelVersion>
-	<groupId>at.ac.tuwien</groupId>
-	<artifactId>sbc</artifactId>
-	<version>2014</version>
-	<packaging>pom</packaging>
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+    <groupId>at.ac.tuwien</groupId>
+    <artifactId>sbc</artifactId>
+    <version>2014</version>
+    <packaging>pom</packaging>
 
-	<name>Space based computing</name>
-	<description>Space based computing assignment</description>
+    <name>Space based computing</name>
+    <description>Space based computing assignment</description>
 
-	<modules>
-		<module>sbc-common</module>
-		<module>sbc-gui</module>
-		<module>sbc-xvsm</module>
-		<module>sbc-jms</module>
-		<module>sbc-distributor</module>
-	</modules>
+    <modules>
+        <module>sbc-common</module>
+        <module>sbc-gui</module>
+        <module>sbc-xvsm</module>
+        <module>sbc-jms</module>
+        <module>sbc-distributor</module>
+    </modules>
 
-	<properties>
-		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+    <properties>
+        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
 
-		<!-- The default port for the server and client which can be overidden 
-			by providing -Dserver.port=VALUE -->
-		<server.port>4242</server.port>
+        <!-- The default port for the server and client which can be overidden 
+        by providing -Dserver.port=VALUE -->
+        <server.port>4242</server.port>
 
-		<version.junit>4.11</version.junit>
-		<version.mozartspaces>2.1-SNAPSHOT</version.mozartspaces>
-	</properties>
+        <version.junit>4.11</version.junit>
+        <version.mozartspaces>2.1-SNAPSHOT</version.mozartspaces>
+    </properties>
 
-	<repositories>
-		<repository>
-			<id>mozartspaces</id>
-			<url>http://www.mozartspaces.org/maven-snapshots</url>
-			<snapshots>
-				<enabled>true</enabled>
-			</snapshots>
-		</repository>
-	</repositories>
+    <repositories>
+        <repository>
+            <id>mozartspaces</id>
+            <url>http://www.mozartspaces.org/maven-snapshots</url>
+            <snapshots>
+                <enabled>true</enabled>
+            </snapshots>
+        </repository>
+    </repositories>
 
-	<dependencyManagement>
-		<dependencies>
-			<dependency>
-				<groupId>${project.groupId}</groupId>
-				<artifactId>sbc-common</artifactId>
-				<version>${project.version}</version>
-			</dependency>
-			<dependency>
-				<groupId>${project.groupId}</groupId>
-				<artifactId>sbc-xvsm</artifactId>
-				<version>${project.version}</version>
-			</dependency>
-			<dependency>
-				<groupId>${project.groupId}</groupId>
-				<artifactId>sbc-jms</artifactId>
-				<version>${project.version}</version>
-			</dependency>
-			<dependency>
-				<groupId>${project.groupId}</groupId>
-				<artifactId>sbc-gui</artifactId>
-				<version>${project.version}</version>
-			</dependency>
-			<dependency>
-				<groupId>${project.groupId}</groupId>
-				<artifactId>sbc-distributor</artifactId>
-				<version>${project.version}</version>
-			</dependency>
+    <dependencyManagement>
+        <dependencies>
+            <dependency>
+                <groupId>${project.groupId}</groupId>
+                <artifactId>sbc-common</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>${project.groupId}</groupId>
+                <artifactId>sbc-xvsm</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>${project.groupId}</groupId>
+                <artifactId>sbc-jms</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>${project.groupId}</groupId>
+                <artifactId>sbc-gui</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>${project.groupId}</groupId>
+                <artifactId>sbc-distributor</artifactId>
+                <version>${project.version}</version>
+            </dependency>
 			
-			<!-- XVSM dependencies -->
-			<dependency>
-				<groupId>org.mozartspaces</groupId>
-				<artifactId>mozartspaces-runtime</artifactId>
-				<version>${version.mozartspaces}</version>
-			</dependency>
-			<dependency>
-				<groupId>org.mozartspaces</groupId>
-				<artifactId>mozartspaces-notifications</artifactId>
-				<version>${version.mozartspaces}</version>
-			</dependency>
-			<dependency>
-				<groupId>org.mozartspaces</groupId>
-				<artifactId>mozartspaces-xvsmp-jaxb</artifactId>
-				<version>${version.mozartspaces}</version>
-			</dependency>
+            <!-- XVSM dependencies -->
+            <dependency>
+                <groupId>org.mozartspaces</groupId>
+                <artifactId>mozartspaces-runtime</artifactId>
+                <version>${version.mozartspaces}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.mozartspaces</groupId>
+                <artifactId>mozartspaces-notifications</artifactId>
+                <version>${version.mozartspaces}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.mozartspaces</groupId>
+                <artifactId>mozartspaces-xvsmp-jaxb</artifactId>
+                <version>${version.mozartspaces}</version>
+            </dependency>
 
-			<!-- JMS dependencies -->
-			<dependency>
-				<groupId>org.apache.geronimo.specs</groupId>
-				<artifactId>geronimo-jms_1.1_spec</artifactId>
-				<version>1.1.1</version>
-			</dependency>
-			<dependency>
-				<groupId>org.apache.activemq</groupId>
-				<artifactId>activemq-core</artifactId>
-				<version>5.7.0</version>
-			</dependency>
+            <!-- JMS dependencies -->
+            <dependency>
+                <groupId>org.apache.geronimo.specs</groupId>
+                <artifactId>geronimo-jms_1.1_spec</artifactId>
+                <version>1.1.1</version>
+            </dependency>
+            <dependency>
+                <groupId>org.apache.activemq</groupId>
+                <artifactId>activemq-core</artifactId>
+                <version>5.7.0</version>
+            </dependency>
 
-			<!-- Test -->
-			<dependency>
-				<groupId>junit</groupId>
-				<artifactId>junit</artifactId>
-				<version>${version.junit}</version>
-				<scope>test</scope>
-			</dependency>
-		</dependencies>
-	</dependencyManagement>
+            <!-- Test -->
+            <dependency>
+                <groupId>junit</groupId>
+                <artifactId>junit</artifactId>
+                <version>${version.junit}</version>
+                <scope>test</scope>
+            </dependency>
+        </dependencies>
+    </dependencyManagement>
 
-	<build>
-		<plugins>
-			<plugin>
-				<artifactId>maven-compiler-plugin</artifactId>
-				<version>3.1</version>
-				<configuration>
-					<source>1.6</source>
-					<target>1.6</target>
-				</configuration>
-			</plugin>
-			<plugin>
-				<groupId>org.codehaus.mojo</groupId>
-				<artifactId>exec-maven-plugin</artifactId>
-				<version>1.2.1</version>
-				<executions>
-					<execution>
-						<goals>
-							<goal>java</goal>
-						</goals>
-					</execution>
-				</executions>
-			</plugin>
-		</plugins>
-	</build>
+    <build>
+        <plugins>
+            <plugin>
+                <artifactId>maven-compiler-plugin</artifactId>
+                <version>3.1</version>
+                <configuration>
+                    <source>1.6</source>
+                    <target>1.6</target>
+                </configuration>
+            </plugin>
+            <plugin>
+                <groupId>org.codehaus.mojo</groupId>
+                <artifactId>exec-maven-plugin</artifactId>
+                <version>1.2.1</version>
+                <executions>
+                    <execution>
+                        <goals>
+                            <goal>java</goal>
+                        </goals>
+                    </execution>
+                </executions>
+            </plugin>
+        </plugins>
+    </build>
 </project>

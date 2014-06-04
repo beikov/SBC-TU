@@ -3,7 +3,6 @@
  * To change this template file, choose Tools | Templates
  * and open the template in the editor.
  */
-
 package at.ac.tuwien.sbc.model;
 
 import java.io.Serializable;
@@ -15,9 +14,9 @@ import java.util.UUID;
  *
  * @author Christian
  */
-public abstract class Clock implements Comparable<Clock>, Serializable  {
-    
-	private final UUID id;
+public abstract class Clock implements Comparable<Clock>, Serializable {
+
+    private final UUID id;
     private long serialId;
     private final long createdTime;
     private long updatedTime;
@@ -29,17 +28,17 @@ public abstract class Clock implements Comparable<Clock>, Serializable  {
     private final UUID assemblerId;
     private final ClockType type;
     private UUID orderId;
-    
+
     private ClockStatus status;
-    
+
     private int quality;
     private UUID qualityCheckerId;
-    
+
     private UUID delivererId;
 
     public Clock(ClockPart chassis, ClockPart clockWork, ClockPart wristband, ClockPart clockHand1, ClockPart clockHand2, UUID assemblerId, ClockType type) {
-    	this.id = UUID.randomUUID();
-    	this.createdTime = this.updatedTime = System.currentTimeMillis();
+        this.id = UUID.randomUUID();
+        this.createdTime = this.updatedTime = System.currentTimeMillis();
         this.chassis = chassis;
         this.clockWork = clockWork;
         this.wristband = wristband;
@@ -49,8 +48,7 @@ public abstract class Clock implements Comparable<Clock>, Serializable  {
         this.status = ClockStatus.ASSEMBLED;
         this.type = type;
     }
-    
-    
+
     public void check(UUID qualityCheckerId, int quality) {
         if (qualityCheckerId == null) {
             throw new IllegalArgumentException("Invalid quality checker id!");
@@ -61,13 +59,13 @@ public abstract class Clock implements Comparable<Clock>, Serializable  {
         if (status != ClockStatus.ASSEMBLED) {
             throw new IllegalStateException("Clock is either already checked or delivered/disassembled!");
         }
-        
+
         this.status = ClockStatus.CHECKED;
         this.qualityCheckerId = qualityCheckerId;
         this.quality = quality;
         this.updatedTime = System.currentTimeMillis();
     }
-    
+
     public void deliver(UUID delivererId) {
         if (delivererId == null) {
             throw new IllegalArgumentException("Invalid deliverer id!");
@@ -75,7 +73,7 @@ public abstract class Clock implements Comparable<Clock>, Serializable  {
         if (status != ClockStatus.CHECKED) {
             throw new IllegalStateException("Clock is either not yet checked or already delivered/disassembled!");
         }
-        
+
         this.status = ClockStatus.DELIVERED;
         this.delivererId = delivererId;
         this.updatedTime = System.currentTimeMillis();
@@ -91,11 +89,11 @@ public abstract class Clock implements Comparable<Clock>, Serializable  {
         if (status != ClockStatus.CHECKED) {
             throw new IllegalStateException("Clock is either not yet checked or already delivered/disassembled!");
         }
-        
+
         this.status = ClockStatus.DISASSEMBLED;
         this.delivererId = delivererId;
         this.updatedTime = System.currentTimeMillis();
-        
+
         List<ClockPart> parts = new ArrayList<ClockPart>();
         parts.add(getChassis());
         parts.add(getClockHand1());
@@ -107,13 +105,13 @@ public abstract class Clock implements Comparable<Clock>, Serializable  {
     public UUID getId() {
         return id;
     }
-    
-    public long getSerialId(){
-    	return serialId;
+
+    public long getSerialId() {
+        return serialId;
     }
-    
-    public void setSerialId(long serialId){
-    	this.serialId = serialId;
+
+    public void setSerialId(long serialId) {
+        this.serialId = serialId;
     }
 
     public ClockPart getChassis() {
@@ -143,9 +141,9 @@ public abstract class Clock implements Comparable<Clock>, Serializable  {
     public ClockStatus getStatus() {
         return status;
     }
-    
+
     public ClockType getType() {
-    	return type;
+        return type;
     }
 
     public int getQuality() {
@@ -159,13 +157,13 @@ public abstract class Clock implements Comparable<Clock>, Serializable  {
     public UUID getDelivererId() {
         return delivererId;
     }
-    
-    public void setOrderId(UUID orderId){
-    	this.orderId = orderId;
+
+    public void setOrderId(UUID orderId) {
+        this.orderId = orderId;
     }
-    
-    public UUID getOrderId(){
-    	return orderId;
+
+    public UUID getOrderId() {
+        return orderId;
     }
 
     @Override
@@ -173,11 +171,11 @@ public abstract class Clock implements Comparable<Clock>, Serializable  {
         if (o == null) {
             throw new NullPointerException();
         }
-        
+
         if (this.equals(o)) {
             return 0;
         }
-        
+
         int result = assemblerId.compareTo(o.assemblerId);
         result = result != 0 ? result : (createdTime < o.createdTime) ? -1 : ((createdTime == o.createdTime) ? 0 : 1);
         return result;
@@ -205,7 +203,7 @@ public abstract class Clock implements Comparable<Clock>, Serializable  {
         return true;
     }
 
-	public boolean isNewer(Clock clock) {
+    public boolean isNewer(Clock clock) {
         return updatedTime > clock.updatedTime;
     }
 

@@ -59,9 +59,9 @@
 		instances you can set the configuration file name with a system property:
 		java -Dlogback.configurationFile=/path/to/config.xml MozartSpacesApp
 		
-		To have separated log files for different MozartSpaces instances (with
-		the same logback configuration) you can use variable substitution in the
-		configuration file, e.g., in the FileAppender configuration section. See
-		http://logback.qos.ch/manual/joran.html#variableSubstitution for details.		
-	 -->
+           To have separated log files for different MozartSpaces instances (with
+           the same logback configuration) you can use variable substitution in the
+           configuration file, e.g., in the FileAppender configuration section. See
+           http://logback.qos.ch/manual/joran.html#variableSubstitution for details.		
+    -->
 </configuration>
