@@ -5,23 +5,22 @@ import java.util.Arrays;
 import java.util.List;
 import javax.jms.JMSException;
 import javax.jms.MessageConsumer;
+import javax.jms.Session;
 
 public class JmsSubscription implements Subscription {
 
-    private final List<MessageConsumer> consumers;
+    private final Session session;
 
-    public JmsSubscription(MessageConsumer... consumers) {
-        this.consumers = Arrays.asList(consumers);
+    public JmsSubscription(Session session) {
+        this.session = session;
     }
 
     @Override
     public void cancel() {
-        for (MessageConsumer consumer : consumers) {
-            try {
-                consumer.setMessageListener(null);
-            } catch (JMSException ex) {
-                // Ignore
-            }
+        try {
+            session.close();
+        } catch (JMSException ex) {
+            // Ignore
         }
     }
 

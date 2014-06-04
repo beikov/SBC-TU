@@ -53,26 +53,51 @@ public abstract class AbstractJmsComponent {
         this.session = session;
         this.tm = new JmsTransactionManager(session);
     }
+    
+    protected Session createSession() throws JMSException {
+        return connection.createSession(true, Session.AUTO_ACKNOWLEDGE);
+    }
 
-    protected Topic createTopicIfNull(Topic t, String name) throws JMSException {
+    protected Topic createTopicIfNull(Session session, Topic t, String name) throws JMSException {
         return t == null ? session.createTopic(name) : t;
     }
 
-    protected Queue createQueueIfNull(Queue q, String name) throws JMSException {
+    protected Queue createQueueIfNull(Session session, Queue q, String name) throws JMSException {
         return q == null ? session.createQueue(name) : q;
     }
 
-    protected MessageConsumer createConsumerIfNull(MessageConsumer consumer, Destination destination) throws JMSException {
+    protected MessageConsumer createConsumerIfNull(Session session, MessageConsumer consumer, Destination destination) throws JMSException {
         return consumer == null ? session.createConsumer(destination) : consumer;
     }
 
-    protected MessageConsumer createConsumerIfNull(MessageConsumer consumer, Destination destination, String selector) throws
+    protected MessageConsumer createConsumerIfNull(Session session, MessageConsumer consumer, Destination destination, String selector) throws
         JMSException {
         return consumer == null ? session.createConsumer(destination, selector) : consumer;
     }
 
-    protected MessageProducer createProducerIfNull(MessageProducer producer, Destination destination) throws JMSException {
+    protected MessageProducer createProducerIfNull(Session session, MessageProducer producer, Destination destination) throws JMSException {
         return producer == null ? session.createProducer(destination) : producer;
+    }
+
+    protected Topic createTopicIfNull(Topic t, String name) throws JMSException {
+        return createTopicIfNull(session, t, name);
+    }
+
+    protected Queue createQueueIfNull(Queue q, String name) throws JMSException {
+        return createQueueIfNull(session, q, name);
+    }
+
+    protected MessageConsumer createConsumerIfNull(MessageConsumer consumer, Destination destination) throws JMSException {
+        return createConsumerIfNull(session, consumer, destination);
+    }
+
+    protected MessageConsumer createConsumerIfNull(MessageConsumer consumer, Destination destination, String selector) throws
+        JMSException {
+        return createConsumerIfNull(session, consumer, destination, selector);
+    }
+
+    protected MessageProducer createProducerIfNull(MessageProducer producer, Destination destination) throws JMSException {
+        return createProducerIfNull(session, producer, destination);
     }
 
     protected static interface Finder<T> {

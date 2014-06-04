@@ -204,7 +204,7 @@ public class MainFrame extends javax.swing.JFrame {
         jComboBox1 = new javax.swing.JComboBox();
         jLabel2 = new javax.swing.JLabel();
         jTextField1 = new javax.swing.JTextField();
-        jButton1 = new javax.swing.JButton();
+        createSupplierButton = new javax.swing.JButton();
         jLabel3 = new javax.swing.JLabel();
         jPanel2 = new javax.swing.JPanel();
         jScrollPane1 = new javax.swing.JScrollPane();
@@ -212,7 +212,7 @@ public class MainFrame extends javax.swing.JFrame {
         orderPanel1 = new javax.swing.JPanel();
         jPanel6 = new javax.swing.JPanel();
         jLabel13 = new javax.swing.JLabel();
-        jButton2 = new javax.swing.JButton();
+        createOrderButton = new javax.swing.JButton();
         jLabel14 = new javax.swing.JLabel();
         classicAmountTextField = new javax.swing.JTextField();
         jLabel15 = new javax.swing.JLabel();
@@ -443,20 +443,15 @@ public class MainFrame extends javax.swing.JFrame {
         jPanel1.setPreferredSize(new java.awt.Dimension(1671, 100));
 
         jComboBox1.setModel(new javax.swing.DefaultComboBoxModel(new String[] { "Gehäuse", "Uhrwerk", "Zeiger", "Lederarmband", "Metallarmband" }));
-        jComboBox1.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                jComboBox1ActionPerformed(evt);
-            }
-        });
 
         jLabel2.setText("Anzahl");
 
         jTextField1.setText("0");
 
-        jButton1.setText("Anlegen");
-        jButton1.addMouseListener(new java.awt.event.MouseAdapter() {
+        createSupplierButton.setText("Anlegen");
+        createSupplierButton.addMouseListener(new java.awt.event.MouseAdapter() {
             public void mouseReleased(java.awt.event.MouseEvent evt) {
-                jButton1MouseReleased(evt);
+                createSupplierButtonMouseReleased(evt);
             }
         });
 
@@ -477,7 +472,7 @@ public class MainFrame extends javax.swing.JFrame {
                         .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
                             .addComponent(jComboBox1, 0, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                             .addComponent(jTextField1, javax.swing.GroupLayout.DEFAULT_SIZE, 137, Short.MAX_VALUE)))
-                    .addComponent(jButton1))
+                    .addComponent(createSupplierButton))
                 .addContainerGap(1399, Short.MAX_VALUE))
         );
         jPanel1Layout.setVerticalGroup(
@@ -492,7 +487,7 @@ public class MainFrame extends javax.swing.JFrame {
                     .addComponent(jLabel2)
                     .addComponent(jTextField1, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
-                .addComponent(jButton1)
+                .addComponent(createSupplierButton)
                 .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
         );
 
@@ -516,37 +511,22 @@ public class MainFrame extends javax.swing.JFrame {
 
         jLabel13.setText("Sportuhren:");
 
-        jButton2.setText("anlegen");
-        jButton2.addMouseListener(new java.awt.event.MouseAdapter() {
+        createOrderButton.setText("anlegen");
+        createOrderButton.addMouseListener(new java.awt.event.MouseAdapter() {
             public void mouseReleased(java.awt.event.MouseEvent evt) {
-                jButton2MouseReleased(evt);
+                createOrderButtonMouseReleased(evt);
             }
         });
 
         jLabel14.setText("Klassische Uhren:");
 
         classicAmountTextField.setText("0");
-        classicAmountTextField.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                classicAmountTextFieldActionPerformed(evt);
-            }
-        });
 
         jLabel15.setText("Sportuhren mit zweiter Zeitzone:");
 
         sportAmountTextField.setText("0");
-        sportAmountTextField.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                sportAmountTextFieldActionPerformed(evt);
-            }
-        });
 
         timeZoneSportAmountTextField.setText("0");
-        timeZoneSportAmountTextField.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                timeZoneSportAmountTextFieldActionPerformed(evt);
-            }
-        });
 
         priorityComboBox.setModel(new javax.swing.DefaultComboBoxModel(new String[] { "niedrig", "mittel", "hoch" }));
 
@@ -563,7 +543,7 @@ public class MainFrame extends javax.swing.JFrame {
                         .addComponent(jLabel16)
                         .addGap(18, 18, 18)
                         .addComponent(priorityComboBox, javax.swing.GroupLayout.PREFERRED_SIZE, 89, javax.swing.GroupLayout.PREFERRED_SIZE))
-                    .addComponent(jButton2))
+                    .addComponent(createOrderButton))
                 .addGap(34, 34, 34)
                 .addGroup(jPanel6Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
                     .addComponent(jLabel14, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
@@ -598,7 +578,7 @@ public class MainFrame extends javax.swing.JFrame {
                             .addComponent(timeZoneSportAmountTextField, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)))
                     .addGroup(jPanel6Layout.createSequentialGroup()
                         .addGap(17, 17, 17)
-                        .addComponent(jButton2)))
+                        .addComponent(createOrderButton)))
                 .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
         );
 
@@ -620,7 +600,7 @@ public class MainFrame extends javax.swing.JFrame {
         pack();
     }// </editor-fold>//GEN-END:initComponents
 
-    private void jButton1MouseReleased(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_jButton1MouseReleased
+    private void createSupplierButtonMouseReleased(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_createSupplierButtonMouseReleased
         ClockPartType type = null;
         switch (jComboBox1.getSelectedIndex()) {
             case 0:
@@ -650,25 +630,9 @@ public class MainFrame extends javax.swing.JFrame {
         if (amount > 0) {
             supplierTableModel.addSupplier(new SupplierActor(connector, type, amount));
         }
-    }//GEN-LAST:event_jButton1MouseReleased
+    }//GEN-LAST:event_createSupplierButtonMouseReleased
 
-    private void jComboBox1ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jComboBox1ActionPerformed
-        // TODO add your handling code here:
-    }//GEN-LAST:event_jComboBox1ActionPerformed
-
-    private void timeZoneSportAmountTextFieldActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_timeZoneSportAmountTextFieldActionPerformed
-        // TODO add your handling code here:
-    }//GEN-LAST:event_timeZoneSportAmountTextFieldActionPerformed
-
-    private void sportAmountTextFieldActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_sportAmountTextFieldActionPerformed
-        // TODO add your handling code here:
-    }//GEN-LAST:event_sportAmountTextFieldActionPerformed
-
-    private void classicAmountTextFieldActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_classicAmountTextFieldActionPerformed
-        // TODO add your handling code here:
-    }//GEN-LAST:event_classicAmountTextFieldActionPerformed
-
-    private void jButton2MouseReleased(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_jButton2MouseReleased
+    private void createOrderButtonMouseReleased(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_createOrderButtonMouseReleased
         Map<ClockType, Integer[]> neededClocks = new HashMap<ClockType, Integer[]>();
         neededClocks.put(ClockType.KLASSISCH, new Integer[]{ Integer.parseInt(classicAmountTextField.getText()), 0 });
         neededClocks.put(ClockType.SPORT, new Integer[]{ Integer.parseInt(sportAmountTextField.getText()), 0 });
@@ -692,7 +656,7 @@ public class MainFrame extends javax.swing.JFrame {
         Order order = new Order(neededClocks, priority);
 
         connector.addOrder(order);
-    }//GEN-LAST:event_jButton2MouseReleased
+    }//GEN-LAST:event_createOrderButtonMouseReleased
 
     public static void start(final Connector connector, final ExecutorService threadPool) {
         /* Create and display the form */
@@ -713,11 +677,11 @@ public class MainFrame extends javax.swing.JFrame {
     private javax.swing.JTable clockTable2;
     private javax.swing.JTable clockTable3;
     private javax.swing.JTable clockTable4;
+    private javax.swing.JButton createOrderButton;
+    private javax.swing.JButton createSupplierButton;
     private javax.swing.JLabel deliveredValue;
     private javax.swing.JLabel disassembledValue;
     private javax.swing.JLabel gehaeuseValue;
-    private javax.swing.JButton jButton1;
-    private javax.swing.JButton jButton2;
     private javax.swing.JComboBox jComboBox1;
     private javax.swing.JLabel jLabel1;
     private javax.swing.JLabel jLabel10;

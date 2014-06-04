@@ -33,6 +33,7 @@ import javax.jms.MessageConsumer;
 import javax.jms.MessageProducer;
 import javax.jms.ObjectMessage;
 import javax.jms.Queue;
+import javax.jms.Session;
 import javax.jms.Topic;
 
 /**
@@ -59,6 +60,7 @@ public class JmsConnector extends AbstractJmsComponent implements Connector {
 
     private static final String DISTRIBUTOR_DEMAND_QUEUE = "queue/distributordemand";
     private static final String DISTRIBUTOR_STOCK_QUEUE_PREFIX = "queue/distributorstock-";
+    private static final String DISTRIBUTOR_STOCK_TOPIC_PREFIX = "topic/distributorstock-";
 
     private static final String IS_ASSEMBLED = "IS_ASSEMBLED";
     private static final String IS_DELIVERED = "IS_DELIVERED";
@@ -89,6 +91,7 @@ public class JmsConnector extends AbstractJmsComponent implements Connector {
     private Queue singleClockOrderQueue;
     private Topic orderTopic;
     private MessageProducer orderQueueProducer;
+    private MessageProducer orderTopicProducer;
     private MessageProducer singleClockOrderQueueProducer;
     private MessageConsumer orderTopicConsumer;
     private final Map<OrderPriority, MessageConsumer> orderPriorityConsumers = new EnumMap<OrderPriority, MessageConsumer>(
@@ -134,6 +137,7 @@ public class JmsConnector extends AbstractJmsComponent implements Connector {
                 msg.setStringProperty("priority", order.getPriority()
                                       .name());
                 orderQueueProducer.send(msg);
+                orderTopicProducer.send(msg);
             }
         });
     }
@@ -316,59 +320,126 @@ public class JmsConnector extends AbstractJmsComponent implements Connector {
 
     @Override
     public Subscription subscribeForClockParts(ClockPartListener listener) {
+        boolean close = true;
+        Session s = null;
+        
         try {
-            connectClockPartListener();
+            s = connectClockPartListener();
             clockPartTopicConsumer.setMessageListener(new JmsClockPartListener(listener));
-            return new JmsSubscription(clockPartTopicConsumer);
+            close = false;
+            return new JmsSubscription(s);
         } catch (JMSException ex) {
             throw new RuntimeException(ex);
+        } finally {
+            if (close && s != null) {
+                try {
+                    s.close();
+                } catch (JMSException ex) {
+                    throw new RuntimeException(ex);
+                }
+            }
         }
     }
 
     @Override
     public Subscription subscribeForClocks(ClockListener listener) {
+        boolean close = true;
+        Session s = null;
+        
         try {
-            connectClockListener();
+            s = connectClockListener();
             clockTopicConsumer.setMessageListener(new JmsClockListener(listener));
-            return new JmsSubscription(clockTopicConsumer);
+            close = false;
+            return new JmsSubscription(s);
         } catch (JMSException ex) {
             throw new RuntimeException(ex);
+        } finally {
+            if (close && s != null) {
+                try {
+                    s.close();
+                } catch (JMSException ex) {
+                    throw new RuntimeException(ex);
+                }
+            }
         }
     }
 
     @Override
     public Subscription subscribeForOrders(OrderListener listener) {
+        boolean close = true;
+        Session s = null;
+        
         try {
-            connectOrderListener();
+            s = connectOrderListener();
             JmsOrderListener l = new JmsOrderListener(listener);
             assembledTopicConsumer.setMessageListener(l);
             orderTopicConsumer.setMessageListener(l);
-            return new JmsSubscription(assembledTopicConsumer, orderTopicConsumer);
+            close = false;
+            return new JmsSubscription(s);
         } catch (JMSException ex) {
             throw new RuntimeException(ex);
+        } finally {
+            if (close && s != null) {
+                try {
+                    s.close();
+                } catch (JMSException ex) {
+                    throw new RuntimeException(ex);
+                }
+            }
         }
     }
 
     @Override
     public Subscription subscribeForDistributorDeliveries(ClockListener listener) {
+        boolean close = true;
+        Session s = null;
+        
         try {
-            // The stock must already be connected
-            // connectDistributorStock(distributorId);
+            s = connectDistributorListener();
             distributorStockTopicConsumer.setMessageListener(new JmsClockListener(listener));
-            return new JmsSubscription(distributorStockTopicConsumer);
+            close = false;
+            return new JmsSubscription(s);
         } catch (JMSException ex) {
             throw new RuntimeException(ex);
+        } finally {
+            if (close && s != null) {
+                try {
+                    s.close();
+                } catch (JMSException ex) {
+                    throw new RuntimeException(ex);
+                }
+            }
         }
     }
 
-    private void connectClockPartListener() throws JMSException {
-        clockPartTopic = createTopicIfNull(clockPartTopic, CLOCKPART_TOPIC);
-        clockPartTopicConsumer = createConsumerIfNull(clockPartTopicConsumer, clockPartTopic);
+    private Session connectClockPartListener() throws JMSException {
+        Session s = createSession();
+        clockPartTopic = createTopicIfNull(s, clockPartTopic, CLOCKPART_TOPIC);
+        clockPartTopicConsumer = createConsumerIfNull(s, clockPartTopicConsumer, clockPartTopic);
+        return s;
     }
 
-    private void connectClockListener() throws JMSException {
-        clockTopic = createTopicIfNull(clockTopic, CLOCK_TOPIC);
-        clockTopicConsumer = createConsumerIfNull(clockTopicConsumer, clockTopic);
+    private Session connectClockListener() throws JMSException {
+        Session s = createSession();
+        clockTopic = createTopicIfNull(s, clockTopic, CLOCK_TOPIC);
+        clockTopicConsumer = createConsumerIfNull(s, clockTopicConsumer, clockTopic);
+        return s;
+    }
+
+    private Session connectOrderListener() throws JMSException {
+        Session s = createSession();
+        orderTopic = createTopicIfNull(s, orderTopic, ORDER_TOPIC);
+        clockTopic = createTopicIfNull(s, clockTopic, CLOCK_TOPIC);
+        assembledTopicConsumer = createConsumerIfNull(s, assembledTopicConsumer, clockTopic, IS_ASSEMBLED + "=true");
+        orderTopicConsumer = createConsumerIfNull(s, orderTopicConsumer, orderTopic);
+        return s;
+    }
+
+    private Session connectDistributorListener() throws JMSException {
+        // distributorStockTopic must already be initialized
+        Session s = createSession();
+        distributorStockTopicConsumer = createConsumerIfNull(s, distributorStockTopicConsumer, distributorStockTopic);
+        return s;
     }
 
     private void connectSupplier() throws JMSException {
@@ -420,9 +491,11 @@ public class JmsConnector extends AbstractJmsComponent implements Connector {
 
     private void connectOrder() throws JMSException {
         orderQueue = createQueueIfNull(orderQueue, ORDER_QUEUE);
+        orderTopic = createTopicIfNull(orderTopic, ORDER_TOPIC);
         singleClockOrderQueue = createQueueIfNull(singleClockOrderQueue, SINGLE_CLOCK_ORDER_QUEUE);
 
         orderQueueProducer = createProducerIfNull(orderQueueProducer, orderQueue);
+        orderTopicProducer = createProducerIfNull(orderTopicProducer, orderTopic);
         singleClockOrderQueueProducer = createProducerIfNull(singleClockOrderQueueProducer, singleClockOrderQueue);
 
         if (orderPriorityConsumers.isEmpty()) {
@@ -432,17 +505,10 @@ public class JmsConnector extends AbstractJmsComponent implements Connector {
         }
         if (singleClockOrderPriorityConsumers.isEmpty()) {
             for (OrderPriority priority : OrderPriority.values()) {
-                singleClockOrderPriorityConsumers.put(priority, session.createConsumer(orderQueue, "priority='" + priority
+                singleClockOrderPriorityConsumers.put(priority, session.createConsumer(singleClockOrderQueue, "priority='" + priority
                                                                                        .name() + "'"));
             }
         }
-    }
-
-    private void connectOrderListener() throws JMSException {
-        orderTopic = createTopicIfNull(orderTopic, ORDER_TOPIC);
-        clockTopic = createTopicIfNull(clockTopic, CLOCK_TOPIC);
-        assembledTopicConsumer = createConsumerIfNull(assembledTopicConsumer, clockTopic, IS_ASSEMBLED + "=true");
-        orderTopicConsumer = createConsumerIfNull(orderTopicConsumer, orderTopic);
     }
 
     private void connectDistributor() throws JMSException {
@@ -458,10 +524,8 @@ public class JmsConnector extends AbstractJmsComponent implements Connector {
     private void connectDistributorStock(UUID distributorId) throws JMSException {
         distributorStockQueue = createQueueIfNull(distributorStockQueue, DISTRIBUTOR_STOCK_QUEUE_PREFIX + distributorId
                                                   .toString());
-        distributorStockTopic = createTopicIfNull(distributorStockTopic, DISTRIBUTOR_STOCK_QUEUE_PREFIX + distributorId
+        distributorStockTopic = createTopicIfNull(distributorStockTopic, DISTRIBUTOR_STOCK_TOPIC_PREFIX + distributorId
                                                   .toString());
-
-        distributorStockTopicConsumer = createConsumerIfNull(distributorStockTopicConsumer, distributorStockTopic);
     }
 
     @Override
@@ -505,7 +569,6 @@ public class JmsConnector extends AbstractJmsComponent implements Connector {
                         ObjectMessage msg = session.createObjectMessage(part);
                         msg.setBooleanProperty("IS_REMOVED", true);
                         clockPartTopicProducer.send(msg);
-
                     }
                 }
                 transactionalTask.doWork(parts);

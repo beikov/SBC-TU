@@ -2,36 +2,40 @@ package at.ac.tuwien.sbc.ui;
 
 import at.ac.tuwien.sbc.model.Order;
 import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.LinkedHashMap;
 import java.util.List;
-import java.util.Map;
 import java.util.UUID;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentLinkedQueue;
+import java.util.concurrent.ConcurrentMap;
 
 public class OrderList {
 
-    Map<UUID, Order> orders;
+    private final ConcurrentMap<UUID, Order> orderMap;
+    private final ConcurrentLinkedQueue<Order> orders;
 
     public OrderList() {
-        orders = new LinkedHashMap<UUID, Order>();
+        this.orderMap = new ConcurrentHashMap<UUID, Order>();
+        this.orders = new ConcurrentLinkedQueue<Order>();
     }
 
     public OrderList(List<Order> orders) {
-        this.orders = new HashMap<UUID, Order>();
+        this.orderMap = new ConcurrentHashMap<UUID, Order>();
+        this.orders = new ConcurrentLinkedQueue<Order>();
         addAll(orders);
     }
 
     public Order getOrder(UUID orderId) {
-        return orders.get(orderId);
+        return orderMap.get(orderId);
     }
 
     public List<Order> getList() {
-        return new ArrayList<Order>(orders.values());
+        return new ArrayList<Order>(orders);
     }
 
     public void addAll(List<Order> orders) {
         for (Order order : orders) {
-            this.orders.put(order.getId(), order);
+            this.orderMap.put(order.getId(), order);
+            this.orders.add(order);
         }
     }
 

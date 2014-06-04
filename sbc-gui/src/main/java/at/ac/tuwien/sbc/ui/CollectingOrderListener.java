@@ -8,7 +8,7 @@ import java.util.List;
 public class CollectingOrderListener implements OrderListener {
 
     private final Runnable listener;
-    private OrderList orderList;
+    private final OrderList orderList;
 
     public CollectingOrderListener(OrderList orderList, Runnable listener) {
         this.orderList = orderList;

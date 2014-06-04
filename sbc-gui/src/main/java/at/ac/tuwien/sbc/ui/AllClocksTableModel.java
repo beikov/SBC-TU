@@ -6,6 +6,7 @@
 package at.ac.tuwien.sbc.ui;
 
 import at.ac.tuwien.sbc.model.Clock;
+import at.ac.tuwien.sbc.model.TimezoneSportsClock;
 import java.util.List;
 import javax.swing.table.AbstractTableModel;
 
@@ -18,12 +19,12 @@ public class AllClocksTableModel extends AbstractTableModel {
     private final ClockList clockList;
     private List<Clock> clocks;
     private final String[] columnNames = { "Seriennummer", "Auftrag", "Uhrtyp", "Genauigkeit", "Gehäuse", "Uhrwerk", "Zeiger 1",
-        "Zeiger 2",
-        "Armband", "Gehäuse-Lieferant", "Uhrwerk-Lieferant", "Zeiger 1-Lieferant", "Zeiger 2-Lieferant", "Armband-Lieferant",
+        "Zeiger 2", "Zeiger 3",
+        "Armband", "Gehäuse-Lieferant", "Uhrwerk-Lieferant", "Zeiger 1-Lieferant", "Zeiger 2-Lieferant", "Zeiger 3-Lieferant", "Armband-Lieferant",
         "Montage", "Qualität", "Logistik" };
     private final Class<?>[] columnTypes = { String.class, String.class, String.class, Integer.class, String.class, String.class,
-        String.class, String.class,
-        String.class, String.class, String.class, String.class, String.class, String.class, String.class, String.class,
+        String.class, String.class, String.class,
+        String.class, String.class, String.class, String.class, String.class, String.class, String.class, String.class, String.class,
         String.class };
 
     public AllClocksTableModel(ClockList clockList) {
@@ -83,36 +84,52 @@ public class AllClocksTableModel extends AbstractTableModel {
                     .getId()
                     .toString();
             case 8:
+                if (clock instanceof TimezoneSportsClock) {
+                    return ((TimezoneSportsClock) clock).getClockHand3()
+                        .getId()
+                        .toString();
+                } else {
+                    return "";
+                }
+            case 9:
                 return clock.getWristband()
                     .getId()
                     .toString();
-            case 9:
+            case 10:
                 return clock.getChassis()
                     .getSupplierId()
                     .toString();
-            case 10:
+            case 11:
                 return clock.getClockWork()
                     .getSupplierId()
                     .toString();
-            case 11:
+            case 12:
                 return clock.getClockHand1()
                     .getSupplierId()
                     .toString();
-            case 12:
+            case 13:
                 return clock.getClockHand2()
                     .getSupplierId()
                     .toString();
-            case 13:
+            case 14:
+                if (clock instanceof TimezoneSportsClock) {
+                    return ((TimezoneSportsClock) clock).getClockHand3()
+                        .getSupplierId()
+                        .toString();
+                } else {
+                    return "";
+                }
+            case 15:
                 return clock.getWristband()
                     .getSupplierId()
                     .toString();
-            case 14:
+            case 16:
                 return clock.getAssemblerId()
                     .toString();
-            case 15:
+            case 17:
                 return clock.getQualityCheckerId() == null ? "" : clock.getQualityCheckerId()
                     .toString();
-            case 16:
+            case 18:
                 return clock.getDelivererId() == null ? "" : clock.getDelivererId()
                     .toString();
         }
