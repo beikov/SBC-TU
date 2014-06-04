@@ -63,9 +63,6 @@
         </profile>
         <profile>
             <id>distributor-jms</id>
-            <properties>
-                <mozartspaces.configurationFile>mozartspaces-client.xml</mozartspaces.configurationFile>
-            </properties>
             <dependencies>
                 <dependency>
                     <groupId>${project.groupId}</groupId>

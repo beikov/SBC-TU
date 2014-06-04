@@ -20,11 +20,13 @@ public class AllClocksTableModel extends AbstractTableModel {
     private List<Clock> clocks;
     private final String[] columnNames = { "Seriennummer", "Auftrag", "Uhrtyp", "Genauigkeit", "Gehäuse", "Uhrwerk", "Zeiger 1",
         "Zeiger 2", "Zeiger 3",
-        "Armband", "Gehäuse-Lieferant", "Uhrwerk-Lieferant", "Zeiger 1-Lieferant", "Zeiger 2-Lieferant", "Zeiger 3-Lieferant", "Armband-Lieferant",
+        "Armband", "Gehäuse-Lieferant", "Uhrwerk-Lieferant", "Zeiger 1-Lieferant", "Zeiger 2-Lieferant", "Zeiger 3-Lieferant",
+        "Armband-Lieferant",
         "Montage", "Qualität", "Logistik" };
     private final Class<?>[] columnTypes = { String.class, String.class, String.class, Integer.class, String.class, String.class,
         String.class, String.class, String.class,
-        String.class, String.class, String.class, String.class, String.class, String.class, String.class, String.class, String.class,
+        String.class, String.class, String.class, String.class, String.class, String.class, String.class, String.class,
+        String.class,
         String.class };
 
     public AllClocksTableModel(ClockList clockList) {

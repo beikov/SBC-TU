@@ -17,7 +17,6 @@ import at.ac.tuwien.sbc.model.SportsClock;
 import at.ac.tuwien.sbc.model.TimezoneSportsClock;
 import at.ac.tuwien.sbc.util.SbcUtils;
 import java.util.List;
-import java.util.Random;
 import java.util.UUID;
 
 /**
@@ -87,7 +86,8 @@ public class AssemblyActor extends AbstractActor {
 
     private ClockType getRandomClockType() {
         ClockType[] types = ClockType.values();
-        return types[random.get().nextInt(types.length)];
+        return types[random.get()
+            .nextInt(types.length)];
     }
 
     private void produceClock(final ClockType typeToProduce, final UUID orderId) {

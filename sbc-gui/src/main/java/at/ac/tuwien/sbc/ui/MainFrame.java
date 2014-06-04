@@ -5,13 +5,6 @@
  */
 package at.ac.tuwien.sbc.ui;
 
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.concurrent.ExecutorService;
-
-import javax.swing.JButton;
-
 import at.ac.tuwien.sbc.Connector;
 import at.ac.tuwien.sbc.actor.SupplierActor;
 import at.ac.tuwien.sbc.model.Clock;
@@ -19,6 +12,11 @@ import at.ac.tuwien.sbc.model.ClockPartType;
 import at.ac.tuwien.sbc.model.ClockType;
 import at.ac.tuwien.sbc.model.Order;
 import at.ac.tuwien.sbc.model.OrderPriority;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.concurrent.ExecutorService;
+import javax.swing.JButton;
 
 /**
  *
@@ -143,7 +141,7 @@ public class MainFrame extends javax.swing.JFrame {
         connector.subscribeForClocks(clockListener);
         List<Clock> pastClocks = connector.getClocks();
         clockListener.onClocksUpdated(pastClocks);
-        
+
         final CollectingOrderListener orderListener = new CollectingOrderListener(orderList, new Runnable() {
             @Override
             public void run() {
@@ -158,7 +156,6 @@ public class MainFrame extends javax.swing.JFrame {
         connector.subscribeForOrders(orderListener);
         orderListener.onOrderAdded(connector.getOrders());
         orderListener.onOrderClockFinished(pastClocks);
-    
 
     }
 
