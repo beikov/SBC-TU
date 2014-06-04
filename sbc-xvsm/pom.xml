@@ -197,5 +197,29 @@
                 </plugins>
             </build>
         </profile>
+        <profile>
+            <id>benchmark</id>
+            <build>
+                <plugins>
+                    <plugin>
+                        <groupId>org.codehaus.mojo</groupId>
+                        <artifactId>exec-maven-plugin</artifactId>                        
+                        <configuration>
+                            <mainClass>at.ac.tuwien.sbc.benchmark.Benchmark</mainClass>
+                            <arguments>
+                                <argument>${server.port}</argument>
+                                <argument>xvsm</argument>
+                            </arguments>
+                            <systemProperties>
+                                <systemProperty>
+                                    <key>mozartspaces.configurationFile</key>
+                                    <value>${mozartspaces.configurationFile}</value>
+                                </systemProperty>
+                            </systemProperties>
+                        </configuration>
+                    </plugin>
+                </plugins>
+            </build>
+        </profile>
     </profiles>
 </project>

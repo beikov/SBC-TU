@@ -25,10 +25,12 @@ import java.util.UUID;
  */
 public class AssemblyActor extends AbstractActor {
 
+    private final boolean doWait;
     OrderPriority lastPriority = null;
 
-    public AssemblyActor(Connector connector) {
+    public AssemblyActor(Connector connector, boolean doWait) {
         super(connector);
+        this.doWait = doWait;
     }
 
     public static void main(String[] args) throws Exception {
@@ -37,7 +39,7 @@ public class AssemblyActor extends AbstractActor {
         }
 
         Connector connector = SbcUtils.getConnector(Integer.parseInt(args[0]), args[1]);
-        AbstractActor actor = new AssemblyActor(connector);
+        AbstractActor actor = new AssemblyActor(connector, true);
         Thread t = new Thread(actor);
         t.start();
 
@@ -52,8 +54,10 @@ public class AssemblyActor extends AbstractActor {
     public void run() {
 
         while (!Thread.interrupted()) {
-            // Wait for 1-3 seconds
-            sleepForSeconds(1, 3);
+            if (doWait) {
+                // Wait for 1-3 seconds
+                sleepForSeconds(1, 3);
+            }
 
             TransactionalTask<SingleClockOrder> productionTask = new TransactionalTask<SingleClockOrder>() {
 

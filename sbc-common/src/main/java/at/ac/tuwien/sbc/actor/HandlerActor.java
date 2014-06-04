@@ -11,7 +11,7 @@ public class HandlerActor extends AbstractActor {
 
     public static void main(String[] args) throws Exception {
         if (args.length != 2) {
-            throw new IllegalArgumentException("Usage: Application PORT (xvsm|jms)");
+            throw new IllegalArgumentException("Usage: HandlerActor PORT (xvsm|jms)");
         }
 
         Connector connector = SbcUtils.getConnector(Integer.parseInt(args[0]), args[1]);

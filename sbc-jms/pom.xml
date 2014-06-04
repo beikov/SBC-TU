@@ -147,5 +147,23 @@
                 </plugins>
             </build>
         </profile>
+        <profile>
+            <id>benchmark</id>
+            <build>
+                <plugins>
+                    <plugin>
+                        <groupId>org.codehaus.mojo</groupId>
+                        <artifactId>exec-maven-plugin</artifactId>
+                        <configuration>
+                            <mainClass>at.ac.tuwien.sbc.benchmark.Benchmark</mainClass>
+                            <arguments>
+                                <argument>${server.port}</argument>
+                                <argument>jms</argument>
+                            </arguments>
+                        </configuration>
+                    </plugin>
+                </plugins>
+            </build>
+        </profile>
     </profiles>
 </project>
