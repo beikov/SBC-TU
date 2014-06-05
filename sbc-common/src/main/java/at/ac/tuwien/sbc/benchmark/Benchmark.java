@@ -27,6 +27,8 @@ import java.util.List;
  */
 public class Benchmark {
     
+	private static final int TOTAL_CLOCKPART_COUNT = 8250;
+	
     public static void main(String[] args) throws Exception {
         if (args.length != 2) {
             throw new IllegalArgumentException("Usage: Benchmark PORT (xvsm|jms)");
@@ -70,12 +72,13 @@ public class Benchmark {
             }
         };
         
-        Thread.sleep(90);
-        
+
+      
         for (Thread t : threads) {
             t.setUncaughtExceptionHandler(eh);
             t.start();
         }
+        
 
         System.out.println("Starting Benchmark");
         
@@ -90,7 +93,6 @@ public class Benchmark {
         }
         
         for (Thread t : threads) {
-        	System.out.println("interrupting");
             t.interrupt();
         }
         

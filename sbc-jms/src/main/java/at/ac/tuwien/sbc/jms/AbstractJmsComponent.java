@@ -54,9 +54,9 @@ public abstract class AbstractJmsComponent {
 		try {
 			ActiveMQConnectionFactory connectionFactory = new ActiveMQConnectionFactory(serverUri);
 
-			ActiveMQPrefetchPolicy policy = new ActiveMQPrefetchPolicy();
-			policy.setQueuePrefetch(0);
-			connectionFactory.setPrefetchPolicy(policy);
+//			ActiveMQPrefetchPolicy policy = new ActiveMQPrefetchPolicy();
+//			policy.setQueuePrefetch(0);
+//			connectionFactory.setPrefetchPolicy(policy);
 			connection = connectionFactory.createConnection();
 			connection.start();
 			session = connection.createSession(true, Session.CLIENT_ACKNOWLEDGE);
