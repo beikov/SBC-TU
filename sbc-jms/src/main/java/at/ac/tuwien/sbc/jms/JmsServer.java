@@ -59,9 +59,10 @@ public class JmsServer {
 
     private static void createIdSequence(int port) throws JMSException {
         ActiveMQConnectionFactory connectionFactory = new ActiveMQConnectionFactory("tcp://localhost:" + port);
-
+        
+        
         ActiveMQPrefetchPolicy policy = new ActiveMQPrefetchPolicy();
-        policy.setQueuePrefetch(0);
+        policy.setQueuePrefetch(ActiveMQPrefetchPolicy.DEFAULT_QUEUE_BROWSER_PREFETCH);
         connectionFactory.setPrefetchPolicy(policy);
         Connection connection = connectionFactory.createConnection();
         connection.start();

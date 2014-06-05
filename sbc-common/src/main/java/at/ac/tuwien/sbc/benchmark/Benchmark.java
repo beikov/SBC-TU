@@ -47,11 +47,11 @@ public class Benchmark {
         zeigerSupplier.run();
         
         List<Thread> threads = new ArrayList<Thread>();
-        AssemblyActor assembly1 = new AssemblyActor(connector, false);
-        AssemblyActor assembly2 = new AssemblyActor(connector, false);
-        QualityCheckerActor quality1 = new QualityCheckerActor(connector);
-        DelivererActor delivererA = new DelivererActor(connector, ClockQualityType.A);
-        DelivererActor delivererb = new DelivererActor(connector, ClockQualityType.B);
+        AssemblyActor assembly1 = new AssemblyActor(SbcUtils.getConnector(Integer.parseInt(args[0]), args[1]), false);
+        AssemblyActor assembly2 = new AssemblyActor(SbcUtils.getConnector(Integer.parseInt(args[0]), args[1]), false);
+        QualityCheckerActor quality1 = new QualityCheckerActor(SbcUtils.getConnector(Integer.parseInt(args[0]), args[1]));
+        DelivererActor delivererA = new DelivererActor(SbcUtils.getConnector(Integer.parseInt(args[0]), args[1]), ClockQualityType.A);
+        DelivererActor delivererb = new DelivererActor(SbcUtils.getConnector(Integer.parseInt(args[0]), args[1]), ClockQualityType.B);
         
         threads.add(new Thread(assembly1));
         threads.add(new Thread(assembly2));
@@ -69,6 +69,8 @@ public class Benchmark {
                 }
             }
         };
+        
+        Thread.sleep(90);
         
         for (Thread t : threads) {
             t.setUncaughtExceptionHandler(eh);
@@ -88,6 +90,7 @@ public class Benchmark {
         }
         
         for (Thread t : threads) {
+        	System.out.println("interrupting");
             t.interrupt();
         }
         

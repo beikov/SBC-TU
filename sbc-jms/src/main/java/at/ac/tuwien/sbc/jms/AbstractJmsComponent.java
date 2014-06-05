@@ -53,11 +53,6 @@ public abstract class AbstractJmsComponent {
 //        this.localPort = localPort;
         try {
             ActiveMQConnectionFactory connectionFactory = new ActiveMQConnectionFactory(serverUri);
-//			ActiveMQConnectionFactory connectionFactory = new ActiveMQConnectionFactory();
-
-            ActiveMQPrefetchPolicy policy = new ActiveMQPrefetchPolicy();
-            policy.setQueuePrefetch(0);
-            connectionFactory.setPrefetchPolicy(policy);
             connection = connectionFactory.createConnection();
             connection.start();
             session = connection.createSession(true, Session.CLIENT_ACKNOWLEDGE);
