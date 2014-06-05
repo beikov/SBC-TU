@@ -32,6 +32,8 @@ public class JmsServer {
         BrokerService broker = new BrokerService();
         broker.addConnector("tcp://localhost:" + port);
 		broker.setPersistent(false);
+        broker.setUseJmx(true);
+        broker.setEnableStatistics(true);
         broker.deleteAllMessages();
         broker.start();
         createIdSequence(port);
@@ -47,6 +49,8 @@ public class JmsServer {
             broker.setBrokerName(name);
             broker.addConnector("tcp://localhost:0");
             broker.setPersistent(false);
+            broker.setUseJmx(true);
+            broker.setEnableStatistics(true);
             broker.deleteAllMessages();
             broker.start();
             URI uri = broker.getTransportConnectorByScheme("tcp").getUri();

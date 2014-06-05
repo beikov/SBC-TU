@@ -41,6 +41,8 @@ public class JmsDistributorConnector extends AbstractJmsComponent implements Dis
     private Queue distributorDemandQueue;
     private MessageProducer distributorDemandQueueProducer;
     private MessageConsumer distributorDemandQueueConsumer;
+    
+    private DistributorDemand lastDemand;
 
     public JmsDistributorConnector(UUID distributorId, int serverPort) {
         super(serverPort);
@@ -62,29 +64,12 @@ public class JmsDistributorConnector extends AbstractJmsComponent implements Dis
 
         // Connect stock connector to distributor server
         stockConnector = new JmsDistributorStockConnector(distributorUri, distributorId.toString());
-
-        // Create initial demand
-        tm.transactional(new TransactionalWork() {
-
-            @Override
-            public void doWork() throws JMSException {
-                Map<ClockType, Integer> demand = new EnumMap<ClockType, Integer>(ClockType.class);
-                demand.put(ClockType.KLASSISCH, 0);
-                demand.put(ClockType.SPORT, 0);
-                demand.put(ClockType.ZEITZONEN_SPORT, 0);
-
-                DistributorDemand distributorDemand = new DistributorDemand(distributorUri, distributorId.toString(), demand);
-                ObjectMessage msg = session.createObjectMessage(distributorDemand);
-                msg.setStringProperty("id", distributorId.toString());
-                distributorDemandQueueProducer.send(msg);
-            }
-        });
     }
 
     private void connectDistributor0() throws JMSException {
         distributorDemandQueue = createQueueIfNull(distributorDemandQueue, JmsConstants.DISTRIBUTOR_DEMAND_QUEUE);
         distributorDemandQueueProducer = createProducerIfNull(distributorDemandQueueProducer, distributorDemandQueue);
-        distributorDemandQueueConsumer = createConsumerIfNull(distributorDemandQueueConsumer, distributorDemandQueue);
+        distributorDemandQueueConsumer = createConsumerIfNull(distributorDemandQueueConsumer, distributorDemandQueue, "id='" + distributorId.toString() + "'");
 
         clockQueue = createQueueIfNull(clockQueue, JmsConstants.CLOCK_QUEUE);
         deliveredConsumer = createConsumerIfNull(deliveredConsumer, clockQueue, JmsConstants.IS_DELIVERED + "=true AND "
@@ -99,22 +84,16 @@ public class JmsDistributorConnector extends AbstractJmsComponent implements Dis
             @Override
             public void doWork() throws JMSException {
                 connectDistributor();
-                MessageConsumer consumer = null;
 
-                try {
-                    consumer = session.createConsumer(distributorDemandQueue, "id='" + distributorId.toString() + "'");
+                if (lastDemand != null) {
                     // This is like a take-operation
-                    consumer.receive();
-
-                    DistributorDemand distributorDemand = new DistributorDemand(distributorUri, distributorId.toString(), demand);
-                    ObjectMessage msg = session.createObjectMessage(distributorDemand);
-                    msg.setStringProperty("id", distributorId.toString());
-                    distributorDemandQueueProducer.send(msg);
-                } finally {
-                    if (consumer != null) {
-                        consumer.close();
-                    }
+                    distributorDemandQueueConsumer.receive();
                 }
+
+                DistributorDemand distributorDemand = lastDemand = new DistributorDemand(distributorUri, distributorId.toString(), demand);
+                ObjectMessage msg = session.createObjectMessage(distributorDemand);
+                msg.setStringProperty("id", distributorId.toString());
+                distributorDemandQueueProducer.send(msg);
             }
         });
     }
