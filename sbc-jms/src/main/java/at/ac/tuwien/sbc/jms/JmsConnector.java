@@ -152,8 +152,9 @@ public class JmsConnector extends AbstractJmsComponent implements Connector {
             @Override
             public void doWork() throws JMSException {
                 connectDistributor();
-                ObjectMessage msg = (ObjectMessage) distributorDemandQueueConsumer.receive();
-                DistributorDemand distributorDemand = (DistributorDemand) msg.getObject();
+                List<DistributorDemand> currentContents = queueAsList(distributorDemandQueue.getQueueName());
+                ObjectMessage demandMsg = (ObjectMessage) distributorDemandQueueConsumer.receive();
+                DistributorDemand distributorDemand = (DistributorDemand) demandMsg.getObject();
                 JmsDistributorStockConnector stockConnector = null;
 
                 try {
@@ -170,7 +171,7 @@ public class JmsConnector extends AbstractJmsComponent implements Connector {
                                 stockConnector.deliver(clock);
                                 
                                 // Push the clock back but marked as "done" by setting IS_ORDERED to true
-                                msg = session.createObjectMessage(clock);
+                                ObjectMessage msg = session.createObjectMessage(clock);
                                 msg.setBooleanProperty(JmsConstants.IS_DELIVERED, true);
                                 msg.setBooleanProperty(JmsConstants.IS_ORDERED, true);
                                 clockQueueProducer.send(msg);
@@ -185,9 +186,10 @@ public class JmsConnector extends AbstractJmsComponent implements Connector {
                     }
                 }
 
-                msg = session.createObjectMessage(distributorDemand);
-                msg.setStringProperty("id", distributorDemand.getDestinationName());
-                distributorDemandQueueProducer.send(msg);
+                DistributorDemand copyDemand = new DistributorDemand(distributorDemand.getUri(), distributorDemand.getDestinationName(), distributorDemand.getNeededClocksPerType());
+                demandMsg = session.createObjectMessage(copyDemand);
+                demandMsg.setStringProperty("id", distributorDemand.getDestinationName());
+                distributorDemandQueueProducer.send(demandMsg);
             }
         });
     }

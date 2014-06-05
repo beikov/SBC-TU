@@ -59,7 +59,7 @@ public abstract class AbstractJmsComponent {
 //			connectionFactory.setPrefetchPolicy(policy);
 			connection = connectionFactory.createConnection();
 			connection.start();
-			session = connection.createSession(true, Session.CLIENT_ACKNOWLEDGE);
+			session = connection.createSession(true, Session.SESSION_TRANSACTED);
 			tm = new JmsTransactionManager(session);
 		} catch (JMSException ex) {
 			throw new RuntimeException(ex);
@@ -78,7 +78,7 @@ public abstract class AbstractJmsComponent {
 	}
 
 	protected Session createSession() throws JMSException {
-		return connection.createSession(true, Session.AUTO_ACKNOWLEDGE);
+		return connection.createSession(true, Session.SESSION_TRANSACTED);
 	}
 
 	protected void close() {
