@@ -18,17 +18,29 @@ public class JmsConstants {
 
     public static final String CLOCK_QUEUE = "queue/clock";
     public static final String CLOCK_TOPIC = "topic/clock";
-    public static final String CLOCKPART_QUEUE = "queue/clockpart";
-    public static final String CLOCKPART_TOPIC = "topic/clockpart";
+    public static final String CLOCK_PART_QUEUE = "queue/clockpart";
+    public static final String CLOCK_PART_TOPIC = "topic/clockpart";
 
     public static final String SINGLE_CLOCK_ORDER_QUEUE = "queue/singleclockorder";
     public static final String ORDER_QUEUE = "queue/order";
     public static final String ORDER_TOPIC = "topic/order";
 
-    public static final String IS_DISASSEMBLED = "IS_DISASSEMBLED";
-    public static final String IS_ASSEMBLED = "IS_ASSEMBLED";
-    public static final String IS_DELIVERED = "IS_DELIVERED";
-    public static final String IS_ORDERED = "IS_ORDERED";
+    // Clock part properties
+    public static final String CLOCK_PART_REMOVED = "removed";
+    public static final String CLOCK_PART_TYPE = "type";
+
+    // Clock properties
+    public static final String CLOCK_ID = "id";
+    public static final String CLOCK_TYPE = "type";
+    public static final String CLOCK_QUALITY = "quality";
+    public static final String CLOCK_STATUS = "status";
+
+    // Order properties
+    public static final String SINGLE_CLOCK_TYPE = "type";
+    public static final String ORDER_PRIORITY = "priority";
+
+    // Distributor properties
+    public static final String DISTRIBUTOR_ID = "id";
 
     public static final String DISTRIBUTOR_DEMAND_QUEUE = "queue/distributordemand";
     public static final String DISTRIBUTOR_STOCK_QUEUE_PREFIX = "queue/distributorstock-";

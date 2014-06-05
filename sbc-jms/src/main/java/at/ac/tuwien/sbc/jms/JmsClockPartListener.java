@@ -21,7 +21,7 @@ public class JmsClockPartListener implements MessageListener {
     public void onMessage(Message message) {
         ObjectMessage mess = (ObjectMessage) message;
         try {
-            if (mess.getBooleanProperty("IS_REMOVED")) {
+            if (mess.getBooleanProperty(JmsConstants.CLOCK_PART_REMOVED)) {
                 ClockPart part = (ClockPart) mess.getObject();
                 List<ClockPart> parts = new ArrayList<ClockPart>();
                 parts.add(part);

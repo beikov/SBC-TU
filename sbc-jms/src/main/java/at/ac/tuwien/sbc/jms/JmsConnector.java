@@ -15,6 +15,7 @@ import at.ac.tuwien.sbc.model.Clock;
 import at.ac.tuwien.sbc.model.ClockPart;
 import at.ac.tuwien.sbc.model.ClockPartType;
 import at.ac.tuwien.sbc.model.ClockQualityType;
+import at.ac.tuwien.sbc.model.ClockStatus;
 import at.ac.tuwien.sbc.model.ClockType;
 import at.ac.tuwien.sbc.model.DistributorDemand;
 import at.ac.tuwien.sbc.model.Order;
@@ -50,7 +51,6 @@ public class JmsConnector extends AbstractJmsComponent implements Connector {
     private MessageProducer clockPartTopicProducer;
     private MessageProducer clockTopicProducer;
     private MessageConsumer assembledConsumer;
-    private MessageConsumer deliveredConsumer;
     private MessageConsumer assembledTopicConsumer;
     private MessageConsumer clockPartTopicConsumer;
     private MessageConsumer clockTopicConsumer;
@@ -95,15 +95,15 @@ public class JmsConnector extends AbstractJmsComponent implements Connector {
                     for (int i = 0; i < order.getNeededClocksOfType(type); i++) {
                         ObjectMessage msg = session.createObjectMessage(new SingleClockOrder(order.getId(), type, order
                                                                                              .getPriority()));
-                        msg.setStringProperty("type", type.name());
-                        msg.setStringProperty("priority", order.getPriority()
+                        msg.setStringProperty(JmsConstants.SINGLE_CLOCK_TYPE, type.name());
+                        msg.setStringProperty(JmsConstants.ORDER_PRIORITY, order.getPriority()
                                               .name());
                         singleClockOrderQueueProducer.send(msg);
                     }
                 }
 
                 ObjectMessage msg = session.createObjectMessage(order);
-                msg.setStringProperty("priority", order.getPriority()
+                msg.setStringProperty(JmsConstants.ORDER_PRIORITY, order.getPriority()
                                       .name());
                 orderQueueProducer.send(msg);
                 orderTopicProducer.send(msg);
@@ -132,13 +132,24 @@ public class JmsConnector extends AbstractJmsComponent implements Connector {
     }
 
     private Clock takeDeliveredClockOfNoOrder(ClockType type) throws JMSException {
-        ObjectMessage msg = (ObjectMessage) deliveredConsumer.receive(JmsConstants.MAX_TIMEOUT_MILLIS);
+        MessageConsumer deliveredConsumer = null;
 
-        if (msg == null) {
-            return null;
+        try {
+            deliveredConsumer = session.createConsumer(clockQueue, JmsConstants.CLOCK_STATUS + "='" + ClockStatus.DELIVERED
+                                                       .name() + "'" + " AND "
+                                                       + JmsConstants.CLOCK_TYPE + "='" + type.name() + "'");
+            ObjectMessage msg = (ObjectMessage) deliveredConsumer.receive(JmsConstants.MAX_TIMEOUT_MILLIS);
+
+            if (msg == null) {
+                return null;
+            }
+
+            return (Clock) msg.getObject();
+        } finally {
+            if (deliveredConsumer != null) {
+                deliveredConsumer.close();
+            }
         }
-
-        return (Clock) msg.getObject();
     }
 
     private JmsDistributorStockConnector getStockConnector(URI distributorUri, String destinationName) throws JMSException {
@@ -152,7 +163,6 @@ public class JmsConnector extends AbstractJmsComponent implements Connector {
             @Override
             public void doWork() throws JMSException {
                 connectDistributor();
-                List<DistributorDemand> currentContents = queueAsList(distributorDemandQueue.getQueueName());
                 ObjectMessage demandMsg = (ObjectMessage) distributorDemandQueueConsumer.receive();
                 DistributorDemand distributorDemand = (DistributorDemand) demandMsg.getObject();
                 JmsDistributorStockConnector stockConnector = null;
@@ -169,11 +179,10 @@ public class JmsConnector extends AbstractJmsComponent implements Connector {
 
                             if (clock != null) {
                                 stockConnector.deliver(clock);
-                                
-                                // Push the clock back but marked as "done" by setting IS_ORDERED to true
+
+                                // Push the clock back but marked as "done" by setting not setting CLOCK_TYPE
                                 ObjectMessage msg = session.createObjectMessage(clock);
-                                msg.setBooleanProperty(JmsConstants.IS_DELIVERED, true);
-                                msg.setBooleanProperty(JmsConstants.IS_ORDERED, true);
+                                msg.setStringProperty(JmsConstants.CLOCK_STATUS, ClockStatus.DELIVERED.name());
                                 clockQueueProducer.send(msg);
                                 break;
                             }
@@ -186,9 +195,9 @@ public class JmsConnector extends AbstractJmsComponent implements Connector {
                     }
                 }
 
-                DistributorDemand copyDemand = new DistributorDemand(distributorDemand.getUri(), distributorDemand.getDestinationName(), distributorDemand.getNeededClocksPerType());
-                demandMsg = session.createObjectMessage(copyDemand);
-                demandMsg.setStringProperty("id", distributorDemand.getDestinationName());
+                // Push back the demand
+                demandMsg = session.createObjectMessage(distributorDemand);
+                demandMsg.setStringProperty(JmsConstants.DISTRIBUTOR_ID, distributorDemand.getDestinationName());
                 distributorDemandQueueProducer.send(demandMsg);
             }
         });
@@ -267,7 +276,7 @@ public class JmsConnector extends AbstractJmsComponent implements Connector {
 
     private Session connectClockPartListener() throws JMSException {
         Session s = createSession();
-        clockPartTopic = createTopicIfNull(s, clockPartTopic, JmsConstants.CLOCKPART_TOPIC);
+        clockPartTopic = createTopicIfNull(s, clockPartTopic, JmsConstants.CLOCK_PART_TOPIC);
         clockPartTopicConsumer = createConsumerIfNull(s, clockPartTopicConsumer, clockPartTopic);
         return s;
     }
@@ -283,24 +292,25 @@ public class JmsConnector extends AbstractJmsComponent implements Connector {
         Session s = createSession();
         orderTopic = createTopicIfNull(s, orderTopic, JmsConstants.ORDER_TOPIC);
         clockTopic = createTopicIfNull(s, clockTopic, JmsConstants.CLOCK_TOPIC);
-        assembledTopicConsumer = createConsumerIfNull(s, assembledTopicConsumer, clockTopic, JmsConstants.IS_ASSEMBLED + "=true");
+        assembledTopicConsumer = createConsumerIfNull(s, assembledTopicConsumer, clockTopic, JmsConstants.CLOCK_STATUS + "='"
+                                                      + ClockStatus.ASSEMBLED.name() + "'");
         orderTopicConsumer = createConsumerIfNull(s, orderTopicConsumer, orderTopic);
         return s;
     }
 
     private void connectSupplier() throws JMSException {
-        clockPartQueue = createQueueIfNull(clockPartQueue, JmsConstants.CLOCKPART_QUEUE);
+        clockPartQueue = createQueueIfNull(clockPartQueue, JmsConstants.CLOCK_PART_QUEUE);
         clockPartQueueProducer = createProducerIfNull(clockPartQueueProducer, clockPartQueue);
 
-        clockPartTopic = createTopicIfNull(clockPartTopic, JmsConstants.CLOCKPART_TOPIC);
+        clockPartTopic = createTopicIfNull(clockPartTopic, JmsConstants.CLOCK_PART_TOPIC);
         clockPartTopicProducer = createProducerIfNull(clockPartTopicProducer, clockPartTopic);
     }
 
     private void connectAssembler() throws JMSException {
         clockQueue = createQueueIfNull(clockQueue, JmsConstants.CLOCK_QUEUE);
         clockTopic = createTopicIfNull(clockTopic, JmsConstants.CLOCK_TOPIC);
-        clockPartQueue = createQueueIfNull(clockPartQueue, JmsConstants.CLOCKPART_QUEUE);
-        clockPartTopic = createTopicIfNull(clockPartTopic, JmsConstants.CLOCKPART_TOPIC);
+        clockPartQueue = createQueueIfNull(clockPartQueue, JmsConstants.CLOCK_PART_QUEUE);
+        clockPartTopic = createTopicIfNull(clockPartTopic, JmsConstants.CLOCK_PART_TOPIC);
 
         clockQueueProducer = createProducerIfNull(clockQueueProducer, clockQueue);
         clockTopicProducer = createProducerIfNull(clockTopicProducer, clockTopic);
@@ -308,7 +318,8 @@ public class JmsConnector extends AbstractJmsComponent implements Connector {
 
         if (partTypeConsumers.isEmpty()) {
             for (ClockPartType type : ClockPartType.values()) {
-                partTypeConsumers.put(type, session.createConsumer(clockPartQueue, "type='" + type.name() + "'"));
+                partTypeConsumers.put(type, session.createConsumer(clockPartQueue, JmsConstants.CLOCK_PART_TYPE + "='" + type
+                                                                   .name() + "'"));
             }
         }
     }
@@ -319,7 +330,8 @@ public class JmsConnector extends AbstractJmsComponent implements Connector {
         clockQueueProducer = createProducerIfNull(clockQueueProducer, clockQueue);
         clockTopicProducer = createProducerIfNull(clockTopicProducer, clockTopic);
 
-        assembledConsumer = createConsumerIfNull(assembledConsumer, clockQueue, JmsConstants.IS_ASSEMBLED + " = true");
+        assembledConsumer = createConsumerIfNull(assembledConsumer, clockQueue, JmsConstants.CLOCK_STATUS + "='"
+                                                 + ClockStatus.ASSEMBLED.name() + "'");
     }
 
     private void connectDeliverer() throws JMSException {
@@ -330,7 +342,8 @@ public class JmsConnector extends AbstractJmsComponent implements Connector {
 
         if (clockQualityConsumers.isEmpty()) {
             for (ClockQualityType type : ClockQualityType.values()) {
-                clockQualityConsumers.put(type, session.createConsumer(clockQueue, "quality='" + type.name() + "'"));
+                clockQualityConsumers.put(type, session.createConsumer(clockQueue, JmsConstants.CLOCK_QUALITY + "='" + type
+                                                                       .name() + "'"));
             }
         }
     }
@@ -346,12 +359,14 @@ public class JmsConnector extends AbstractJmsComponent implements Connector {
 
         if (orderPriorityConsumers.isEmpty()) {
             for (OrderPriority priority : OrderPriority.values()) {
-                orderPriorityConsumers.put(priority, session.createConsumer(orderQueue, "priority='" + priority.name() + "'"));
+                orderPriorityConsumers.put(priority, session.createConsumer(orderQueue, JmsConstants.ORDER_PRIORITY + "='"
+                                                                            + priority.name() + "'"));
             }
         }
         if (singleClockOrderPriorityConsumers.isEmpty()) {
             for (OrderPriority priority : OrderPriority.values()) {
-                singleClockOrderPriorityConsumers.put(priority, session.createConsumer(singleClockOrderQueue, "priority='"
+                singleClockOrderPriorityConsumers.put(priority, session.createConsumer(singleClockOrderQueue,
+                                                                                       JmsConstants.ORDER_PRIORITY + "='"
                                                                                        + priority
                                                                                        .name() + "'"));
             }
@@ -365,8 +380,6 @@ public class JmsConnector extends AbstractJmsComponent implements Connector {
 
         clockQueue = createQueueIfNull(clockQueue, JmsConstants.CLOCK_QUEUE);
         clockQueueProducer = createProducerIfNull(clockQueueProducer, clockQueue);
-        deliveredConsumer = createConsumerIfNull(deliveredConsumer, clockQueue, JmsConstants.IS_DELIVERED + "=true AND "
-                                                 + JmsConstants.IS_ORDERED + "=false");
     }
 
     @Override
@@ -378,7 +391,7 @@ public class JmsConnector extends AbstractJmsComponent implements Connector {
                 connectSupplier();
                 for (ClockPart cp : parts) {
                     ObjectMessage message = session.createObjectMessage(cp);
-                    message.setStringProperty("type", cp.getType()
+                    message.setStringProperty(JmsConstants.CLOCK_PART_TYPE, cp.getType()
                                               .name());
                     clockPartQueueProducer.send(message);
                     clockPartTopicProducer.send(message);
@@ -408,7 +421,7 @@ public class JmsConnector extends AbstractJmsComponent implements Connector {
                         ClockPart part = (ClockPart) message.getObject();
                         parts.add(part);
                         ObjectMessage msg = session.createObjectMessage(part);
-                        msg.setBooleanProperty("IS_REMOVED", true);
+                        msg.setBooleanProperty(JmsConstants.CLOCK_PART_REMOVED, true);
                         clockPartTopicProducer.send(msg);
                     }
                 }
@@ -458,7 +471,7 @@ public class JmsConnector extends AbstractJmsComponent implements Connector {
                 idSequence = idSequence != null ? idSequence : new JmsSequence(session, JmsConstants.ID_QUEUE);
                 clock.setSerialId(idSequence.getNextId());
                 ObjectMessage msg = session.createObjectMessage(clock);
-                msg.setBooleanProperty(JmsConstants.IS_ASSEMBLED, true);
+                msg.setStringProperty(JmsConstants.CLOCK_STATUS, ClockStatus.ASSEMBLED.name());
                 clockQueueProducer.send(msg);
                 clockTopicProducer.send(msg);
             }
@@ -474,7 +487,7 @@ public class JmsConnector extends AbstractJmsComponent implements Connector {
             public void doWork() throws JMSException {
                 connectChecker();
                 ObjectMessage message = session.createObjectMessage(clock);
-                message.setStringProperty("quality", type.name());
+                message.setStringProperty(JmsConstants.CLOCK_QUALITY, type.name());
                 clockQueueProducer.send(message);
                 clockTopicProducer.send(message);
             }
@@ -489,8 +502,12 @@ public class JmsConnector extends AbstractJmsComponent implements Connector {
             public void doWork() throws JMSException {
                 connectDeliverer();
                 Message msg = session.createObjectMessage(clock);
-                msg.setBooleanProperty(JmsConstants.IS_DELIVERED, true);
-                msg.setBooleanProperty(JmsConstants.IS_ORDERED, clock.getOrderId() != null);
+                msg.setStringProperty(JmsConstants.CLOCK_STATUS, ClockStatus.DELIVERED.name());
+                if (clock.getOrderId() == null) {
+                    // Setting the type makes it available for handler to ship clocks to distributors
+                    msg.setStringProperty(JmsConstants.CLOCK_TYPE, clock.getType()
+                                          .name());
+                }
                 clockTopicProducer.send(msg);
                 clockQueueProducer.send(msg);
             }
@@ -505,7 +522,7 @@ public class JmsConnector extends AbstractJmsComponent implements Connector {
             public void doWork() throws JMSException {
                 connectDeliverer();
                 Message msg = session.createObjectMessage(clock);
-                msg.setBooleanProperty(JmsConstants.IS_DISASSEMBLED, true);
+                msg.setStringProperty(JmsConstants.CLOCK_STATUS, ClockStatus.DISASSEMBLED.name());
                 clockTopicProducer.send(msg);
                 clockQueueProducer.send(msg);
             }
@@ -514,7 +531,7 @@ public class JmsConnector extends AbstractJmsComponent implements Connector {
 
     @Override
     public List<ClockPart> getClockParts() {
-        return queueAsList(JmsConstants.CLOCKPART_QUEUE);
+        return queueAsList(JmsConstants.CLOCK_PART_QUEUE);
     }
 
     @Override

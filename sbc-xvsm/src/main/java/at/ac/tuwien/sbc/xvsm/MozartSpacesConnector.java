@@ -91,14 +91,13 @@ public class MozartSpacesConnector extends AbstractMozartSpacesComponent impleme
                                                          new FifoCoordinator());
 
         clocksDeliveredToDistributorsContainer = getOrCreateContainer(
-        												capi, MozartSpacesConstants.DELIVERED_TO_DISTRIBUTORS_CONTAINER_NAME, 
-        												new FifoCoordinator());
-        
+            capi, MozartSpacesConstants.DELIVERED_TO_DISTRIBUTORS_CONTAINER_NAME,
+            new FifoCoordinator());
+
         distributorDemandContainer = getOrCreateContainer(capi, MozartSpacesConstants.DISTRIBUTOR_DEMAND_CONTAINER_NAME,
                                                           new QueryCoordinator(),
                                                           new FifoCoordinator());
-        
-        
+
     }
 
     @Override
@@ -177,8 +176,9 @@ public class MozartSpacesConnector extends AbstractMozartSpacesComponent impleme
                                            IsolationLevel.READ_COMMITTED, null));
             clocks.addAll((List) capi.read(disassembledClocksContainer, selectors, MzsConstants.RequestTimeout.INFINITE, null,
                                            IsolationLevel.READ_COMMITTED, null));
-            clocks.addAll((List) capi.read(clocksDeliveredToDistributorsContainer, selectors, MzsConstants.RequestTimeout.INFINITE,null,
-            								IsolationLevel.READ_COMMITTED,null));
+            clocks.addAll((List) capi.read(clocksDeliveredToDistributorsContainer, selectors,
+                                           MzsConstants.RequestTimeout.INFINITE, null,
+                                           IsolationLevel.READ_COMMITTED, null));
             return clocks;
         } catch (MzsCoreException ex) {
             throw new RuntimeException(ex);
@@ -424,10 +424,13 @@ public class MozartSpacesConnector extends AbstractMozartSpacesComponent impleme
             public void doWork(TransactionReference tx) throws MzsCoreException {
                 List<Selector> selectors = new ArrayList<Selector>();
                 Query query = new Query()
-                    .filter(Property.forName("type").equalTo(type))
-                    .filter(Property.forName("orderId").equalTo(null));
+                    .filter(Property.forName("type")
+                        .equalTo(type))
+                    .filter(Property.forName("orderId")
+                        .equalTo(null));
                 selectors.add(QueryCoordinator.newSelector(query, 1));
-                clocks.addAll((List) capi.take(deliveredClocksContainer, selectors, MozartSpacesConstants.MAX_TIMEOUT_MILLIS, tx));
+                clocks.addAll((List) capi
+                    .take(deliveredClocksContainer, selectors, MozartSpacesConstants.MAX_TIMEOUT_MILLIS, tx));
             }
         });
 
@@ -473,8 +476,9 @@ public class MozartSpacesConnector extends AbstractMozartSpacesComponent impleme
                     if (stockConnector != null) {
                         stockConnector.close();
                     }
-                    
-                    capi.write(distributorDemandContainer, MzsConstants.RequestTimeout.INFINITE, tx, new Entry(distributorDemand));
+
+                    capi.write(distributorDemandContainer, MzsConstants.RequestTimeout.INFINITE, tx,
+                               new Entry(distributorDemand));
                 }
             }
         });

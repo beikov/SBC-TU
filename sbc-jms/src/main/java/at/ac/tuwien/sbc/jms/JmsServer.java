@@ -31,13 +31,14 @@ public class JmsServer {
         Integer port = Integer.parseInt(args[0]);
         BrokerService broker = new BrokerService();
         broker.addConnector("tcp://localhost:" + port);
-		broker.setPersistent(false);
+        broker.setPersistent(false);
         broker.setUseJmx(true);
         broker.setEnableStatistics(true);
         broker.deleteAllMessages();
         broker.start();
         createIdSequence(port);
-        URI uri = broker.getTransportConnectorByScheme("tcp").getUri();
+        URI uri = broker.getTransportConnectorByScheme("tcp")
+            .getUri();
         System.out.println("Started JMS-Server at: " + uri.toString());
         System.out.println("Press CTRL+C to shutdown the server...");
         while (System.in.read() != -1);
@@ -53,7 +54,8 @@ public class JmsServer {
             broker.setEnableStatistics(true);
             broker.deleteAllMessages();
             broker.start();
-            URI uri = broker.getTransportConnectorByScheme("tcp").getUri();
+            URI uri = broker.getTransportConnectorByScheme("tcp")
+                .getUri();
             System.out.println("Started JMS-Server at: " + uri.toString());
             return uri;
         } catch (Exception ex) {
@@ -63,8 +65,7 @@ public class JmsServer {
 
     private static void createIdSequence(int port) throws JMSException {
         ActiveMQConnectionFactory connectionFactory = new ActiveMQConnectionFactory("tcp://localhost:" + port);
-        
-        
+
         ActiveMQPrefetchPolicy policy = new ActiveMQPrefetchPolicy();
         policy.setQueuePrefetch(0);
         connectionFactory.setPrefetchPolicy(policy);

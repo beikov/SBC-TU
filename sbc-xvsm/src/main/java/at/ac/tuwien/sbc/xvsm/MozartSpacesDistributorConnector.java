@@ -97,10 +97,12 @@ public class MozartSpacesDistributorConnector extends AbstractMozartSpacesCompon
             public void doWork(TransactionReference tx) throws MzsCoreException {
                 List<Selector> selectors = new ArrayList<Selector>();
                 Query query = new Query()
-                    .filter(Property.forName("uri").equalTo(distributorUri))
-                    .filter(Property.forName("destinationName").equalTo(distributorId.toString()));
+                    .filter(Property.forName("uri")
+                        .equalTo(distributorUri))
+                    .filter(Property.forName("destinationName")
+                        .equalTo(distributorId.toString()));
                 selectors.add(QueryCoordinator.newSelector(query, MzsConstants.Selecting.COUNT_ALL));
-                
+
                 capi.delete(distributorDemandContainer, selectors, MzsConstants.RequestTimeout.TRY_ONCE, tx);
                 capi.write(entry, distributorDemandContainer, MozartSpacesConstants.MAX_TIMEOUT_MILLIS, tx);
             }

@@ -12,11 +12,8 @@ import at.ac.tuwien.sbc.model.Clock;
 import at.ac.tuwien.sbc.model.ClockType;
 import at.ac.tuwien.sbc.model.DistributorDemand;
 import java.net.URI;
-import java.util.EnumMap;
 import java.util.Map;
 import java.util.UUID;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 import javax.jms.JMSException;
 import javax.jms.MessageConsumer;
 import javax.jms.MessageProducer;
@@ -35,13 +32,11 @@ public class JmsDistributorConnector extends AbstractJmsComponent implements Dis
     private JmsDistributorStockConnector stockConnector;
 
     private Queue clockQueue;
-    private MessageConsumer deliveredConsumer;
 
     // Distributor stuff
     private Queue distributorDemandQueue;
     private MessageProducer distributorDemandQueueProducer;
-    private MessageConsumer distributorDemandQueueConsumer;
-    
+
     private DistributorDemand lastDemand;
 
     public JmsDistributorConnector(UUID distributorId, int serverPort) {
@@ -69,12 +64,8 @@ public class JmsDistributorConnector extends AbstractJmsComponent implements Dis
     private void connectDistributor0() throws JMSException {
         distributorDemandQueue = createQueueIfNull(distributorDemandQueue, JmsConstants.DISTRIBUTOR_DEMAND_QUEUE);
         distributorDemandQueueProducer = createProducerIfNull(distributorDemandQueueProducer, distributorDemandQueue);
-        distributorDemandQueueConsumer = createConsumerIfNull(distributorDemandQueueConsumer, distributorDemandQueue, "id='" + distributorId.toString() + "'");
 
         clockQueue = createQueueIfNull(clockQueue, JmsConstants.CLOCK_QUEUE);
-        deliveredConsumer = createConsumerIfNull(deliveredConsumer, clockQueue, JmsConstants.IS_DELIVERED + "=true AND "
-                                                 + JmsConstants.IS_ORDERED
-                                                 + "=true");
     }
 
     @Override
@@ -86,13 +77,23 @@ public class JmsDistributorConnector extends AbstractJmsComponent implements Dis
                 connectDistributor();
 
                 if (lastDemand != null) {
-                    // This is like a take-operation
-                    distributorDemandQueueConsumer.receive();
+                    MessageConsumer consumer = null;
+                    try {
+                        consumer = session.createConsumer(distributorDemandQueue, JmsConstants.DISTRIBUTOR_ID + "='"
+                                                          + distributorId.toString() + "'");
+                        // This is like a take-operation
+                        consumer.receive();
+                    } finally {
+                        if (consumer != null) {
+                            consumer.close();
+                        }
+                    }
                 }
 
-                DistributorDemand distributorDemand = lastDemand = new DistributorDemand(distributorUri, distributorId.toString(), demand);
+                DistributorDemand distributorDemand = lastDemand = new DistributorDemand(distributorUri, distributorId
+                                                                                         .toString(), demand);
                 ObjectMessage msg = session.createObjectMessage(distributorDemand);
-                msg.setStringProperty("id", distributorId.toString());
+                msg.setStringProperty(JmsConstants.DISTRIBUTOR_ID, distributorId.toString());
                 distributorDemandQueueProducer.send(msg);
             }
         });

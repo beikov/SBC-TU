@@ -69,8 +69,9 @@ public class JmsDistributorStockConnector extends AbstractJmsComponent {
                 MessageConsumer distributorStockQueueConsumer = null;
 
                 try {
-                    distributorStockQueueConsumer = session.createConsumer(distributorStockQueue, "id=" + removedClock
-                                                                         .getSerialId());
+                    distributorStockQueueConsumer = session.createConsumer(distributorStockQueue, JmsConstants.CLOCK_ID + "="
+                                                                           + removedClock
+                                                                           .getSerialId());
                     distributorStockQueueConsumer.receive();
                 } finally {
                     if (distributorStockQueueConsumer != null) {
@@ -87,7 +88,7 @@ public class JmsDistributorStockConnector extends AbstractJmsComponent {
             @Override
             public void doWork() throws JMSException {
                 ObjectMessage msg = session.createObjectMessage(clock);
-                msg.setLongProperty("id", clock.getSerialId());
+                msg.setLongProperty(JmsConstants.CLOCK_ID, clock.getSerialId());
                 distributorStockQueueProducer.send(msg);
                 distributorStockTopicProducer.send(msg);
             }
