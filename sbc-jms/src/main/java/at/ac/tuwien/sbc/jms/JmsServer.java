@@ -62,7 +62,7 @@ public class JmsServer {
         
         
         ActiveMQPrefetchPolicy policy = new ActiveMQPrefetchPolicy();
-        policy.setQueuePrefetch(ActiveMQPrefetchPolicy.DEFAULT_QUEUE_BROWSER_PREFETCH);
+        policy.setQueuePrefetch(0);
         connectionFactory.setPrefetchPolicy(policy);
         Connection connection = connectionFactory.createConnection();
         connection.start();

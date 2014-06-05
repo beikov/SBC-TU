@@ -28,194 +28,198 @@ import org.apache.activemq.ActiveMQPrefetchPolicy;
  */
 public abstract class AbstractJmsComponent {
 
-    private final String serverHost;
-    private final int serverPort;
-    private final URI serverUri;
-//    private final String localHost;
-//	private final int localPort;
-    private final Connection connection;
-    protected final Session session;
-    protected final JmsTransactionManager tm;
+	private final String serverHost;
+	private final int serverPort;
+	private final URI serverUri;
+	//    private final String localHost;
+	//	private final int localPort;
+	private final Connection connection;
+	protected final Session session;
+	protected final JmsTransactionManager tm;
 
-    private static URI getUri(String serverHost, int serverPort) {
-        return URI.create("tcp://" + serverHost + ":" + serverPort);
-    }
+	private static URI getUri(String serverHost, int serverPort) {
+		return URI.create("tcp://" + serverHost + ":" + serverPort);
+	}
 
-    public AbstractJmsComponent(int serverPort) {
-        this("localhost", serverPort);
-    }
+	public AbstractJmsComponent(int serverPort) {
+		this("localhost", serverPort);
+	}
 
-    public AbstractJmsComponent(String serverHost, int serverPort/* , String localHost, int localPort */) {
-        this.serverHost = serverHost;
-        this.serverPort = serverPort;
-        this.serverUri = getUri(serverHost, serverPort);
-//        this.localHost = localHost;
-//        this.localPort = localPort;
-        try {
-            ActiveMQConnectionFactory connectionFactory = new ActiveMQConnectionFactory(serverUri);
-            connection = connectionFactory.createConnection();
-            connection.start();
-            session = connection.createSession(true, Session.CLIENT_ACKNOWLEDGE);
-            tm = new JmsTransactionManager(session);
-        } catch (JMSException ex) {
-            throw new RuntimeException(ex);
-        }
-    }
+	public AbstractJmsComponent(String serverHost, int serverPort/* , String localHost, int localPort */) {
+		this.serverHost = serverHost;
+		this.serverPort = serverPort;
+		this.serverUri = getUri(serverHost, serverPort);
+		//        this.localHost = localHost;
+		//        this.localPort = localPort;
+		try {
+			ActiveMQConnectionFactory connectionFactory = new ActiveMQConnectionFactory(serverUri);
 
-    public AbstractJmsComponent(Session session) {
-        this.serverHost = null;
-        this.serverPort = -1;
-        this.serverUri = null;
-//        this.localHost = null;
-//        this.localPort = null;
-        this.connection = null;
-        this.session = session;
-        this.tm = new JmsTransactionManager(session);
-    }
+			ActiveMQPrefetchPolicy policy = new ActiveMQPrefetchPolicy();
+			policy.setQueuePrefetch(0);
+			connectionFactory.setPrefetchPolicy(policy);
+			connection = connectionFactory.createConnection();
+			connection.start();
+			session = connection.createSession(true, Session.CLIENT_ACKNOWLEDGE);
+			tm = new JmsTransactionManager(session);
+		} catch (JMSException ex) {
+			throw new RuntimeException(ex);
+		}
+	}
 
-    protected Session createSession() throws JMSException {
-        return connection.createSession(true, Session.AUTO_ACKNOWLEDGE);
-    }
+	public AbstractJmsComponent(Session session) {
+		this.serverHost = null;
+		this.serverPort = -1;
+		this.serverUri = null;
+		//        this.localHost = null;
+		//        this.localPort = null;
+		this.connection = null;
+		this.session = session;
+		this.tm = new JmsTransactionManager(session);
+	}
 
-    protected void close() {
-        try {
-            connection.close();
-        } catch (JMSException ex) {
-            // Ignore
-        }
-    }
+	protected Session createSession() throws JMSException {
+		return connection.createSession(true, Session.AUTO_ACKNOWLEDGE);
+	}
 
-    protected Topic createTopicIfNull(Session session, Topic t, String name) throws JMSException {
-        return t == null ? session.createTopic(name) : t;
-    }
+	protected void close() {
+		try {
+			connection.close();
+		} catch (JMSException ex) {
+			// Ignore
+		}
+	}
 
-    protected Queue createQueueIfNull(Session session, Queue q, String name) throws JMSException {
-        return q == null ? session.createQueue(name) : q;
-    }
+	protected Topic createTopicIfNull(Session session, Topic t, String name) throws JMSException {
+		return t == null ? session.createTopic(name) : t;
+	}
 
-    protected MessageConsumer createConsumerIfNull(Session session, MessageConsumer consumer, Destination destination) throws
-        JMSException {
-        return consumer == null ? session.createConsumer(destination) : consumer;
-    }
+	protected Queue createQueueIfNull(Session session, Queue q, String name) throws JMSException {
+		return q == null ? session.createQueue(name) : q;
+	}
 
-    protected MessageConsumer createConsumerIfNull(Session session, MessageConsumer consumer, Destination destination, String selector)
-        throws
-        JMSException {
-        return consumer == null ? session.createConsumer(destination, selector) : consumer;
-    }
+	protected MessageConsumer createConsumerIfNull(Session session, MessageConsumer consumer, Destination destination) throws
+	JMSException {
+		return consumer == null ? session.createConsumer(destination) : consumer;
+	}
 
-    protected MessageProducer createProducerIfNull(Session session, MessageProducer producer, Destination destination) throws
-        JMSException {
-        return producer == null ? session.createProducer(destination) : producer;
-    }
+	protected MessageConsumer createConsumerIfNull(Session session, MessageConsumer consumer, Destination destination, String selector)
+			throws
+			JMSException {
+		return consumer == null ? session.createConsumer(destination, selector) : consumer;
+	}
 
-    protected Topic createTopicIfNull(Topic t, String name) throws JMSException {
-        return createTopicIfNull(session, t, name);
-    }
+	protected MessageProducer createProducerIfNull(Session session, MessageProducer producer, Destination destination) throws
+	JMSException {
+		return producer == null ? session.createProducer(destination) : producer;
+	}
 
-    protected Queue createQueueIfNull(Queue q, String name) throws JMSException {
-        return createQueueIfNull(session, q, name);
-    }
+	protected Topic createTopicIfNull(Topic t, String name) throws JMSException {
+		return createTopicIfNull(session, t, name);
+	}
 
-    protected MessageConsumer createConsumerIfNull(MessageConsumer consumer, Destination destination) throws JMSException {
-        return createConsumerIfNull(session, consumer, destination);
-    }
+	protected Queue createQueueIfNull(Queue q, String name) throws JMSException {
+		return createQueueIfNull(session, q, name);
+	}
 
-    protected MessageConsumer createConsumerIfNull(MessageConsumer consumer, Destination destination, String selector) throws
-        JMSException {
-        return createConsumerIfNull(session, consumer, destination, selector);
-    }
+	protected MessageConsumer createConsumerIfNull(MessageConsumer consumer, Destination destination) throws JMSException {
+		return createConsumerIfNull(session, consumer, destination);
+	}
 
-    protected MessageProducer createProducerIfNull(MessageProducer producer, Destination destination) throws JMSException {
-        return createProducerIfNull(session, producer, destination);
-    }
+	protected MessageConsumer createConsumerIfNull(MessageConsumer consumer, Destination destination, String selector) throws
+	JMSException {
+		return createConsumerIfNull(session, consumer, destination, selector);
+	}
 
-    protected static interface Finder<T> {
+	protected MessageProducer createProducerIfNull(MessageProducer producer, Destination destination) throws JMSException {
+		return createProducerIfNull(session, producer, destination);
+	}
 
-        public boolean accept(T element);
-    }
+	protected static interface Finder<T> {
 
-    protected <T> T findInQueue(String name, String selector) {
-        Session s = null;
+		public boolean accept(T element);
+	}
 
-        try {
-            s = connection.createSession(false, Session.AUTO_ACKNOWLEDGE);
-            QueueBrowser browser = s.createBrowser(s.createQueue(name), selector);
-            Enumeration<ObjectMessage> enumeration = browser.getEnumeration();
+	protected <T> T findInQueue(String name, String selector) {
+		Session s = null;
 
-            if (enumeration.hasMoreElements()) {
-                return (T) enumeration.nextElement()
-                    .getObject();
-            }
+		try {
+			s = connection.createSession(false, Session.AUTO_ACKNOWLEDGE);
+			QueueBrowser browser = s.createBrowser(s.createQueue(name), selector);
+			Enumeration<ObjectMessage> enumeration = browser.getEnumeration();
 
-            return null;
-        } catch (JMSException ex) {
-            throw new RuntimeException(ex);
-        } finally {
-            if (s != null) {
-                try {
-                    s.close();
-                } catch (JMSException ex) {
-                    // Ignore
-                }
-            }
-        }
-    }
+			if (enumeration.hasMoreElements()) {
+				return (T) enumeration.nextElement()
+						.getObject();
+			}
 
-    protected <T> T findInQueue(String name, String selector, Finder<T> finder) {
-        Session s = null;
+			return null;
+		} catch (JMSException ex) {
+			throw new RuntimeException(ex);
+		} finally {
+			if (s != null) {
+				try {
+					s.close();
+				} catch (JMSException ex) {
+					// Ignore
+				}
+			}
+		}
+	}
 
-        try {
-            s = connection.createSession(false, Session.AUTO_ACKNOWLEDGE);
-            QueueBrowser browser = s.createBrowser(s.createQueue(name), selector);
-            Enumeration<ObjectMessage> enumeration = browser.getEnumeration();
-            while (enumeration.hasMoreElements()) {
-                T object = (T) enumeration.nextElement()
-                    .getObject();
-                if (finder.accept(object)) {
-                    return object;
-                }
-            }
+	protected <T> T findInQueue(String name, String selector, Finder<T> finder) {
+		Session s = null;
 
-            return null;
-        } catch (JMSException ex) {
-            throw new RuntimeException(ex);
-        } finally {
-            if (s != null) {
-                try {
-                    s.close();
-                } catch (JMSException ex) {
-                    // Ignore
-                }
-            }
-        }
-    }
+		try {
+			s = connection.createSession(false, Session.AUTO_ACKNOWLEDGE);
+			QueueBrowser browser = s.createBrowser(s.createQueue(name), selector);
+			Enumeration<ObjectMessage> enumeration = browser.getEnumeration();
+			while (enumeration.hasMoreElements()) {
+				T object = (T) enumeration.nextElement()
+						.getObject();
+				if (finder.accept(object)) {
+					return object;
+				}
+			}
 
-    protected <T> List<T> queueAsList(String name) {
-        Session s = null;
+			return null;
+		} catch (JMSException ex) {
+			throw new RuntimeException(ex);
+		} finally {
+			if (s != null) {
+				try {
+					s.close();
+				} catch (JMSException ex) {
+					// Ignore
+				}
+			}
+		}
+	}
 
-        try {
-            s = connection.createSession(false, Session.AUTO_ACKNOWLEDGE);
-            Enumeration<ObjectMessage> enumeration = s.createBrowser(s.createQueue(name))
-                .getEnumeration();
-            List<T> list = new LinkedList<T>();
+	protected <T> List<T> queueAsList(String name) {
+		Session s = null;
 
-            while (enumeration.hasMoreElements()) {
-                list.add((T) enumeration.nextElement()
-                    .getObject());
-            }
+		try {
+			s = connection.createSession(false, Session.AUTO_ACKNOWLEDGE);
+			Enumeration<ObjectMessage> enumeration = s.createBrowser(s.createQueue(name))
+					.getEnumeration();
+			List<T> list = new LinkedList<T>();
 
-            return list;
-        } catch (JMSException ex) {
-            throw new RuntimeException(ex);
-        } finally {
-            if (s != null) {
-                try {
-                    s.close();
-                } catch (JMSException ex) {
-                    // Ignore
-                }
-            }
-        }
-    }
+			while (enumeration.hasMoreElements()) {
+				list.add((T) enumeration.nextElement()
+						.getObject());
+			}
+
+			return list;
+		} catch (JMSException ex) {
+			throw new RuntimeException(ex);
+		} finally {
+			if (s != null) {
+				try {
+					s.close();
+				} catch (JMSException ex) {
+					// Ignore
+				}
+			}
+		}
+	}
 }
