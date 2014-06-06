@@ -5,6 +5,10 @@
  */
 package at.ac.tuwien.sbc;
 
+import java.util.List;
+import java.util.Map;
+import java.util.UUID;
+
 import at.ac.tuwien.sbc.model.Clock;
 import at.ac.tuwien.sbc.model.ClockPart;
 import at.ac.tuwien.sbc.model.ClockPartType;
@@ -12,8 +16,6 @@ import at.ac.tuwien.sbc.model.ClockQualityType;
 import at.ac.tuwien.sbc.model.Order;
 import at.ac.tuwien.sbc.model.OrderPriority;
 import at.ac.tuwien.sbc.model.SingleClockOrder;
-import java.util.List;
-import java.util.Map;
 
 /**
  *
@@ -54,6 +56,6 @@ public interface Connector {
     public void addOrder(Order order);
 
     // Distributer stuff
-    public void deliverDemandedClock();
+    public void deliverDemandedClock(UUID handlerId);
 
 }

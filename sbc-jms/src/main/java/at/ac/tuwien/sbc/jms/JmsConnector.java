@@ -5,6 +5,22 @@
  */
 package at.ac.tuwien.sbc.jms;
 
+import java.net.URI;
+import java.util.ArrayList;
+import java.util.EnumMap;
+import java.util.List;
+import java.util.Map;
+import java.util.UUID;
+
+import javax.jms.JMSException;
+import javax.jms.Message;
+import javax.jms.MessageConsumer;
+import javax.jms.MessageProducer;
+import javax.jms.ObjectMessage;
+import javax.jms.Queue;
+import javax.jms.Session;
+import javax.jms.Topic;
+
 import at.ac.tuwien.sbc.ClockListener;
 import at.ac.tuwien.sbc.ClockPartListener;
 import at.ac.tuwien.sbc.Connector;
@@ -21,19 +37,6 @@ import at.ac.tuwien.sbc.model.DistributorDemand;
 import at.ac.tuwien.sbc.model.Order;
 import at.ac.tuwien.sbc.model.OrderPriority;
 import at.ac.tuwien.sbc.model.SingleClockOrder;
-import java.net.URI;
-import java.util.ArrayList;
-import java.util.EnumMap;
-import java.util.List;
-import java.util.Map;
-import javax.jms.JMSException;
-import javax.jms.Message;
-import javax.jms.MessageConsumer;
-import javax.jms.MessageProducer;
-import javax.jms.ObjectMessage;
-import javax.jms.Queue;
-import javax.jms.Session;
-import javax.jms.Topic;
 
 /**
  *
@@ -157,7 +160,7 @@ public class JmsConnector extends AbstractJmsComponent implements Connector {
     }
 
     @Override
-    public void deliverDemandedClock() {
+    public void deliverDemandedClock(final UUID handlerId) {
         tm.transactional(new TransactionalWork() {
 
             @Override
@@ -178,12 +181,15 @@ public class JmsConnector extends AbstractJmsComponent implements Connector {
                             Clock clock = takeDeliveredClockOfNoOrder(type);
 
                             if (clock != null) {
+                            	clock.setDistributor(distributorDemand.getDestinationName().substring(3));
+                            	clock.setHandlerId(handlerId);
                                 stockConnector.deliver(clock);
 
                                 // Push the clock back but marked as "done" by setting not setting CLOCK_TYPE
                                 ObjectMessage msg = session.createObjectMessage(clock);
                                 msg.setStringProperty(JmsConstants.CLOCK_STATUS, ClockStatus.DELIVERED.name());
                                 clockQueueProducer.send(msg);
+                                clockTopicProducer.send(msg);
                                 break;
                             }
                         }
@@ -377,9 +383,11 @@ public class JmsConnector extends AbstractJmsComponent implements Connector {
         distributorDemandQueue = createQueueIfNull(distributorDemandQueue, JmsConstants.DISTRIBUTOR_DEMAND_QUEUE);
         distributorDemandQueueProducer = createProducerIfNull(distributorDemandQueueProducer, distributorDemandQueue);
         distributorDemandQueueConsumer = createConsumerIfNull(distributorDemandQueueConsumer, distributorDemandQueue);
-
+        clockTopic = createTopicIfNull(clockTopic, JmsConstants.CLOCK_TOPIC);
+        
         clockQueue = createQueueIfNull(clockQueue, JmsConstants.CLOCK_QUEUE);
         clockQueueProducer = createProducerIfNull(clockQueueProducer, clockQueue);
+        clockTopicProducer = createProducerIfNull(clockTopicProducer, clockTopic);
     }
 
     @Override

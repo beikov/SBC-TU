@@ -27,7 +27,11 @@ public abstract class Clock implements Comparable<Clock>, Serializable {
     private final ClockPart clockHand2;
     private final UUID assemblerId;
     private final ClockType type;
+    
     private UUID orderId;
+    
+    private String distributorId;
+    private UUID handlerId;
 
     private ClockStatus status;
 
@@ -165,8 +169,24 @@ public abstract class Clock implements Comparable<Clock>, Serializable {
     public UUID getOrderId() {
         return orderId;
     }
+    
+    public void setDistributor(String distributorId){
+    	this.distributorId = distributorId;
+    }
+    
+    public String getDistributor(){
+    	return distributorId;
+    }
+    
+    public UUID getHandlerId() {
+		return handlerId;
+	}
 
-    @Override
+	public void setHandlerId(UUID handlerId) {
+		this.handlerId = handlerId;
+	}
+
+	@Override
     public int compareTo(Clock o) {
         if (o == null) {
             throw new NullPointerException();

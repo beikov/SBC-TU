@@ -30,7 +30,7 @@ public class HandlerActor extends AbstractActor {
     public void run() {
         while (!Thread.interrupted()) {
             try {
-                connector.deliverDemandedClock();
+                connector.deliverDemandedClock(id);
             } catch (RuntimeException ex) {
                 ex.printStackTrace(System.err);
             }

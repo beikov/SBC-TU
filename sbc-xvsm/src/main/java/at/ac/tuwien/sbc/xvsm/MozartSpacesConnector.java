@@ -5,21 +5,6 @@
  */
 package at.ac.tuwien.sbc.xvsm;
 
-import at.ac.tuwien.sbc.ClockListener;
-import at.ac.tuwien.sbc.ClockPartListener;
-import at.ac.tuwien.sbc.Connector;
-import at.ac.tuwien.sbc.OrderListener;
-import at.ac.tuwien.sbc.Subscription;
-import at.ac.tuwien.sbc.TransactionalTask;
-import at.ac.tuwien.sbc.model.Clock;
-import at.ac.tuwien.sbc.model.ClockPart;
-import at.ac.tuwien.sbc.model.ClockPartType;
-import at.ac.tuwien.sbc.model.ClockQualityType;
-import at.ac.tuwien.sbc.model.ClockType;
-import at.ac.tuwien.sbc.model.DistributorDemand;
-import at.ac.tuwien.sbc.model.Order;
-import at.ac.tuwien.sbc.model.OrderPriority;
-import at.ac.tuwien.sbc.model.SingleClockOrder;
 import java.net.URI;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -28,6 +13,8 @@ import java.util.EnumSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.UUID;
+
 import org.mozartspaces.capi3.CoordinationData;
 import org.mozartspaces.capi3.FifoCoordinator;
 import org.mozartspaces.capi3.IsolationLevel;
@@ -44,6 +31,22 @@ import org.mozartspaces.core.TransactionReference;
 import org.mozartspaces.notifications.Notification;
 import org.mozartspaces.notifications.NotificationListener;
 import org.mozartspaces.notifications.Operation;
+
+import at.ac.tuwien.sbc.ClockListener;
+import at.ac.tuwien.sbc.ClockPartListener;
+import at.ac.tuwien.sbc.Connector;
+import at.ac.tuwien.sbc.OrderListener;
+import at.ac.tuwien.sbc.Subscription;
+import at.ac.tuwien.sbc.TransactionalTask;
+import at.ac.tuwien.sbc.model.Clock;
+import at.ac.tuwien.sbc.model.ClockPart;
+import at.ac.tuwien.sbc.model.ClockPartType;
+import at.ac.tuwien.sbc.model.ClockQualityType;
+import at.ac.tuwien.sbc.model.ClockType;
+import at.ac.tuwien.sbc.model.DistributorDemand;
+import at.ac.tuwien.sbc.model.Order;
+import at.ac.tuwien.sbc.model.OrderPriority;
+import at.ac.tuwien.sbc.model.SingleClockOrder;
 
 /**
  *
@@ -443,7 +446,7 @@ public class MozartSpacesConnector extends AbstractMozartSpacesComponent impleme
     }
 
     @Override
-    public void deliverDemandedClock() {
+    public void deliverDemandedClock(final UUID handlerId) {
         tm.transactional(new TransactionalWork() {
             @Override
             public void doWork(TransactionReference tx) throws MzsCoreException {
@@ -462,8 +465,11 @@ public class MozartSpacesConnector extends AbstractMozartSpacesComponent impleme
                     for (ClockType type : demandedClocks.keySet()) {
                         if (stockCount.get(type) < demandedClocks.get(type)) {
                             Clock clock = takeDeliveredClockOfNoOrder(type);
-
+                            
                             if (clock != null) {
+                                clock.setDistributor(distributorDemand.getDestinationName());
+                                clock.setHandlerId(handlerId);
+                            	clock.setDistributor(distributorDemand.getDestinationName());
                                 stockConnector.deliver(clock);
                                 Entry entry = new Entry(clock);
                                 capi.write(disassembledClocksContainer, MzsConstants.RequestTimeout.ZERO, tx, entry);

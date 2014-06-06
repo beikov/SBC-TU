@@ -22,12 +22,12 @@ public class AllClocksTableModel extends AbstractTableModel {
         "Zeiger 2", "Zeiger 3",
         "Armband", "Gehäuse-Lieferant", "Uhrwerk-Lieferant", "Zeiger 1-Lieferant", "Zeiger 2-Lieferant", "Zeiger 3-Lieferant",
         "Armband-Lieferant",
-        "Montage", "Qualität", "Logistik" };
+        "Montage", "Qualität", "Logistik", "Kundenbetreuer", "Großhändler" };
     private final Class<?>[] columnTypes = { String.class, String.class, String.class, Integer.class, String.class, String.class,
         String.class, String.class, String.class,
         String.class, String.class, String.class, String.class, String.class, String.class, String.class, String.class,
         String.class,
-        String.class };
+        String.class, String.class, String.class };
 
     public AllClocksTableModel(ClockList clockList) {
         this.clockList = clockList;
@@ -134,6 +134,10 @@ public class AllClocksTableModel extends AbstractTableModel {
             case 18:
                 return clock.getDelivererId() == null ? "" : clock.getDelivererId()
                     .toString();
+            case 19:
+            	return clock.getHandlerId() == null ? "" : clock.getHandlerId();
+            case 20:
+            	return clock.getDelivererId() == null ? "" : clock.getDistributor();
         }
 
         return null;
