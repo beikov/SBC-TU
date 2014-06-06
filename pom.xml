@@ -23,7 +23,7 @@
 
         <!-- The default port for the server and client which can be overidden 
         by providing -Dserver.port=VALUE -->
-        <server.port>4242</server.port>
+        <server.port>9292</server.port>
 
         <version.junit>4.11</version.junit>
         <version.mozartspaces>2.1-SNAPSHOT</version.mozartspaces>
