@@ -29,6 +29,7 @@ public class CollectingOrderListener implements OrderListener {
                     .addFinishedClock(clock);
             }
         }
+        listener.run();
 
     }
 

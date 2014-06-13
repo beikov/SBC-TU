@@ -9,6 +9,7 @@ import java.net.URI;
 import java.util.Enumeration;
 import java.util.LinkedList;
 import java.util.List;
+
 import javax.jms.Connection;
 import javax.jms.Destination;
 import javax.jms.JMSException;
@@ -19,7 +20,10 @@ import javax.jms.Queue;
 import javax.jms.QueueBrowser;
 import javax.jms.Session;
 import javax.jms.Topic;
+
 import org.apache.activemq.ActiveMQConnectionFactory;
+import org.apache.activemq.ActiveMQPrefetchPolicy;
+import org.apache.activemq.RedeliveryPolicy;
 
 /**
  *
@@ -52,7 +56,15 @@ public abstract class AbstractJmsComponent {
         //        this.localPort = localPort;
         try {
             ActiveMQConnectionFactory connectionFactory = new ActiveMQConnectionFactory(serverUri);
+            RedeliveryPolicy redeliveryPolicy = connectionFactory.getRedeliveryPolicy();
+            redeliveryPolicy.setMaximumRedeliveries(-1);
+            redeliveryPolicy.setInitialRedeliveryDelay(0);
+//            connectionFactory.setRedeliveryPolicy(redeliveryPolicy);
+            ActiveMQPrefetchPolicy policy = new ActiveMQPrefetchPolicy();
+            policy.setQueuePrefetch(0);
+            connectionFactory.setPrefetchPolicy(policy);
             connection = connectionFactory.createConnection();
+        	
             connection.start();
             session = connection.createSession(true, Session.SESSION_TRANSACTED);
             tm = new JmsTransactionManager(session);

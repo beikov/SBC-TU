@@ -27,4 +27,12 @@ public class SingleClockOrder implements Serializable {
         return priority;
     }
 
+	@Override
+	public String toString() {
+		return "SingleClockOrder [orderId=" + orderId + ", neededType="
+				+ neededType + ", priority=" + priority + "]";
+	}
+    
+    
+
 }
