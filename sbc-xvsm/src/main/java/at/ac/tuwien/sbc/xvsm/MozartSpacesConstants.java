@@ -32,5 +32,6 @@ public class MozartSpacesConstants {
     public static final String PARTS_TYPE_COORDINATOR_NAME = "type";
     public static final String ORDER_PRIORITY_COORDINATOR_NAME = "priority";
     public static final String CLOCK_QUALITY_COORDINATOR_NAME = "quality";
+	public static final String ORDER_TYPE_COORDINATOR_NAME = "order_type";
 
 }

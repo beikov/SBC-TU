@@ -37,7 +37,7 @@ public interface Connector {
 
     public void addParts(List<ClockPart> parts);
 
-    public void takeParts(Map<ClockPartType, Integer> neededClockParts, TransactionalTask<List<ClockPart>> transactionalTask);
+    public boolean takeParts(Map<ClockPartType, Integer> neededClockParts, TransactionalTask<List<ClockPart>> transactionalTask);
 
     public void takeAssembled(TransactionalTask<Clock> transactionalTask);
 

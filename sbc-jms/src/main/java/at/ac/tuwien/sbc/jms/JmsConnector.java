@@ -118,7 +118,7 @@ public class JmsConnector extends AbstractJmsComponent implements Connector {
 
 	@Override
 	public boolean takeSingleClockOrder(final OrderPriority priority, final TransactionalTask<SingleClockOrder> transactionalTask) {
-		final Boolean[] done = { false };
+		final Boolean[] done = { false, true };
 		
 		
 		tm.transactional(new TransactionalWork() {
@@ -132,11 +132,14 @@ public class JmsConnector extends AbstractJmsComponent implements Connector {
 				if (message != null) {
 					transactionalTask.doWork((SingleClockOrder) message.getObject());
 					done[0] = true;
+				}else{
+					// there is no single clock order of any type for this priority, so we don't need to check specific types
+					done[1] = false;
 				}
 			}
 
 		});
-		if(done[0]){
+		if(done[0] || !done[1]){
 			return done[0];
 		}
 		
@@ -485,8 +488,8 @@ public class JmsConnector extends AbstractJmsComponent implements Connector {
 	}
 
 	@Override
-	public void takeParts(final Map<ClockPartType, Integer> neededClockParts, final TransactionalTask<List<ClockPart>> transactionalTask) {
-		tm.transactional(new TransactionalWork() {
+	public boolean takeParts(final Map<ClockPartType, Integer> neededClockParts, final TransactionalTask<List<ClockPart>> transactionalTask) {
+		return tm.transactional(new TransactionalWork() {
 
 			@Override
 			public void doWork() throws JMSException {
