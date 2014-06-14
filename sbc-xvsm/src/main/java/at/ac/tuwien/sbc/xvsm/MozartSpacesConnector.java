@@ -74,11 +74,8 @@ public class MozartSpacesConnector extends AbstractMozartSpacesComponent impleme
                                                         new FifoCoordinator());
         disassembledClocksContainer = getOrCreateContainer(capi, MozartSpacesConstants.DISASSEMBLED_CLOCKS_CONTAINER_NAME,
                                                            new FifoCoordinator());
-        orderContainer = getOrCreateContainer(capi, MozartSpacesConstants.ORDER_CONTAINER_NAME, new QueryCoordinator(),
-                                              new FifoCoordinator());
+        orderContainer = getOrCreateContainer(capi, MozartSpacesConstants.ORDER_CONTAINER_NAME, new FifoCoordinator());
         singleClockOrderContainer = getOrCreateContainer(capi, MozartSpacesConstants.SINGLE_CLOCK_ORDER_CONTAINER_NAME,
-                                                         new LabelCoordinator(
-                                                             MozartSpacesConstants.ORDER_PRIORITY_COORDINATOR_NAME),
                                                          new LabelCoordinator(
                                                              MozartSpacesConstants.ORDER_TYPE_COORDINATOR_NAME),
                                                          new FifoCoordinator());
@@ -139,12 +136,9 @@ public class MozartSpacesConnector extends AbstractMozartSpacesComponent impleme
 
     private List<? extends CoordinationData> getSingleOrderCoordinationData(SingleClockOrder singleOrder) {
         return Arrays.asList(
-            LabelCoordinator.newCoordinationData(singleOrder.getPriority()
-                .name(), MozartSpacesConstants.ORDER_PRIORITY_COORDINATOR_NAME),
             LabelCoordinator.newCoordinationData(singleOrder.getNeededType()
                 .name() + singleOrder.getPriority()
-                .name(),
-                                                 MozartSpacesConstants.ORDER_TYPE_COORDINATOR_NAME),
+                .name(), MozartSpacesConstants.ORDER_TYPE_COORDINATOR_NAME),
             FifoCoordinator.newCoordinationData());
     }
 
@@ -326,7 +320,7 @@ public class MozartSpacesConnector extends AbstractMozartSpacesComponent impleme
         public void doWork(TransactionReference tx) throws MzsCoreException {
             final List<Selector> selectors = new ArrayList<Selector>();
             selectors.add(LabelCoordinator.newSelector(type + priority.name(), 1,
-                                                       MozartSpacesConstants.ORDER_PRIORITY_COORDINATOR_NAME));
+                                                       MozartSpacesConstants.ORDER_TYPE_COORDINATOR_NAME));
             selectors.add(FifoCoordinator.newSelector(1));
 
             List<SingleClockOrder> singleOrders = null;

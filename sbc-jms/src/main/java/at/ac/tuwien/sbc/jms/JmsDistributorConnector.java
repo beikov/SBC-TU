@@ -25,8 +25,6 @@ public class JmsDistributorConnector extends AbstractJmsComponent implements Dis
     private URI distributorUri;
     private JmsDistributorStockConnector stockConnector;
 
-    private Queue clockQueue;
-
     // Distributor stuff
     private Queue distributorDemandQueue;
     private MessageProducer distributorDemandQueueProducer;
@@ -56,8 +54,6 @@ public class JmsDistributorConnector extends AbstractJmsComponent implements Dis
     private void connectDistributor0() throws JMSException {
         distributorDemandQueue = createQueueIfNull(distributorDemandQueue, JmsConstants.DISTRIBUTOR_DEMAND_QUEUE);
         distributorDemandQueueProducer = createProducerIfNull(distributorDemandQueueProducer, distributorDemandQueue);
-
-        clockQueue = createQueueIfNull(clockQueue, JmsConstants.CLOCK_QUEUE);
     }
 
     @Override

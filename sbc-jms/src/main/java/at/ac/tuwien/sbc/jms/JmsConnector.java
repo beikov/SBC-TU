@@ -57,8 +57,6 @@ public class JmsConnector extends AbstractJmsComponent implements Connector {
     private MessageProducer orderQueueProducer;
     private MessageProducer orderTopicProducer;
     private MessageProducer singleClockOrderQueueProducer;
-    private final Map<OrderPriority, MessageConsumer> orderPriorityConsumers = new EnumMap<OrderPriority, MessageConsumer>(
-        OrderPriority.class);
     private final Map<OrderPriority, Map<String, MessageConsumer>> singleClockOrderPriorityAndTypeConsumers = new EnumMap<OrderPriority, Map<String, MessageConsumer>>(
         OrderPriority.class);
 
@@ -507,13 +505,6 @@ public class JmsConnector extends AbstractJmsComponent implements Connector {
         orderTopicProducer = createProducerIfNull(orderTopicProducer, orderTopic);
         singleClockOrderQueueProducer = createProducerIfNull(singleClockOrderQueueProducer, singleClockOrderQueue);
 
-        if (orderPriorityConsumers.isEmpty()) {
-            for (OrderPriority priority : OrderPriority.values()) {
-                // Order consumer for the given priority
-                orderPriorityConsumers.put(priority, session.createConsumer(orderQueue, JmsConstants.ORDER_PRIORITY + "='"
-                                                                            + priority.name() + "'"));
-            }
-        }
         if (singleClockOrderPriorityAndTypeConsumers.isEmpty()) {
             for (OrderPriority priority : OrderPriority.values()) {
                 Map<String, MessageConsumer> innerMap = new HashMap<String, MessageConsumer>();
