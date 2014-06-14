@@ -8,6 +8,9 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.ConcurrentMap;
 
+/**
+ * A container for orders that also groups orders by their id.
+ */
 public class OrderList {
 
     private final ConcurrentMap<UUID, Order> orderMap;
@@ -19,9 +22,15 @@ public class OrderList {
     }
 
     public OrderList(List<Order> orders) {
-        this.orderMap = new ConcurrentHashMap<UUID, Order>();
+        int size = orders.size();
+        this.orderMap = new ConcurrentHashMap<UUID, Order>(size);
         this.orders = new ConcurrentLinkedQueue<Order>();
-        addAll(orders);
+
+        for (int i = 0; i < size; i++) {
+            Order order = orders.get(i);
+            this.orderMap.put(order.getId(), order);
+            this.orders.add(order);
+        }
     }
 
     public Order getOrder(UUID orderId) {
@@ -32,11 +41,9 @@ public class OrderList {
         return new ArrayList<Order>(orders);
     }
 
-    public void addAll(List<Order> orders) {
-        for (Order order : orders) {
-            this.orderMap.put(order.getId(), order);
-            this.orders.add(order);
-        }
+    public void addAll(Order order) {
+        this.orderMap.put(order.getId(), order);
+        this.orders.add(order);
     }
 
 }

@@ -1,18 +1,16 @@
-/*
- * To change this license header, choose License Headers in Project Properties.
- * To change this template file, choose Tools | Templates
- * and open the template in the editor.
- */
 package at.ac.tuwien.sbc;
 
 import at.ac.tuwien.sbc.model.Clock;
-import java.util.List;
 
 /**
- *
- * @author Christian
+ * A listener to obtain state changes of clocks.
  */
 public interface ClockListener {
 
-    public void onClocksUpdated(List<Clock> clocks);
+    /**
+     * Is called every time a clock is updated.
+     *
+     * @param clock the updated clock
+     */
+    public void onClockUpdated(Clock clock);
 }

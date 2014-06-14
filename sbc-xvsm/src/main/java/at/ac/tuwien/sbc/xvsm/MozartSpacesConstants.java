@@ -1,13 +1,7 @@
-/*
- * To change this license header, choose License Headers in Project Properties.
- * To change this template file, choose Tools | Templates
- * and open the template in the editor.
- */
 package at.ac.tuwien.sbc.xvsm;
 
 /**
- *
- * @author Christian
+ * Some constants for containers and coordinator names used by the MozartSpaces connector.
  */
 public class MozartSpacesConstants {
 
@@ -32,6 +26,6 @@ public class MozartSpacesConstants {
     public static final String PARTS_TYPE_COORDINATOR_NAME = "type";
     public static final String ORDER_PRIORITY_COORDINATOR_NAME = "priority";
     public static final String CLOCK_QUALITY_COORDINATOR_NAME = "quality";
-	public static final String ORDER_TYPE_COORDINATOR_NAME = "order_type";
+    public static final String ORDER_TYPE_COORDINATOR_NAME = "order_type";
 
 }

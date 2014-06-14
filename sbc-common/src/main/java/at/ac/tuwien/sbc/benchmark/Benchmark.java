@@ -1,8 +1,3 @@
-/*
- * To change this license header, choose License Headers in Project Properties.
- * To change this template file, choose Tools | Templates
- * and open the template in the editor.
- */
 package at.ac.tuwien.sbc.benchmark;
 
 import at.ac.tuwien.sbc.Connector;
@@ -11,6 +6,7 @@ import at.ac.tuwien.sbc.actor.DelivererActor;
 import at.ac.tuwien.sbc.actor.QualityCheckerActor;
 import at.ac.tuwien.sbc.actor.SupplierActor;
 import at.ac.tuwien.sbc.model.Clock;
+import at.ac.tuwien.sbc.model.ClockPart;
 import at.ac.tuwien.sbc.model.ClockPartType;
 import at.ac.tuwien.sbc.model.ClockQualityType;
 import at.ac.tuwien.sbc.model.ClockStatus;
@@ -19,12 +15,9 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
- *
- * @author Christian
+ * A benchmark that simulates load to measure throughput.
  */
 public class Benchmark {
-
-    private static final int TOTAL_CLOCKPART_COUNT = 8250;
 
     public static void main(String[] args) throws Exception {
         if (args.length != 2) {
@@ -73,22 +66,118 @@ public class Benchmark {
         }
 
         System.out.println("Starting Benchmark");
+        long startTime = System.currentTimeMillis();
 
-        Thread.sleep(60000);
+        int sleptTime = 10000;
+        int sleepTime = 5000;
+        boolean productionDone = false;
+        int deliveredCount = -1;
+        boolean deliveryDone = false;
 
-        int count = 0;
-
-        for (Clock c : connector.getClocks()) {
-            if (c.getStatus() == ClockStatus.DELIVERED) {
-                count++;
+        // First sleep 10 seconds then start checking whether its done yet
+        Thread.sleep(sleptTime);
+        do {
+            if (!productionDone) {
+                productionDone = productionDone(connector);
             }
-        }
+            if (productionDone) {
+                if (deliveredCount == -1) {
+                    deliveredCount = getDeliveredCount(connector, false);
+                }
+                if (deliveredCount != -1) {
+                    deliveryDone = true;
+                    break;
+                }
+            }
 
+            Thread.sleep(sleepTime);
+            sleptTime += sleepTime;
+        } while (sleptTime != 60000);
+
+        int count = deliveryDone ? deliveredCount : getDeliveredCount(connector, true);
+
+        // We stop every worker thread before measuring
         for (Thread t : threads) {
             t.setUncaughtExceptionHandler(eh);
             t.interrupt();
         }
 
         System.out.println("Throughput: " + count);
+        System.out.println("Time taken: " + (System.currentTimeMillis() - startTime) / 1000 + " sec");
+        System.out.println("Done faster: " + deliveryDone);
+    }
+
+    private static boolean productionDone(Connector connector) {
+        List<ClockPart> parts = connector.getClockParts();
+        int size = parts.size();
+
+        int gehaeuse = 0;
+        int uhrwerk = 0;
+        int zeiger = 0;
+        int lederarmband = 0;
+        int metallarmband = 0;
+
+        for (int i = 0; i < size; i++) {
+            ClockPart p = parts.get(i);
+
+            switch (p.getType()) {
+                case GEHAEUSE:
+                    gehaeuse++;
+                    break;
+                case UHRWERK:
+                    uhrwerk++;
+                    break;
+                case ZEIGER:
+                    zeiger++;
+                    break;
+                case LEDERARMBAND:
+                    lederarmband++;
+                    break;
+                case METALLARMBAND:
+                    metallarmband++;
+                    break;
+            }
+
+            if (gehaeuse != 0 && uhrwerk != 0 && zeiger > 1 && (lederarmband != 0 || metallarmband != 0)) {
+                // We can produce a classic or sport clock, so production is not done
+                return false;
+            }
+        }
+
+        // If we get here, we couldn't find enough clock parts in the store for production
+        return true;
+    }
+
+    /**
+     * If all clocks are delivered returns the count of delivered clocks, otherwise -1.
+     *
+     * @param connector   the connector to use to get the clocks
+     * @param returnCount if true, always the count is returned, otherwise only if all clocks are delivered
+     * @return The count of delivered clocks if all are delivered, otherwise -1.
+     */
+    private static int getDeliveredCount(Connector connector, boolean returnCount) {
+        List<Clock> clocks = connector.getClocks();
+        int size = clocks.size();
+        int count = 0;
+
+        if (returnCount) {
+            for (int i = 0; i < size; i++) {
+                if (clocks.get(i)
+                    .getStatus() == ClockStatus.DELIVERED) {
+                    count++;
+                }
+            }
+        } else {
+            for (int i = 0; i < size; i++) {
+                if (clocks.get(i)
+                    .getStatus() == ClockStatus.DELIVERED) {
+                    count++;
+                } else {
+                    return -1;
+                }
+            }
+        }
+
+        return count;
     }
 }

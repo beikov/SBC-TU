@@ -7,6 +7,9 @@ import java.util.List;
 import java.util.Map;
 import javax.swing.table.AbstractTableModel;
 
+/**
+ * A simple table model for the factory order GUI that takes snapshots of the {@link OrderList} container on data change events.
+ */
 public class OrderTableModel extends AbstractTableModel {
 
     private final OrderList orderList;

@@ -1,8 +1,3 @@
-/*
- * To change this license header, choose License Headers in Project Properties.
- * To change this template file, choose Tools | Templates
- * and open the template in the editor.
- */
 package at.ac.tuwien.sbc.xvsm;
 
 import java.net.URI;
@@ -13,127 +8,182 @@ import org.mozartspaces.core.MzsTimeoutException;
 import org.mozartspaces.core.TransactionReference;
 
 /**
- *
- * @author Christian
+ * A simple transaction manager for CAPI object that supports reuse of transaction in nested scenarios.
  */
 public class MozartSpacesTransactionManager {
 
-	private final ThreadLocal<TransactionReference> currentTransaction = new ThreadLocal<TransactionReference>();
-	private final ThreadLocal<Boolean> currentTransactionRollback = new ThreadLocal<Boolean>();
-	private final Capi capi;
-	private final URI serverUri;
-	private boolean rollbackNeeded = false;
+    private final ThreadLocal<Transaction> currentTransaction = new ThreadLocal<Transaction>();
+    private final Capi capi;
+    private final URI serverUri;
 
-	public MozartSpacesTransactionManager(Capi capi, URI serverUri) {
-		this.capi = capi;
-		this.serverUri = serverUri;
-	}
+    public MozartSpacesTransactionManager(Capi capi, URI serverUri) {
+        this.capi = capi;
+        this.serverUri = serverUri;
+    }
 
-	private boolean commit(TransactionReference tx) {
-		try {
-			if(!rollbackNeeded){
-				capi.commitTransaction(tx);
-				return false;
-			}else{
-				rollback(tx);
-				
-				return true;
-			}
-		} catch (MzsTimeoutException ex) {
-			return true;
-		} catch (MzsCoreException ex) {
-			throw new RuntimeException(ex);
-		} finally {
-			currentTransaction.remove();
-			currentTransactionRollback.remove();
-		}
-	}
+    /**
+     * Commits the current transaction.
+     *
+     * @return true if a timeout occurred, otherwise false
+     */
+    private boolean commit() {
+        try {
+            Transaction tx = currentTransaction.get();
+            capi.commitTransaction(tx.getTxReference());
+            return false;
+        } catch (MzsTimeoutException ex) {
+            return true;
+        } catch (MzsCoreException ex) {
+            throw new RuntimeException(ex);
+        } finally {
+            currentTransaction.remove();
+        }
+    }
 
-	public void rollback(TransactionReference tx) {
-		try {
-			capi.rollbackTransaction(tx);
-		} catch (MzsTimeoutException ex) {
-			// On timeout we dont have to rollback
-		} catch (MzsCoreException ex) {
-			throw new RuntimeException(ex);
-		} finally {
-			currentTransaction.remove();
-			rollbackNeeded = false;
-		}
-	}
+    /**
+     * Rolls back the current transaction.
+     */
+    public void rollback() {
+        try {
+            Transaction tx = currentTransaction.get();
+            capi.rollbackTransaction(tx.getTxReference());
+        } catch (MzsTimeoutException ex) {
+            // On timeout we dont have to rollback
+        } catch (MzsCoreException ex) {
+            throw new RuntimeException(ex);
+        } finally {
+            currentTransaction.remove();
+        }
+    }
 
-	protected boolean transactional(TransactionalWork work) {
-		return transactional(work, MozartSpacesConstants.MAX_TRANSACTION_TIMEOUT_MILLIS);
-	}
+    /**
+     * Sets the current transaction as rollback only.
+     */
+    public void setRollbackOnly() {
+        Transaction tx = currentTransaction.get();
+        if (tx != null) {
+            tx.setRollbackOnly();
+        }
+    }
 
-	protected boolean transactional(TransactionalWork work, long timeoutInMillis) {
-		boolean created = ensureCurrentTransaction(timeoutInMillis);
-		TransactionReference tx = getCurrentTransaction();
-		currentTransactionRollback.set(Boolean.TRUE);
+    /**
+     * Returns whether the currenct transaction is rollback only.
+     *
+     * @return whether the currenct transaction is rollback only
+     */
+    public boolean isRollbackOnly() {
+        Transaction tx = currentTransaction.get();
+        return tx == null ? false : tx.isRollbackOnly();
+    }
 
-		try {
-			work.doWork(tx);
+    /**
+     * Invokes the given work transactionally, joining an existing transaction if possible. It uses a default timeout for the transaction.
+     *
+     * @param work the work that should be done transactional
+     * @return true if a timeout occurred, otherwise false
+     */
+    protected boolean transactional(TransactionalWork work) {
+        return transactional(work, MozartSpacesConstants.MAX_TRANSACTION_TIMEOUT_MILLIS);
+    }
 
-			if (created) {
-				return commit(tx);
-			} else {
-				// Indicates no timeout occurred
-				return false;
-			}
-		} catch (MzsTimeoutException ex) {
-			// On timeout we dont have to rollback
-//			created = false;
-//			currentTransaction.remove();
-//			currentTransactionRollback.remove();
-			return true;
-		} catch (CountNotMetException ex) {
-			// This happens when try once is used and is handeled like a timeout
-//			created = false;
-//			currentTransaction.remove();
-//			currentTransactionRollback.remove();
-			return true;
-		} catch (RuntimeException ex) {
-			throw ex;
-		} catch (Error ex) {
-			throw ex;
-		} catch (Throwable ex) {
-			throw new RuntimeException(ex);
-		} finally {
-			if (created && Boolean.TRUE == currentTransactionRollback.get()) {
-				rollback(tx);
-			}
-		}
-	}
+    /**
+     * Invokes the given work transactionally, joining an existing transaction if possible.
+     *
+     * @param work            the work that should be done transactional
+     * @param timeoutInMillis the transaction timeout
+     * @return true if a timeout occurred, otherwise false
+     */
+    protected boolean transactional(TransactionalWork work, long timeoutInMillis) {
+        boolean created = ensureCurrentTransaction(timeoutInMillis);
+        TransactionReference tx = getCurrentTransaction();
 
-	protected TransactionReference getCurrentTransaction() {
-		return currentTransaction.get();
-	}
+        try {
+            work.doWork(tx);
 
-	/**
-	 * Returns true if the call resulted in creating the transaction.
-	 *
-	 * @param timeoutInMillis
-	 * @return
-	 */
-	private boolean ensureCurrentTransaction(long timeoutInMillis) {
-		try {
-			TransactionReference tx = currentTransaction.get();
-			if (tx == null) {
-				tx = capi.createTransaction(timeoutInMillis, serverUri);
-				currentTransaction.set(tx);
-				return true;
-			}
-			return false;
-		} catch (MzsCoreException ex) {
-			throw new RuntimeException(ex);
-		}
-	}
+            if (created) {
+                if (!isRollbackOnly()) {
+                    return commit();
+                } else {
+                    // Timout occurred
+                    return true;
+                }
+            } else {
+                // Indicates no timeout occurred
+                return false;
+            }
+        } catch (MzsTimeoutException ex) {
+            // On timeout we dont have to rollback
+            setRollbackOnly();
+            return true;
+        } catch (CountNotMetException ex) {
+            // This happens when try once is used and is handeled like a timeout
+            setRollbackOnly();
+            return true;
+        } catch (RuntimeException ex) {
+            setRollbackOnly();
+            throw ex;
+        } catch (Error ex) {
+            setRollbackOnly();
+            throw ex;
+        } catch (Throwable ex) {
+            setRollbackOnly();
+            throw new RuntimeException(ex);
+        } finally {
+            if (created && isRollbackOnly()) {
+                rollback();
+            }
+        }
+    }
 
-	public void setRollbackNeeded(boolean b) {
-		rollbackNeeded = b;
-	}
-	
-	public boolean isRollbackNeeded(){
-		return rollbackNeeded;
-	}
+    /**
+     * Returns the current transaction or null if none exists.
+     *
+     * @return the current transaction or null if none exists
+     */
+    protected TransactionReference getCurrentTransaction() {
+        Transaction tx = currentTransaction.get();
+        return tx == null ? null : tx.getTxReference();
+    }
+
+    /**
+     * Returns true if the call resulted in creating the transaction.
+     *
+     * @param timeoutInMillis
+     * @return
+     */
+    private boolean ensureCurrentTransaction(long timeoutInMillis) {
+        try {
+            Transaction tx = currentTransaction.get();
+            if (tx == null) {
+                tx = new Transaction(capi.createTransaction(timeoutInMillis, serverUri));
+                currentTransaction.set(tx);
+                return true;
+            }
+            return false;
+        } catch (MzsCoreException ex) {
+            throw new RuntimeException(ex);
+        }
+    }
+
+    private static class Transaction {
+
+        private final TransactionReference tx;
+        private boolean rollbackOnly = false;
+
+        public Transaction(TransactionReference tx) {
+            this.tx = tx;
+        }
+
+        public void setRollbackOnly() {
+            rollbackOnly = true;
+        }
+
+        public boolean isRollbackOnly() {
+            return rollbackOnly;
+        }
+
+        private TransactionReference getTxReference() {
+            return tx;
+        }
+    }
 }

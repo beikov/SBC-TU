@@ -1,8 +1,3 @@
-/*
- * To change this license header, choose License Headers in Project Properties.
- * To change this template file, choose Tools | Templates
- * and open the template in the editor.
- */
 package at.ac.tuwien.sbc.ui;
 
 import at.ac.tuwien.sbc.Connector;
@@ -12,15 +7,13 @@ import at.ac.tuwien.sbc.model.ClockPartType;
 import at.ac.tuwien.sbc.model.ClockType;
 import at.ac.tuwien.sbc.model.Order;
 import at.ac.tuwien.sbc.model.OrderPriority;
-import java.util.HashMap;
-import java.util.List;
+import java.util.EnumMap;
 import java.util.Map;
 import java.util.concurrent.ExecutorService;
 import javax.swing.JButton;
 
 /**
- *
- * @author Christian
+ * The GUI of the factory application
  */
 public class MainFrame extends javax.swing.JFrame {
 
@@ -39,12 +32,6 @@ public class MainFrame extends javax.swing.JFrame {
     private final AllClocksTableModel clockTableModel;
     private final OrderTableModel orderTableModel;
 
-    /**
-     * Creates new form App
-     *
-     * @param connector
-     * @param threadPool
-     */
     public MainFrame(Connector connector, final ExecutorService threadPool) {
         this.orderList = new OrderList();
 
@@ -62,7 +49,7 @@ public class MainFrame extends javax.swing.JFrame {
         initComponents();
 
         // Add cell renderer for supplier table
-        new ButtonColumn(supplierTable, new ButtonColumn.Listener() {
+        ButtonColumn.register(supplierTable, 3, new ButtonColumn.Listener() {
 
             @Override
             public void buttonClicked(final JButton editButton, final JButton renderButton, final int row) {
@@ -80,7 +67,7 @@ public class MainFrame extends javax.swing.JFrame {
                     }
                 }));
             }
-        }, 3);
+        });
 
         CountingClockPartListener clockPartListener = new CountingClockPartListener(counter, new Runnable() {
 
@@ -137,11 +124,6 @@ public class MainFrame extends javax.swing.JFrame {
             }
         });
 
-        // Subscribe before retrieving data or else we might miss notifications
-        connector.subscribeForClocks(clockListener);
-        List<Clock> pastClocks = connector.getClocks();
-        clockListener.onClocksUpdated(pastClocks);
-
         final CollectingOrderListener orderListener = new CollectingOrderListener(orderList, new Runnable() {
             @Override
             public void run() {
@@ -153,9 +135,18 @@ public class MainFrame extends javax.swing.JFrame {
                 });
             }
         });
+
+        // Subscribe before retrieving data or else we might miss notifications
+        connector.subscribeForClocks(clockListener);
         connector.subscribeForOrders(orderListener);
-        orderListener.onOrderAdded(connector.getOrders());
-        orderListener.onOrderClockFinished(pastClocks);
+
+        for (Order order : connector.getOrders()) {
+            orderListener.onOrderAdded(order);
+        }
+        for (Clock clock : connector.getClocks()) {
+            clockListener.onClockUpdated(clock);
+            orderListener.onOrderClockFinished(clock);
+        }
 
     }
 
@@ -637,7 +628,7 @@ public class MainFrame extends javax.swing.JFrame {
     }//GEN-LAST:event_createSupplierButtonMouseReleased
 
     private void createOrderButtonMouseReleased(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_createOrderButtonMouseReleased
-        Map<ClockType, Integer[]> neededClocks = new HashMap<ClockType, Integer[]>();
+        Map<ClockType, Integer[]> neededClocks = new EnumMap<ClockType, Integer[]>(ClockType.class);
         neededClocks.put(ClockType.KLASSISCH, new Integer[]{ Integer.parseInt(classicAmountTextField.getText()), 0 });
         neededClocks.put(ClockType.SPORT, new Integer[]{ Integer.parseInt(sportAmountTextField.getText()), 0 });
         neededClocks

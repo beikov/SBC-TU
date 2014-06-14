@@ -1,8 +1,3 @@
-/*
- * To change this license header, choose License Headers in Project Properties.
- * To change this template file, choose Tools | Templates
- * and open the template in the editor.
- */
 package at.ac.tuwien.sbc.actor;
 
 import at.ac.tuwien.sbc.Connector;
@@ -10,8 +5,7 @@ import java.util.Random;
 import java.util.UUID;
 
 /**
- *
- * @author Christian
+ * An abstract actor that has an id and offers a nice sleep method.
  */
 public abstract class AbstractActor implements Runnable {
 
@@ -36,6 +30,12 @@ public abstract class AbstractActor implements Runnable {
         return id;
     }
 
+    /**
+     * Sleeps for a time between <code>from</code> and <code>to</code> seconds.
+     *
+     * @param from minimum time to sleep in seconds
+     * @param to   maximum time to sleep in seconds
+     */
     protected void sleepForSeconds(int from, int to) {
         try {
             // Wait an amount of seconds between from and to

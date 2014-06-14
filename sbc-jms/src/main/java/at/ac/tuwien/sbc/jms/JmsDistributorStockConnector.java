@@ -1,8 +1,3 @@
-/*
- * To change this license header, choose License Headers in Project Properties.
- * To change this template file, choose Tools | Templates
- * and open the template in the editor.
- */
 package at.ac.tuwien.sbc.jms;
 
 import at.ac.tuwien.sbc.ClockListener;
@@ -18,12 +13,10 @@ import javax.jms.MessageConsumer;
 import javax.jms.MessageProducer;
 import javax.jms.ObjectMessage;
 import javax.jms.Queue;
-import javax.jms.Session;
 import javax.jms.Topic;
 
 /**
- *
- * @author Christian
+ * A connector implementation to communicate with the stock of a distributor.
  */
 public class JmsDistributorStockConnector extends AbstractJmsComponent {
 
@@ -32,7 +25,6 @@ public class JmsDistributorStockConnector extends AbstractJmsComponent {
 
     private MessageProducer distributorStockQueueProducer;
     private MessageProducer distributorStockTopicProducer;
-    private MessageConsumer distributorStockTopicConsumer;
 
     public JmsDistributorStockConnector(URI distributorUri, String destinationName) throws JMSException {
         super(distributorUri.getHost(), distributorUri.getPort());
@@ -44,14 +36,22 @@ public class JmsDistributorStockConnector extends AbstractJmsComponent {
         distributorStockTopicProducer = createProducerIfNull(distributorStockTopicProducer, distributorStockTopic);
     }
 
+    /**
+     * Returns the current stock of the distributor.
+     *
+     * @return the current stock of the distributor
+     * @throws JMSException
+     */
     public Map<ClockType, Integer> getDistributorStock() throws JMSException {
         List<Clock> clocks = queueAsList(distributorStockQueue.getQueueName());
         Map<ClockType, Integer> stock = new EnumMap<ClockType, Integer>(ClockType.class);
 
+        // Initialize the map with 0 values for each type
         for (ClockType t : ClockType.values()) {
             stock.put(t, 0);
         }
 
+        // Increment the counter for every clock type
         for (Clock c : clocks) {
             stock.put(c.getType(), stock.get(c.getType()) + 1);
         }
@@ -59,6 +59,11 @@ public class JmsDistributorStockConnector extends AbstractJmsComponent {
         return stock;
     }
 
+    /**
+     * Removes the given clock from the distributor stock.
+     *
+     * @param removedClock the clock to be removed
+     */
     public void removeClockFromStock(final Clock removedClock) {
         tm.transactional(new TransactionalWork() {
 
@@ -69,9 +74,11 @@ public class JmsDistributorStockConnector extends AbstractJmsComponent {
                 MessageConsumer distributorStockQueueConsumer = null;
 
                 try {
+                    // Consume the clock by id
                     distributorStockQueueConsumer = session.createConsumer(distributorStockQueue, JmsConstants.CLOCK_ID + "="
                                                                            + removedClock
                                                                            .getSerialId());
+                    // This is like a take
                     distributorStockQueueConsumer.receive();
                 } finally {
                     if (distributorStockQueueConsumer != null) {
@@ -82,12 +89,19 @@ public class JmsDistributorStockConnector extends AbstractJmsComponent {
         });
     }
 
+    /**
+     * Delivers the given clock to the distributor stock.
+     *
+     * @param clock the clock to be delivered.
+     * @throws JMSException
+     */
     public void deliver(final Clock clock) throws JMSException {
         tm.transactional(new TransactionalWork() {
 
             @Override
             public void doWork() throws JMSException {
                 ObjectMessage msg = session.createObjectMessage(clock);
+                // We need this so we can remove it by id later
                 msg.setLongProperty(JmsConstants.CLOCK_ID, clock.getSerialId());
                 distributorStockQueueProducer.send(msg);
                 distributorStockTopicProducer.send(msg);
@@ -95,32 +109,13 @@ public class JmsDistributorStockConnector extends AbstractJmsComponent {
         });
     }
 
+    /**
+     * Registers a listener for clock updates in the distributor stock.
+     *
+     * @param listener the listener to be registered
+     * @return a subscription for the registration that can be cancelled
+     */
     public Subscription subscribeForDistributorDeliveries(ClockListener listener) {
-        boolean close = true;
-        Session s = null;
-
-        try {
-            s = connectDistributorListener();
-            distributorStockTopicConsumer.setMessageListener(new JmsClockListener(listener));
-            close = false;
-            return new JmsSubscription(s);
-        } catch (JMSException ex) {
-            throw new RuntimeException(ex);
-        } finally {
-            if (close && s != null) {
-                try {
-                    s.close();
-                } catch (JMSException ex) {
-                    throw new RuntimeException(ex);
-                }
-            }
-        }
-    }
-
-    private Session connectDistributorListener() throws JMSException {
-        // distributorStockTopic must already be initialized
-        Session s = createSession();
-        distributorStockTopicConsumer = createConsumerIfNull(s, distributorStockTopicConsumer, distributorStockTopic);
-        return s;
+        return subscribeListener(new JmsClockListener(listener), distributorStockTopic);
     }
 }

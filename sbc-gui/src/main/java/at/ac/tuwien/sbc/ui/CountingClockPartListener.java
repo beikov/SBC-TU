@@ -1,8 +1,3 @@
-/*
- * To change this license header, choose License Headers in Project Properties.
- * To change this template file, choose Tools | Templates
- * and open the template in the editor.
- */
 package at.ac.tuwien.sbc.ui;
 
 import at.ac.tuwien.sbc.ClockPartListener;
@@ -12,8 +7,9 @@ import java.util.List;
 import java.util.Set;
 
 /**
- *
- * @author Christian
+ * A clock part listener that increments or decrements counters for the respective clock part types in a {@link ClockPartCounter}.
+ * By default this class first collects elements until {@link CountingClockPartListener#setCurrentClockParts(java.util.List) } is invoked. This is done to not loose elements in the two step process of registering a listener and the retrieving all elements.
+ * The listener is only invoked on events that happen after switching from collect mode to count mode.
  */
 public class CountingClockPartListener implements ClockPartListener {
 
@@ -29,35 +25,41 @@ public class CountingClockPartListener implements ClockPartListener {
     }
 
     @Override
-    public void onClockPartsAdded(List<ClockPart> clockParts) {
+    public void onClockPartAdded(ClockPart clockPart) {
+        // Use double-checked locking
         boolean shouldCollect = collect;
         if (shouldCollect) {
             synchronized (collectedClockParts) {
                 shouldCollect = collect;
                 if (shouldCollect) {
-                    collectedClockParts.addAll(clockParts);
+                    // Just add elements, no need to invoke the listener
+                    collectedClockParts.add(clockPart);
                 }
             }
         }
         if (!shouldCollect) {
-            counter.increment(clockParts);
+            // We are in count mode
+            counter.increment(clockPart);
             listener.run();
         }
     }
 
     @Override
-    public void onClockPartsRemoved(List<ClockPart> clockParts) {
+    public void onClockPartRemoved(ClockPart clockPart) {
+        // Use double-checked locking
         boolean shouldCollect = collect;
         if (shouldCollect) {
             synchronized (collectedClockParts) {
                 shouldCollect = collect;
                 if (shouldCollect) {
-                    collectedClockParts.removeAll(clockParts);
+                    // Just remove elements, no need to invoke the listener
+                    collectedClockParts.remove(clockPart);
                 }
             }
         }
         if (!shouldCollect) {
-            counter.decrement(clockParts);
+            // We are in count mode
+            counter.decrement(clockPart);
             listener.run();
         }
     }
@@ -65,8 +67,12 @@ public class CountingClockPartListener implements ClockPartListener {
     void setCurrentClockParts(List<ClockPart> clockParts) {
         synchronized (collectedClockParts) {
             collectedClockParts.addAll(clockParts);
-            counter.increment(collectedClockParts);
+            for (ClockPart part : collectedClockParts) {
+                counter.increment(part);
+            }
+            // Switch to count mode
             collect = false;
+            collectedClockParts.clear();
             listener.run();
         }
     }

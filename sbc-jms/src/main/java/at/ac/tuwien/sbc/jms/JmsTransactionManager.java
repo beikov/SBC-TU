@@ -1,27 +1,25 @@
-/*
- * To change this license header, choose License Headers in Project Properties.
- * To change this template file, choose Tools | Templates
- * and open the template in the editor.
- */
 package at.ac.tuwien.sbc.jms;
 
 import javax.jms.JMSException;
 import javax.jms.Session;
 
 /**
- *
- * @author Christian
+ * A simple transaction manager for a session that supports reuse of transaction in nested scenarios.
  */
 public class JmsTransactionManager {
 
-    private final ThreadLocal<Boolean> currentTransaction = new ThreadLocal<Boolean>();
-    private final ThreadLocal<Boolean> currentTransactionRollback = new ThreadLocal<Boolean>();
+    private final ThreadLocal<Transaction> currentTransaction = new ThreadLocal<Transaction>();
     private final Session session;
 
     public JmsTransactionManager(Session session) {
         this.session = session;
     }
 
+    /**
+     * Commits the current transaction.
+     *
+     * @return true if a timeout occurred, otherwise false
+     */
     protected boolean commit() {
         try {
             session.commit();
@@ -30,10 +28,12 @@ public class JmsTransactionManager {
             throw new RuntimeException(ex);
         } finally {
             currentTransaction.remove();
-            currentTransactionRollback.remove();
         }
     }
 
+    /**
+     * Rolls back the current transaction.
+     */
     protected void rollback() {
         try {
             session.rollback();
@@ -41,19 +41,49 @@ public class JmsTransactionManager {
             throw new RuntimeException(ex);
         } finally {
             currentTransaction.remove();
-            currentTransactionRollback.remove();
         }
     }
 
+    /**
+     * Sets the current transaction as rollback only.
+     */
+    public void setRollbackOnly() {
+        Transaction tx = currentTransaction.get();
+        if (tx != null) {
+            tx.setRollbackOnly();
+        }
+    }
+
+    /**
+     * Returns whether the currenct transaction is rollback only.
+     *
+     * @return whether the currenct transaction is rollback only
+     */
+    public boolean isRollbackOnly() {
+        Transaction tx = currentTransaction.get();
+        return tx == null ? false : tx.isRollbackOnly();
+    }
+
+    /**
+     * Invokes the given work transactionally, joining an existing transaction if possible.
+     *
+     * @param work the work that should be done transactional
+     * @return true if a timeout occurred, otherwise false
+     */
     protected boolean transactional(TransactionalWork work) {
         boolean created = ensureCurrentTransaction();
-        currentTransactionRollback.set(Boolean.TRUE);
+        Transaction tx = currentTransaction.get();
 
         try {
             work.doWork();
 
             if (created) {
-                return commit();
+                if (!isRollbackOnly()) {
+                    return commit();
+                } else {
+                    // Timout occurred
+                    return true;
+                }
             } else {
                 // Indicates no timeout occurred
                 return false;
@@ -61,18 +91,23 @@ public class JmsTransactionManager {
         } catch (TimeoutException ex) {
             if (!created) {
                 // Propagate the timeout to the outermost block
+                tx.setRollbackOnly();
                 throw ex;
             } else {
+                tx.setRollbackOnly();
                 return true;
             }
         } catch (RuntimeException ex) {
+            tx.setRollbackOnly();
             throw ex;
         } catch (Error ex) {
+            tx.setRollbackOnly();
             throw ex;
         } catch (Throwable ex) {
+            tx.setRollbackOnly();
             throw new RuntimeException(ex);
         } finally {
-            if (created && Boolean.TRUE == currentTransactionRollback.get()) {
+            if (created && isRollbackOnly()) {
                 rollback();
             }
         }
@@ -85,12 +120,25 @@ public class JmsTransactionManager {
      * @return
      */
     private boolean ensureCurrentTransaction() {
-        Boolean tx = currentTransaction.get();
+        Transaction tx = currentTransaction.get();
         if (tx == null) {
-            tx = Boolean.TRUE;
+            tx = new Transaction();
             currentTransaction.set(tx);
             return true;
         }
         return false;
+    }
+
+    private static class Transaction {
+
+        private boolean rollbackOnly = false;
+
+        public void setRollbackOnly() {
+            rollbackOnly = true;
+        }
+
+        public boolean isRollbackOnly() {
+            return rollbackOnly;
+        }
     }
 }

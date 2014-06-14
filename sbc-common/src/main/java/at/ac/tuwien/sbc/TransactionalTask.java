@@ -1,15 +1,16 @@
-/*
- * To change this license header, choose License Headers in Project Properties.
- * To change this template file, choose Tools | Templates
- * and open the template in the editor.
- */
 package at.ac.tuwien.sbc;
 
 /**
+ * A task that is executed within one transaction, reusing an existing transaction if possible.
  *
- * @author Christian
+ * @param <V> the type of the parameter the task should receive
  */
 public interface TransactionalTask<V> {
 
+    /**
+     * The work that should be done transactionally.
+     *
+     * @param param the parameter the task receives for it's work
+     */
     public void doWork(V param);
 }

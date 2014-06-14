@@ -1,14 +1,8 @@
-/*
- * To change this license header, choose License Headers in Project Properties.
- * To change this template file, choose Tools | Templates
- * and open the template in the editor.
- */
 package at.ac.tuwien.sbc.xvsm;
 
 import at.ac.tuwien.sbc.ClockPartListener;
 import at.ac.tuwien.sbc.model.ClockPart;
 import java.io.Serializable;
-import java.util.ArrayList;
 import java.util.List;
 import org.mozartspaces.core.Entry;
 import org.mozartspaces.notifications.Notification;
@@ -16,8 +10,7 @@ import org.mozartspaces.notifications.NotificationListener;
 import org.mozartspaces.notifications.Operation;
 
 /**
- *
- * @author Christian
+ * A MozartSpaces notification listener that forwards objects messages for clock parts to a {@link ClockPartListener}.
  */
 public class MozartSpacesClockPartListener implements NotificationListener {
 
@@ -29,23 +22,23 @@ public class MozartSpacesClockPartListener implements NotificationListener {
 
     @Override
     public void entryOperationFinished(Notification source, Operation operation, List<? extends Serializable> entries) {
-        List<ClockPart> parts = new ArrayList<ClockPart>(entries.size());
-
         for (int i = 0; i < entries.size(); i++) {
             Object entry = entries.get(i);
+            ClockPart part;
 
             if (entry instanceof ClockPart) {
-                parts.add((ClockPart) entry);
+                part = (ClockPart) entry;
             } else {
-                parts.add((ClockPart) ((Entry) entry).getValue());
+                part = (ClockPart) ((Entry) entry).getValue();
+            }
+
+            if (operation == Operation.WRITE) {
+                listener.onClockPartAdded(part);
+            } else if (operation == Operation.TAKE || operation == Operation.DELETE) {
+                listener.onClockPartRemoved(part);
             }
         }
 
-        if (operation == Operation.WRITE) {
-            listener.onClockPartsAdded(parts);
-        } else if (operation == Operation.TAKE || operation == Operation.DELETE) {
-            listener.onClockPartsRemoved(parts);
-        }
     }
 
 }

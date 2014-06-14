@@ -1,20 +1,23 @@
-/*
- * To change this license header, choose License Headers in Project Properties.
- * To change this template file, choose Tools | Templates
- * and open the template in the editor.
- */
 package at.ac.tuwien.sbc;
 
 import at.ac.tuwien.sbc.model.ClockPart;
-import java.util.List;
 
 /**
- *
- * @author Christian
+ * A listener to obtain state changes of clock parts.
  */
 public interface ClockPartListener {
 
-    public void onClockPartsAdded(List<ClockPart> clockParts);
+    /**
+     * Is called every time a clock part is added.
+     *
+     * @param clockPart the added clock part
+     */
+    public void onClockPartAdded(ClockPart clockPart);
 
-    public void onClockPartsRemoved(List<ClockPart> clockParts);
+    /**
+     * Is called every time a clock part are removed.
+     *
+     * @param clockPart the removed clock part
+     */
+    public void onClockPartRemoved(ClockPart clockPart);
 }

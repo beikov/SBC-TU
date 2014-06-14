@@ -2,11 +2,23 @@ package at.ac.tuwien.sbc;
 
 import at.ac.tuwien.sbc.model.Clock;
 import at.ac.tuwien.sbc.model.Order;
-import java.util.List;
 
+/**
+ * A listener to obtain state changes of orders.
+ */
 public interface OrderListener {
 
-    public void onOrderAdded(List<Order> orders);
+    /**
+     * Is called every time an order is added.
+     *
+     * @param order the added order
+     */
+    public void onOrderAdded(Order order);
 
-    public void onOrderClockFinished(List<Clock> clocks);
+    /**
+     * Is called for every clock, which is part of an order, is assembled.
+     *
+     * @param clock the finished clock
+     */
+    public void onOrderClockFinished(Clock clock);
 }

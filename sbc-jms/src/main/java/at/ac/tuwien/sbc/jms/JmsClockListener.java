@@ -2,13 +2,14 @@ package at.ac.tuwien.sbc.jms;
 
 import at.ac.tuwien.sbc.ClockListener;
 import at.ac.tuwien.sbc.model.Clock;
-import java.util.ArrayList;
-import java.util.List;
 import javax.jms.JMSException;
 import javax.jms.Message;
 import javax.jms.MessageListener;
 import javax.jms.ObjectMessage;
 
+/**
+ * A JMS message listener that forwards objects messages for clocks to a {@link ClockListener}.
+ */
 public class JmsClockListener implements MessageListener {
 
     private final ClockListener listener;
@@ -21,15 +22,10 @@ public class JmsClockListener implements MessageListener {
     public void onMessage(Message message) {
         ObjectMessage mess = (ObjectMessage) message;
         try {
-            Clock c = (Clock) mess.getObject();
-
-            List<Clock> clocks = new ArrayList<Clock>();
-            clocks.add(c);
-            listener.onClocksUpdated(clocks);
-
+            Clock clock = (Clock) mess.getObject();
+            listener.onClockUpdated(clock);
         } catch (JMSException e) {
-            // TODO Auto-generated catch block
-            e.printStackTrace();
+            e.printStackTrace(System.err);
         }
     }
 

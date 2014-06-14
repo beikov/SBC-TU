@@ -1,8 +1,3 @@
-/*
- * To change this license header, choose License Headers in Project Properties.
- * To change this template file, choose Tools | Templates
- * and open the template in the editor.
- */
 package at.ac.tuwien.sbc.model;
 
 import java.io.Serializable;
@@ -11,8 +6,7 @@ import java.util.List;
 import java.util.UUID;
 
 /**
- *
- * @author Christian
+ * A clock that can have multiple states and is composed of multiple clock parts.
  */
 public abstract class Clock implements Comparable<Clock>, Serializable {
 
@@ -27,9 +21,9 @@ public abstract class Clock implements Comparable<Clock>, Serializable {
     private final ClockPart clockHand2;
     private final UUID assemblerId;
     private final ClockType type;
-    
+
     private UUID orderId;
-    
+
     private String distributorId;
     private UUID handlerId;
 
@@ -53,6 +47,12 @@ public abstract class Clock implements Comparable<Clock>, Serializable {
         this.type = type;
     }
 
+    /**
+     * Checks this clock as the quality checker with the given id.
+     *
+     * @param qualityCheckerId the id of the quality checker that checks this clock
+     * @throws IllegalStateException if this clock is either alreafy checked or delivered/disassembled
+     */
     public void check(UUID qualityCheckerId, int quality) {
         if (qualityCheckerId == null) {
             throw new IllegalArgumentException("Invalid quality checker id!");
@@ -70,6 +70,12 @@ public abstract class Clock implements Comparable<Clock>, Serializable {
         this.updatedTime = System.currentTimeMillis();
     }
 
+    /**
+     * Delivers this clock as the deliverer with the given id.
+     *
+     * @param delivererId the id of the deliverer that delivers this clock
+     * @throws IllegalStateException if this clock is either not yet checked or already delivered/disassembled
+     */
     public void deliver(UUID delivererId) {
         if (delivererId == null) {
             throw new IllegalArgumentException("Invalid deliverer id!");
@@ -83,6 +89,13 @@ public abstract class Clock implements Comparable<Clock>, Serializable {
         this.updatedTime = System.currentTimeMillis();
     }
 
+    /**
+     * Disassembles this clock as the deliverer with the given id.
+     *
+     * @param delivererId the id of the deliverer that disassembles this clock
+     * @throws IllegalStateException if this clock is either not yet checked or already delivered/disassembled
+     * @return the clock parts of the disassembled clock
+     */
     public List<ClockPart> disassemble(UUID delivererId) {
         if (delivererId == null) {
             throw new IllegalArgumentException("Invalid deliverer id!");
@@ -169,36 +182,26 @@ public abstract class Clock implements Comparable<Clock>, Serializable {
     public UUID getOrderId() {
         return orderId;
     }
-    
-    public void setDistributor(String distributorId){
-    	this.distributorId = distributorId;
+
+    public void setDistributor(String distributorId) {
+        this.distributorId = distributorId;
     }
-    
-    public String getDistributor(){
-    	return distributorId;
+
+    public String getDistributor() {
+        return distributorId;
     }
-    
+
     public UUID getHandlerId() {
-		return handlerId;
-	}
+        return handlerId;
+    }
 
-	public void setHandlerId(UUID handlerId) {
-		this.handlerId = handlerId;
-	}
+    public void setHandlerId(UUID handlerId) {
+        this.handlerId = handlerId;
+    }
 
-	@Override
+    @Override
     public int compareTo(Clock o) {
-        if (o == null) {
-            throw new NullPointerException();
-        }
-
-        if (this.equals(o)) {
-            return 0;
-        }
-
-        int result = assemblerId.compareTo(o.assemblerId);
-        result = result != 0 ? result : (createdTime < o.createdTime) ? -1 : ((createdTime == o.createdTime) ? 0 : 1);
-        return result;
+        return (serialId < o.serialId) ? -1 : ((serialId == o.serialId) ? 0 : 1);
     }
 
     @Override
@@ -223,6 +226,12 @@ public abstract class Clock implements Comparable<Clock>, Serializable {
         return true;
     }
 
+    /**
+     * Checks if this clock is newer than the given clock.
+     *
+     * @param clock the clock to be checked against this
+     * @return true if this clock's last updated time is later than the one's given.
+     */
     public boolean isNewer(Clock clock) {
         return updatedTime > clock.updatedTime;
     }

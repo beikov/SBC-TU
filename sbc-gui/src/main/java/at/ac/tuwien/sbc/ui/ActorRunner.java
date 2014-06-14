@@ -1,15 +1,9 @@
-/*
- * To change this license header, choose License Headers in Project Properties.
- * To change this template file, choose Tools | Templates
- * and open the template in the editor.
- */
 package at.ac.tuwien.sbc.ui;
 
 import java.awt.EventQueue;
 
 /**
- *
- * @author Christian
+ * A simple wrapper that adds a callback to the Swing event queue after a target has finished.
  */
 public class ActorRunner implements Runnable {
 

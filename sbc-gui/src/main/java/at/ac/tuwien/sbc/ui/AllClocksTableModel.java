@@ -1,8 +1,3 @@
-/*
- * To change this license header, choose License Headers in Project Properties.
- * To change this template file, choose Tools | Templates
- * and open the template in the editor.
- */
 package at.ac.tuwien.sbc.ui;
 
 import at.ac.tuwien.sbc.model.Clock;
@@ -11,8 +6,7 @@ import java.util.List;
 import javax.swing.table.AbstractTableModel;
 
 /**
- *
- * @author Christian
+ * A simple table model for the factory clock GUI that takes snapshots of the {@link ClockList} container on data change events.
  */
 public class AllClocksTableModel extends AbstractTableModel {
 
@@ -135,9 +129,9 @@ public class AllClocksTableModel extends AbstractTableModel {
                 return clock.getDelivererId() == null ? "" : clock.getDelivererId()
                     .toString();
             case 19:
-            	return clock.getHandlerId() == null ? "" : clock.getHandlerId();
+                return clock.getHandlerId() == null ? "" : clock.getHandlerId();
             case 20:
-            	return clock.getDelivererId() == null ? "" : clock.getDistributor();
+                return clock.getDelivererId() == null ? "" : clock.getDistributor();
         }
 
         return null;

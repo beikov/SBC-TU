@@ -2,13 +2,14 @@ package at.ac.tuwien.sbc.jms;
 
 import at.ac.tuwien.sbc.ClockPartListener;
 import at.ac.tuwien.sbc.model.ClockPart;
-import java.util.ArrayList;
-import java.util.List;
 import javax.jms.JMSException;
 import javax.jms.Message;
 import javax.jms.MessageListener;
 import javax.jms.ObjectMessage;
 
+/**
+ * A JMS message listener that forwards objects messages for clock parts to a {@link ClockPartListener}.
+ */
 public class JmsClockPartListener implements MessageListener {
 
     private final ClockPartListener listener;
@@ -21,20 +22,14 @@ public class JmsClockPartListener implements MessageListener {
     public void onMessage(Message message) {
         ObjectMessage mess = (ObjectMessage) message;
         try {
+            ClockPart part = (ClockPart) mess.getObject();
             if (mess.getBooleanProperty(JmsConstants.CLOCK_PART_REMOVED)) {
-                ClockPart part = (ClockPart) mess.getObject();
-                List<ClockPart> parts = new ArrayList<ClockPart>();
-                parts.add(part);
-                listener.onClockPartsRemoved(parts);
+                listener.onClockPartRemoved(part);
             } else {
-                ClockPart part = (ClockPart) mess.getObject();
-                List<ClockPart> parts = new ArrayList<ClockPart>();
-                parts.add(part);
-                listener.onClockPartsAdded(parts);
+                listener.onClockPartAdded(part);
             }
         } catch (JMSException e) {
-            // TODO Auto-generated catch block
-            e.printStackTrace();
+            e.printStackTrace(System.err);
         }
     }
 

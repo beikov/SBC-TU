@@ -1,8 +1,3 @@
-/*
- * To change this license header, choose License Headers in Project Properties.
- * To change this template file, choose Tools | Templates
- * and open the template in the editor.
- */
 package at.ac.tuwien.sbc.xvsm;
 
 import java.net.URI;
@@ -19,17 +14,14 @@ import org.mozartspaces.core.MzsConstants;
 import org.mozartspaces.core.MzsCoreException;
 
 /**
- *
- * @author Christian
+ * A wrapper around a MozartSpaces container that acts as a sequence.
  */
 public class MozartSpacesSequence extends AbstractMozartSpacesComponent {
 
-    private final String containerName;
     private final ContainerReference idContainer;
 
     public MozartSpacesSequence(Capi capi, URI serverUri, MozartSpacesTransactionManager tm, String containerName) {
         super(capi, serverUri, tm);
-        this.containerName = containerName;
         idContainer = getOrCreateIdContainer(capi, containerName);
     }
 
@@ -48,13 +40,19 @@ public class MozartSpacesSequence extends AbstractMozartSpacesComponent {
                 return container;
             } catch (ContainerNameNotAvailableException ex2) {
                 // Someone else was faster...
-                return getOrCreateContainer(capi, name);
+                return getOrCreateIdContainer(capi, name);
             } catch (MzsCoreException ex2) {
                 throw new RuntimeException(ex2);
             }
         }
     }
 
+    /**
+     * Returns the next value created by this sequence.
+     *
+     * @return the next value created by this sequence
+     * @throws MzsCoreException
+     */
     public long getNextId() throws MzsCoreException {
         List<Selector> selectors = new ArrayList<Selector>();
         selectors.add(FifoCoordinator.newSelector(1));

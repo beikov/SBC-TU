@@ -4,6 +4,9 @@ import java.io.Serializable;
 import java.util.List;
 import java.util.UUID;
 
+/**
+ * A clock with a metal wristband and an additional clock hand for a second timezone.
+ */
 public class TimezoneSportsClock extends Clock implements Serializable {
 
     private final ClockPart clockHand3;

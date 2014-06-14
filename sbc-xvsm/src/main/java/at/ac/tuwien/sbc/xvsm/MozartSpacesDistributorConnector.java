@@ -1,8 +1,3 @@
-/*
- * To change this license header, choose License Headers in Project Properties.
- * To change this template file, choose Tools | Templates
- * and open the template in the editor.
- */
 package at.ac.tuwien.sbc.xvsm;
 
 import at.ac.tuwien.sbc.ClockListener;
@@ -31,8 +26,7 @@ import org.mozartspaces.core.MzsCoreException;
 import org.mozartspaces.core.TransactionReference;
 
 /**
- *
- * @author Christian
+ * A simple MozartSpaces implemenation of the {@link DistributorConnector}.
  */
 public class MozartSpacesDistributorConnector extends AbstractMozartSpacesComponent implements DistributorConnector {
 
@@ -47,10 +41,12 @@ public class MozartSpacesDistributorConnector extends AbstractMozartSpacesCompon
         super(serverPort);
         this.distributorId = distributorId;
 
+        // Retrieve demand container located at the fatory
         distributorDemandContainer = getOrCreateContainer(capi, MozartSpacesConstants.DISTRIBUTOR_DEMAND_CONTAINER_NAME,
                                                           new QueryCoordinator(),
                                                           new FifoCoordinator());
 
+        // Create a space for the distributor
         String oldConfigurationFile = System.getProperty("mozartspaces.configurationFile");
         System.setProperty("mozartspaces.configurationFile", "mozartspaces-server.xml");
         final Capi distributorCapi = new Capi(DefaultMzsCore.newInstance(0));
@@ -58,8 +54,6 @@ public class MozartSpacesDistributorConnector extends AbstractMozartSpacesCompon
         distributorUri = distributorCapi.getCore()
             .getConfig()
             .getSpaceUri();
-        // The following uses the first ip address it can find as host instead of localhost
-        // distributorURI = URI.create("xvsm://" + SbcUtils.getLocalIpAddress() + ":" + distributorURI.getPort());
         Runtime.getRuntime()
             .addShutdownHook(new Thread() {
                 @Override
@@ -68,6 +62,7 @@ public class MozartSpacesDistributorConnector extends AbstractMozartSpacesCompon
                     .shutdown(true);
                 }
             });
+        // Connect to the distributor space through the stock connector
         stockConnector = new MozartSpacesDistributorStockConnector(distributorUri, distributorId.toString());
 
         Map<ClockType, Integer> demand = new EnumMap<ClockType, Integer>(ClockType.class);
@@ -75,6 +70,7 @@ public class MozartSpacesDistributorConnector extends AbstractMozartSpacesCompon
         demand.put(ClockType.SPORT, 0);
         demand.put(ClockType.ZEITZONEN_SPORT, 0);
 
+        // Save an initial demand of zero
         DistributorDemand distributorDemand = new DistributorDemand(distributorUri, distributorId.toString(), demand);
         final Entry demandEntry = new Entry(distributorDemand);
 
@@ -103,7 +99,9 @@ public class MozartSpacesDistributorConnector extends AbstractMozartSpacesCompon
                         .equalTo(distributorId.toString()));
                 selectors.add(QueryCoordinator.newSelector(query, MzsConstants.Selecting.COUNT_ALL));
 
+                // Delete the old demand
                 capi.delete(distributorDemandContainer, selectors, MzsConstants.RequestTimeout.TRY_ONCE, tx);
+                // Save the new demand
                 capi.write(entry, distributorDemandContainer, MozartSpacesConstants.MAX_TIMEOUT_MILLIS, tx);
             }
         });

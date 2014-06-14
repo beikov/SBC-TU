@@ -3,8 +3,10 @@ package at.ac.tuwien.sbc.ui;
 import at.ac.tuwien.sbc.OrderListener;
 import at.ac.tuwien.sbc.model.Clock;
 import at.ac.tuwien.sbc.model.Order;
-import java.util.List;
 
+/**
+ * An order listener that adds orders to a {@link OrderList} or updated orders from that container and invokes a listener.
+ */
 public class CollectingOrderListener implements OrderListener {
 
     private final Runnable listener;
@@ -16,18 +18,16 @@ public class CollectingOrderListener implements OrderListener {
     }
 
     @Override
-    public void onOrderAdded(List<Order> orders) {
-        orderList.addAll(orders);
+    public void onOrderAdded(Order order) {
+        orderList.addAll(order);
         listener.run();
     }
 
     @Override
-    public void onOrderClockFinished(List<Clock> clocks) {
-        for (Clock clock : clocks) {
-            if (clock.getOrderId() != null) {
-                orderList.getOrder(clock.getOrderId())
-                    .addFinishedClock(clock);
-            }
+    public void onOrderClockFinished(Clock clock) {
+        if (clock.getOrderId() != null) {
+            orderList.getOrder(clock.getOrderId())
+                .addFinishedClock(clock);
         }
         listener.run();
 

@@ -1,8 +1,3 @@
-/*
- * To change this license header, choose License Headers in Project Properties.
- * To change this template file, choose Tools | Templates
- * and open the template in the editor.
- */
 package at.ac.tuwien.sbc.actor;
 
 import at.ac.tuwien.sbc.Connector;
@@ -12,8 +7,7 @@ import at.ac.tuwien.sbc.model.ClockQualityType;
 import at.ac.tuwien.sbc.util.SbcUtils;
 
 /**
- *
- * @author Christian
+ * An actor that tries to take checked clocks of a specific quality from the factory stock and make them ready for delivery. If no clock with the wanted quality is available teh actor tries to disassemble faulty clocks.
  */
 public class DelivererActor extends AbstractActor {
 
@@ -44,6 +38,7 @@ public class DelivererActor extends AbstractActor {
     @Override
     public void run() {
         while (!Thread.interrupted()) {
+            // Try to take a checked clock, waiting at most 5 seconds to get one
             if (connector.takeChecked(type, 5000, new TransactionalTask<Clock>() {
 
                 @Override
@@ -53,7 +48,7 @@ public class DelivererActor extends AbstractActor {
                 }
 
             })) {
-                // Timeout occurred
+                // Timeout occurred, try to disassemble faulty clocks, waiting at most 1 second get one
                 connector.takeChecked(ClockQualityType.C, 1000, new TransactionalTask<Clock>() {
 
                     @Override

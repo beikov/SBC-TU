@@ -1,8 +1,3 @@
-/*
- * To change this license header, choose License Headers in Project Properties.
- * To change this template file, choose Tools | Templates
- * and open the template in the editor.
- */
 package at.ac.tuwien.sbc.distributor;
 
 import at.ac.tuwien.sbc.DistributorConnector;
@@ -10,15 +5,12 @@ import at.ac.tuwien.sbc.model.ClockType;
 import java.awt.EventQueue;
 import java.util.EnumMap;
 import java.util.Map;
-import java.util.UUID;
 
 /**
- *
- * @author Manuel
+ * The GUI of the distributor application
  */
 public class DistributorFrame extends javax.swing.JFrame {
 
-    private final UUID id;
     private final DistributorConnector connector;
 
     private final ClockList clockList;
@@ -40,37 +32,39 @@ public class DistributorFrame extends javax.swing.JFrame {
         }
     };
 
-    /**
-     * Creates new form DistributorGui
-     */
-    public DistributorFrame(UUID id, DistributorConnector connector) {
-        this.id = id;
+    public DistributorFrame(DistributorConnector connector) {
         this.connector = connector;
 
         clockList = new ClockList();
         clockTableModel = new ClockTableModel(clockList);
 
         final DistributorClockListener clockListener = new DistributorClockListener(clockList, updateCountAction);
+
+        // Removes clocks from the clock list, lets the connector know of the removal and then invokes the updateCountAction
         final ClockConsumer clockConsumer = new ClockConsumer(clockList, updateCountAction, connector);
         final Thread clockConsumerThread = new Thread(clockConsumer);
         clockConsumerThread.setDaemon(true);
         clockConsumerThread.start();
 
+        // Register listener for clock deliveries
         connector.subscribeForDistributorDeliveries(clockListener);
 
         initComponents();
     }
 
     private void updateOrderCounts() {
+        // Update current order counts
         clockList.setOrderCount(ClockType.KLASSISCH, Integer.parseInt(classicClockDemandTextField.getText()));
         clockList.setOrderCount(ClockType.SPORT, Integer.parseInt(sportsClockDemandTextField.getText()));
         clockList.setOrderCount(ClockType.ZEITZONEN_SPORT, Integer.parseInt(timezoneClockDemandTextField.getText()));
 
+        // Retriev current demand counts
         final Map<ClockType, Integer> demand = new EnumMap<ClockType, Integer>(ClockType.class);
         int classicDemand = clockList.getDemandCount(ClockType.KLASSISCH);
         int sportsDemand = clockList.getDemandCount(ClockType.SPORT);
         int timezoneDemand = clockList.getDemandCount(ClockType.ZEITZONEN_SPORT);
 
+        // Only put the demand into the demand map if it actually is greater than 0
         if (classicDemand > 0) {
             demand.put(ClockType.KLASSISCH, classicDemand);
         }
@@ -81,6 +75,7 @@ public class DistributorFrame extends javax.swing.JFrame {
             demand.put(ClockType.ZEITZONEN_SPORT, timezoneDemand);
         }
 
+        // Let the factory know of our current demand
         connector.setDemand(demand);
     }
 
@@ -248,12 +243,12 @@ public class DistributorFrame extends javax.swing.JFrame {
     private javax.swing.JButton updateDemandButton;
     // End of variables declaration//GEN-END:variables
 
-    public static void start(final UUID id, final DistributorConnector connector) {
+    public static void start(final DistributorConnector connector) {
         /* Create and display the form */
         java.awt.EventQueue.invokeLater(new Runnable() {
             @Override
             public void run() {
-                new DistributorFrame(id, connector).setVisible(true);
+                new DistributorFrame(connector).setVisible(true);
             }
         });
     }

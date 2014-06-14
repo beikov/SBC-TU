@@ -1,16 +1,10 @@
-/*
- * To change this license header, choose License Headers in Project Properties.
- * To change this template file, choose Tools | Templates
- * and open the template in the editor.
- */
 package at.ac.tuwien.sbc.model;
 
 import java.io.Serializable;
 import java.util.UUID;
 
 /**
- *
- * @author Christian
+ * A clock part with an id and a type delivered by a specific supplier.
  */
 public class ClockPart implements Serializable {
 

@@ -4,9 +4,11 @@ import at.ac.tuwien.sbc.model.Clock;
 import java.util.List;
 import javax.swing.table.AbstractTableModel;
 
+/**
+ * A simple table model for the distributor clock GUI that takes snapshots of the {@link ClockList} container on data change events.
+ */
 public class ClockTableModel extends AbstractTableModel {
 
-    //    private final ClockList clockList;
     private final ClockList clockList;
     private List<Clock> clocks;
     private final String[] columnNames = { "Seriennummer", "Uhrtyp" };

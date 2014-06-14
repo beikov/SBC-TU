@@ -1,19 +1,12 @@
-/*
- * To change this license header, choose License Headers in Project Properties.
- * To change this template file, choose Tools | Templates
- * and open the template in the editor.
- */
 package at.ac.tuwien.sbc.actor;
 
 import at.ac.tuwien.sbc.Connector;
 import at.ac.tuwien.sbc.TransactionalTask;
 import at.ac.tuwien.sbc.model.Clock;
-import at.ac.tuwien.sbc.model.ClockQualityType;
 import at.ac.tuwien.sbc.util.SbcUtils;
 
 /**
- *
- * @author Christian
+ * An actor that takes assembled clocks from the factory stock and check their qualities.
  */
 public class QualityCheckerActor extends AbstractActor {
 
@@ -45,9 +38,10 @@ public class QualityCheckerActor extends AbstractActor {
 
                 @Override
                 public void doWork(Clock clock) {
+                    // Get a random quality between 1 and 10
                     clock.check(id, random.get()
                                 .nextInt(10) + 1);
-                    connector.addCheckedClock(clock, ClockQualityType.fromQuality(clock.getQuality()));
+                    connector.addCheckedClock(clock);
                 }
 
             });

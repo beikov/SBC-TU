@@ -1,8 +1,3 @@
-/*
- * To change this license header, choose License Headers in Project Properties.
- * To change this template file, choose Tools | Templates
- * and open the template in the editor.
- */
 package at.ac.tuwien.sbc.actor;
 
 import at.ac.tuwien.sbc.Connector;
@@ -20,13 +15,22 @@ import java.util.List;
 import java.util.UUID;
 
 /**
- *
- * @author Christian
+ * An actor that takes clock parts either randomly or like requested by orders to produce clocks and puts them into the factory stock.
  */
 public class AssemblyActor extends AbstractActor {
 
     private final boolean doWait;
-    OrderPriority lastPriority = null;
+    private final ClockType[] types = ClockType.values();
+    private final TransactionalTask<SingleClockOrder> productionTask = new TransactionalTask<SingleClockOrder>() {
+
+        @Override
+        public void doWork(SingleClockOrder order) {
+            produceClock(order.getNeededType(), order.getOrderId());
+        }
+
+    };
+
+    private OrderPriority lastPriority;
 
     public AssemblyActor(Connector connector, boolean doWait) {
         super(connector);
@@ -59,15 +63,7 @@ public class AssemblyActor extends AbstractActor {
                 sleepForSeconds(1, 3);
             }
 
-            TransactionalTask<SingleClockOrder> productionTask = new TransactionalTask<SingleClockOrder>() {
-
-                @Override
-                public void doWork(SingleClockOrder order) {
-                    produceClock(order.getNeededType(), order.getOrderId());
-                }
-
-            };
-
+            System.out.println(connector.getSingleClockOrders());
             // First try high priority single clock orders
             boolean done = connector.takeSingleClockOrder(OrderPriority.HOCH, productionTask);
             // If none can be found try middle priority single clock orders
@@ -82,6 +78,7 @@ public class AssemblyActor extends AbstractActor {
             }
 
             if (!done) {
+                // Try to produce a random clock type
                 AssemblyActor.this.lastPriority = null;
                 produceClock(getRandomClockType(), null);
             }
@@ -89,7 +86,6 @@ public class AssemblyActor extends AbstractActor {
     }
 
     private ClockType getRandomClockType() {
-        ClockType[] types = ClockType.values();
         return types[random.get()
             .nextInt(types.length)];
     }

@@ -6,6 +6,9 @@ import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 
+/**
+ * An order for specific amounts of different clock types with a specific priority.
+ */
 public class Order implements Serializable {
 
     private final UUID id;
@@ -36,14 +39,15 @@ public class Order implements Serializable {
         return priority;
     }
 
+    /**
+     * Returns the amount of clocks needed of the given type to fulfill this order.
+     *
+     * @param type the clock type to check
+     * @return the amount of clocks needed
+     */
     public int getNeededClocksOfType(ClockType type) {
         Integer needed = neededClocks.get(type)[0];
         return (needed != null) ? needed : 0;
-    }
-
-    public boolean isClockTypeNeeded(ClockType type) {
-        Integer needed = neededClocks.get(type)[0];
-        return (needed != null) ? needed > 0 : false;
     }
 
     @Override
@@ -52,6 +56,11 @@ public class Order implements Serializable {
             + ", clocks=" + clocks + ", priority=" + priority + "]";
     }
 
+    /**
+     * Associates the given finished clock to this order.
+     *
+     * @param clock the finished clock to be associated to this order
+     */
     public void addFinishedClock(Clock clock) {
         Integer[] needed = neededClocks.get(clock.getType());
         needed[1] += 1;

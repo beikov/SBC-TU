@@ -1,8 +1,3 @@
-/*
- * To change this license header, choose License Headers in Project Properties.
- * To change this template file, choose Tools | Templates
- * and open the template in the editor.
- */
 package at.ac.tuwien.sbc.actor;
 
 import at.ac.tuwien.sbc.Connector;
@@ -12,8 +7,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
- *
- * @author Christian
+ * An actor that delivers a specific amount of a specific clock part type to the factory stock.
  */
 public class SupplierActor extends AbstractActor {
 

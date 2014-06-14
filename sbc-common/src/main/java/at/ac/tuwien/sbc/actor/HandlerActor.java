@@ -3,6 +3,9 @@ package at.ac.tuwien.sbc.actor;
 import at.ac.tuwien.sbc.Connector;
 import at.ac.tuwien.sbc.util.SbcUtils;
 
+/**
+ * An actor that tries to deliver demanded clocks to distributors.
+ */
 public class HandlerActor extends AbstractActor {
 
     public HandlerActor(Connector connector) {

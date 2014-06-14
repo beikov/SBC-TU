@@ -1,17 +1,10 @@
-/*
- * To change this license header, choose License Headers in Project Properties.
- * To change this template file, choose Tools | Templates
- * and open the template in the editor.
- */
 package at.ac.tuwien.sbc.ui;
 
 import at.ac.tuwien.sbc.ClockListener;
 import at.ac.tuwien.sbc.model.Clock;
-import java.util.List;
 
 /**
- *
- * @author Christian
+ * A clock listener that adds clocks to a {@link ClockList} container and invokes a listener.
  */
 public class CollectingClockListener implements ClockListener {
 
@@ -24,8 +17,8 @@ public class CollectingClockListener implements ClockListener {
     }
 
     @Override
-    public void onClocksUpdated(List<Clock> clocks) {
-        clockList.addClocks(clocks);
+    public void onClockUpdated(Clock clock) {
+        clockList.addClocks(clock);
         listener.run();
     }
 

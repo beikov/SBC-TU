@@ -1,8 +1,3 @@
-/*
- * To change this license header, choose License Headers in Project Properties.
- * To change this template file, choose Tools | Templates
- * and open the template in the editor.
- */
 package at.ac.tuwien.sbc.jms;
 
 import at.ac.tuwien.sbc.ClockListener;
@@ -21,8 +16,7 @@ import javax.jms.ObjectMessage;
 import javax.jms.Queue;
 
 /**
- *
- * @author Christian
+ * A simple JMS implemenation of the {@link DistributorConnector}.
  */
 public class JmsDistributorConnector extends AbstractJmsComponent implements DistributorConnector {
 
@@ -54,8 +48,6 @@ public class JmsDistributorConnector extends AbstractJmsComponent implements Dis
 
         // Start distributor server
         distributorUri = JmsServer.startServer(distributorId.toString());
-        // The following uses the first ip address it can find as host instead of localhost
-        // distributorURI = URI.create("tcp://" + SbcUtils.getLocalIpAddress() + ":" + distributorURI.getPort());
 
         // Connect stock connector to distributor server
         stockConnector = new JmsDistributorStockConnector(distributorUri, distributorId.toString());
@@ -76,7 +68,8 @@ public class JmsDistributorConnector extends AbstractJmsComponent implements Dis
             public void doWork() throws JMSException {
                 connectDistributor();
 
-                if (lastDemand != null) {
+                // Only remove the old demand if there exists one and the new demand is different from the old one
+                if (lastDemand != null && !lastDemand.equals(demand)) {
                     MessageConsumer consumer = null;
                     try {
                         consumer = session.createConsumer(distributorDemandQueue, JmsConstants.DISTRIBUTOR_ID + "='"
@@ -90,9 +83,11 @@ public class JmsDistributorConnector extends AbstractJmsComponent implements Dis
                     }
                 }
 
+                // Remember this demand
                 DistributorDemand distributorDemand = lastDemand = new DistributorDemand(distributorUri, distributorId
                                                                                          .toString(), demand);
                 ObjectMessage msg = session.createObjectMessage(distributorDemand);
+                // We need the id to be able to consume the demand later
                 msg.setStringProperty(JmsConstants.DISTRIBUTOR_ID, distributorId.toString());
                 distributorDemandQueueProducer.send(msg);
             }

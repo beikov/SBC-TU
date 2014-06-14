@@ -5,8 +5,7 @@ import at.ac.tuwien.sbc.util.SbcUtils;
 import java.util.UUID;
 
 /**
- * Hello world!
- *
+ * The entry point for the distributor GUI.
  */
 public class DistributorApp {
 
@@ -18,6 +17,6 @@ public class DistributorApp {
         UUID id = UUID.randomUUID();
         DistributorConnector connector = SbcUtils.getDistributorConnector(id, Integer.parseInt(args[0]), args[1]);
         System.out.println("Starting DistributerGUI with id " + id.toString());
-        DistributorFrame.start(id, connector);
+        DistributorFrame.start(connector);
     }
 }

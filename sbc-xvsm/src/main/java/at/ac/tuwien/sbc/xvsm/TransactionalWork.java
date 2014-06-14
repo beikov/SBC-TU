@@ -1,18 +1,18 @@
-/*
- * To change this license header, choose License Headers in Project Properties.
- * To change this template file, choose Tools | Templates
- * and open the template in the editor.
- */
 package at.ac.tuwien.sbc.xvsm;
 
 import org.mozartspaces.core.MzsCoreException;
 import org.mozartspaces.core.TransactionReference;
 
 /**
- *
- * @author Christian
+ * A wrapper for a MozartSpaces task that should be done transactional.
  */
 public interface TransactionalWork {
 
+    /**
+     * The work that should be done transactionally.
+     *
+     * @param tx the transaction within this work runs
+     * @throws MzsCoreException
+     */
     public void doWork(TransactionReference tx) throws MzsCoreException;
 }

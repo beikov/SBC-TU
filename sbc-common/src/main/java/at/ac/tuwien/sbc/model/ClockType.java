@@ -4,6 +4,9 @@ import java.util.Collections;
 import java.util.EnumMap;
 import java.util.Map;
 
+/**
+ * The type of a clock.
+ */
 public enum ClockType {
 
     KLASSISCH(1, 0, 1, 1, 2),
@@ -30,6 +33,11 @@ public enum ClockType {
         map.put(clockPartType, count);
     }
 
+    /**
+     * Returns the parts needed for this clock type.
+     *
+     * @return the parts needed for this clock type.
+     */
     public Map<ClockPartType, Integer> getNeededParts() {
         return neededParts;
     }

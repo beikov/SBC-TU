@@ -8,6 +8,9 @@ import java.util.Queue;
 import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.atomic.AtomicInteger;
 
+/**
+ * A container for clocks that counts the amount of clock types.
+ */
 public class ClockList {
 
     private final Queue<Clock> clocks;
@@ -32,24 +35,22 @@ public class ClockList {
         return new ArrayList<Clock>(clocks);
     }
 
-    public void addAll(List<Clock> clocks) {
-        for (Clock clock : clocks) {
-            switch (clock.getType()) {
-                case KLASSISCH:
-                    classicClocks.incrementAndGet();
-                    orderedClassicClocks.decrementAndGet();
-                    break;
-                case SPORT:
-                    sportsClocks.incrementAndGet();
-                    orderedSportsClocks.decrementAndGet();
-                    break;
-                case ZEITZONEN_SPORT:
-                    timezoneClocks.incrementAndGet();
-                    orderedTimezoneClocks.decrementAndGet();
-                    break;
-            }
+    public void add(Clock clock) {
+        switch (clock.getType()) {
+            case KLASSISCH:
+                classicClocks.incrementAndGet();
+                orderedClassicClocks.decrementAndGet();
+                break;
+            case SPORT:
+                sportsClocks.incrementAndGet();
+                orderedSportsClocks.decrementAndGet();
+                break;
+            case ZEITZONEN_SPORT:
+                timezoneClocks.incrementAndGet();
+                orderedTimezoneClocks.decrementAndGet();
+                break;
         }
-        this.clocks.addAll(clocks);
+        this.clocks.add(clock);
     }
 
     public Clock removeAny() {

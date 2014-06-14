@@ -1,8 +1,3 @@
-/*
- * To change this license header, choose License Headers in Project Properties.
- * To change this template file, choose Tools | Templates
- * and open the template in the editor.
- */
 package at.ac.tuwien.sbc.jms;
 
 import javax.jms.JMSException;
@@ -13,8 +8,7 @@ import javax.jms.Queue;
 import javax.jms.Session;
 
 /**
- *
- * @author Christian
+ * A wrapper around a JMS queue that acts as a sequence. This implementation assumes that there already exists an {@link ObjectMessage} containing a {@link Long}.
  */
 public class JmsSequence extends AbstractJmsComponent {
 
@@ -34,12 +28,19 @@ public class JmsSequence extends AbstractJmsComponent {
         idProducer = createProducerIfNull(idProducer, idQueue);
     }
 
+    /**
+     * Returns the next value created by this sequence.
+     *
+     * @return the next value created by this sequence
+     * @throws JMSException
+     */
     public long getNextId() throws JMSException {
         connectIdSequence();
         // The server creates the first message so we can just wait without a timeout
         ObjectMessage message = (ObjectMessage) idConsumer.receive();
         Long id = (Long) message.getObject();
 
+        // Push back the next value of the sequence
         ObjectMessage msg = session.createObjectMessage(Long.valueOf(id + 1));
         idProducer.send(msg);
 

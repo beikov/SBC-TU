@@ -1,15 +1,12 @@
-/*
- * To change this license header, choose License Headers in Project Properties.
- * To change this template file, choose Tools | Templates
- * and open the template in the editor.
- */
 package at.ac.tuwien.sbc;
 
 /**
- *
- * @author Christian
+ * Represents the subscription that resulted by registering a listener.
  */
 public interface Subscription {
 
+    /**
+     * Cancels the subscription so that the listener registered earlier receives no more messages.
+     */
     public void cancel();
 }

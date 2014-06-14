@@ -4,6 +4,9 @@ import java.io.Serializable;
 import java.net.URI;
 import java.util.Map;
 
+/**
+ * The clock demand of a distributor and the endpoint address to which clock should be delivered to.
+ */
 public class DistributorDemand implements Serializable {
 
     private final URI uri;

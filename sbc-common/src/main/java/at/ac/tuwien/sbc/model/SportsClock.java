@@ -3,6 +3,9 @@ package at.ac.tuwien.sbc.model;
 import java.io.Serializable;
 import java.util.UUID;
 
+/**
+ * A clock with a metal wristband.
+ */
 public class SportsClock extends Clock implements Serializable {
 
     public SportsClock(ClockPart chassis, ClockPart clockWork,

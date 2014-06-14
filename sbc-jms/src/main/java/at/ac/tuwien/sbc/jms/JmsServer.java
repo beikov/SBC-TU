@@ -1,8 +1,3 @@
-/*
- * To change this license header, choose License Headers in Project Properties.
- * To change this template file, choose Tools | Templates
- * and open the template in the editor.
- */
 package at.ac.tuwien.sbc.jms;
 
 import java.net.URI;
@@ -16,11 +11,13 @@ import org.apache.activemq.ActiveMQPrefetchPolicy;
 import org.apache.activemq.broker.BrokerService;
 
 /**
- *
- * @author Christian
+ * A wrapper around ActiveMQ to start a JMS Server.
  */
 public class JmsServer {
 
+    /**
+     * The value at which the id sequenece starts.
+     */
     private static final Long SEQUENCE_START = 0L;
 
     public static void main(String[] args) throws Exception {
@@ -31,9 +28,9 @@ public class JmsServer {
         Integer port = Integer.parseInt(args[0]);
         BrokerService broker = new BrokerService();
         broker.addConnector("tcp://localhost:" + port);
+        // We don't need persistence
         broker.setPersistent(false);
-        broker.setUseJmx(true);
-        broker.setEnableStatistics(true);
+        // Clear everything, just to make sure
         broker.deleteAllMessages();
         broker.start();
         createIdSequence(port);
@@ -49,9 +46,9 @@ public class JmsServer {
             BrokerService broker = new BrokerService();
             broker.setBrokerName(name);
             broker.addConnector("tcp://localhost:0");
+            // We don't need persistence
             broker.setPersistent(false);
-            broker.setUseJmx(true);
-            broker.setEnableStatistics(true);
+            // Clear everything, just to make sure
             broker.deleteAllMessages();
             broker.start();
             URI uri = broker.getTransportConnectorByScheme("tcp")
@@ -63,25 +60,36 @@ public class JmsServer {
         }
     }
 
+    /**
+     * Creates a queue that represents an id sequence.
+     *
+     * @param port the port at which the JMS Server listens
+     * @throws JMSException
+     */
     private static void createIdSequence(int port) throws JMSException {
         ActiveMQConnectionFactory connectionFactory = new ActiveMQConnectionFactory("tcp://localhost:" + port);
 
         ActiveMQPrefetchPolicy policy = new ActiveMQPrefetchPolicy();
         policy.setQueuePrefetch(0);
         connectionFactory.setPrefetchPolicy(policy);
-        Connection connection = connectionFactory.createConnection();
-        connection.start();
-        Session session = connection.createSession(true, Session.CLIENT_ACKNOWLEDGE);
+        Connection connection = null;
 
-        MessageProducer idProducer = session.createProducer(
-            session.createQueue(JmsConstants.ID_QUEUE));
+        try {
+            connection = connectionFactory.createConnection();
+            connection.start();
+            Session session = connection.createSession(true, Session.CLIENT_ACKNOWLEDGE);
 
-        ObjectMessage message = session.createObjectMessage(SEQUENCE_START);
-        idProducer.send(message);
+            MessageProducer idProducer = session.createProducer(
+                session.createQueue(JmsConstants.ID_QUEUE));
 
-        session.commit();
+            ObjectMessage message = session.createObjectMessage(SEQUENCE_START);
+            idProducer.send(message);
 
-        session.close();
-        connection.close();
+            session.commit();
+        } finally {
+            if (connection != null) {
+                connection.close();
+            }
+        }
     }
 }

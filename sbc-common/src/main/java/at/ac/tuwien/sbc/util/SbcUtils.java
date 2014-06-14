@@ -1,24 +1,21 @@
-/*
- * To change this license header, choose License Headers in Project Properties.
- * To change this template file, choose Tools | Templates
- * and open the template in the editor.
- */
 package at.ac.tuwien.sbc.util;
 
 import at.ac.tuwien.sbc.Connector;
 import at.ac.tuwien.sbc.DistributorConnector;
-import java.net.InetAddress;
-import java.net.NetworkInterface;
-import java.net.SocketException;
-import java.util.Enumeration;
 import java.util.UUID;
 
 /**
- *
- * @author Christian
+ * A utility class for creating connectors
  */
 public final class SbcUtils {
 
+    /**
+     * Creates a factory connector for the given port and type.
+     *
+     * @param port the port at which the server listens
+     * @param type the type of the connector, either xvsm or jms
+     * @return a new connector instance
+     */
     public static Connector getConnector(int port, String type) {
         Exception reason = null;
 
@@ -42,6 +39,14 @@ public final class SbcUtils {
         throw new IllegalArgumentException("Could not create the connector", reason);
     }
 
+    /**
+     * Creates a distributor connector for the given port and type.
+     *
+     * @param distributorId the id of the distributor
+     * @param port          the port at which the server listens
+     * @param type          the type of the distributor connector, either xvsm or jms
+     * @return a new distributor connector instance
+     */
     public static DistributorConnector getDistributorConnector(UUID distributorId, int port, String type) {
         Exception reason = null;
 
@@ -63,26 +68,5 @@ public final class SbcUtils {
         }
 
         throw new IllegalArgumentException("Could not create the connector", reason);
-    }
-
-    public static String getLocalIpAddress() {
-        try {
-            Enumeration<NetworkInterface> networkInterfaces = NetworkInterface.getNetworkInterfaces();
-            while (networkInterfaces.hasMoreElements()) {
-                NetworkInterface iface = networkInterfaces.nextElement();
-                if (iface.isUp() && !iface.isLoopback()) {
-                    Enumeration<InetAddress> addresses = iface.getInetAddresses();
-                    if (addresses.hasMoreElements()) {
-                        return addresses.nextElement()
-                            .getHostAddress();
-                    }
-                }
-            }
-        } catch (SocketException ex) {
-            ex.printStackTrace(System.err);
-        }
-
-        return InetAddress.getLoopbackAddress()
-            .getHostAddress();
     }
 }
