@@ -4,9 +4,11 @@ import at.ac.tuwien.sbc.model.Clock;
 import at.ac.tuwien.sbc.model.ClockPart;
 import at.ac.tuwien.sbc.model.ClockPartType;
 import at.ac.tuwien.sbc.model.ClockQualityType;
+import at.ac.tuwien.sbc.model.ClockType;
 import at.ac.tuwien.sbc.model.Order;
 import at.ac.tuwien.sbc.model.OrderPriority;
 import at.ac.tuwien.sbc.model.SingleClockOrder;
+
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
@@ -149,5 +151,8 @@ public interface Connector {
     public void deliverDemandedClock(UUID handlerId);
 
     public List<SingleClockOrder> getSingleClockOrders();
+
+	boolean takeSingleClockOrder(OrderPriority priority, ClockType type,
+			TransactionalTask<SingleClockOrder> transactionalTask);
 
 }

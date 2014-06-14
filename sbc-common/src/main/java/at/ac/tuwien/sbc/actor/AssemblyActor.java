@@ -19,137 +19,151 @@ import java.util.UUID;
  */
 public class AssemblyActor extends AbstractActor {
 
-    private final boolean doWait;
-    private final ClockType[] types = ClockType.values();
-    private final TransactionalTask<SingleClockOrder> productionTask = new TransactionalTask<SingleClockOrder>() {
+	private final boolean doWait;
+	private final ClockType[] types = ClockType.values();
+	private final TransactionalTask<SingleClockOrder> productionTask = new TransactionalTask<SingleClockOrder>() {
 
-        @Override
-        public void doWork(SingleClockOrder order) {
-            produceClock(order.getNeededType(), order.getOrderId());
-        }
+		@Override
+		public void doWork(SingleClockOrder order) {
+			produceClock(order.getNeededType(), order.getOrderId());
+		}
 
-    };
+	};
 
-    private OrderPriority lastPriority;
+	private OrderPriority lastPriority;
 
-    public AssemblyActor(Connector connector, boolean doWait) {
-        super(connector);
-        this.doWait = doWait;
-    }
+	public AssemblyActor(Connector connector, boolean doWait) {
+		super(connector);
+		this.doWait = doWait;
+	}
 
-    public static void main(String[] args) throws Exception {
-        if (args.length != 2) {
-            throw new IllegalArgumentException("Usage: AssemblyActor PORT (xvsm|jms)");
-        }
+	public static void main(String[] args) throws Exception {
+		if (args.length != 2) {
+			throw new IllegalArgumentException("Usage: AssemblyActor PORT (xvsm|jms)");
+		}
 
-        Connector connector = SbcUtils.getConnector(Integer.parseInt(args[0]), args[1]);
-        AbstractActor actor = new AssemblyActor(connector, true);
-        Thread t = new Thread(actor);
-        t.start();
+		Connector connector = SbcUtils.getConnector(Integer.parseInt(args[0]), args[1]);
+		AbstractActor actor = new AssemblyActor(connector, true);
+		Thread t = new Thread(actor);
+		t.start();
 
-        System.out.println("Starting " + actor.getClass()
-            .getSimpleName() + " with id " + actor.getId());
-        System.out.println("Press CTRL+C to shutdown...");
-        while (System.in.read() != -1);
-        t.interrupt();
-    }
+		System.out.println("Starting " + actor.getClass()
+				.getSimpleName() + " with id " + actor.getId());
+		System.out.println("Press CTRL+C to shutdown...");
+		while (System.in.read() != -1);
+		t.interrupt();
+	}
 
-    @Override
-    public void run() {
-        while (!Thread.interrupted()) {
-            if (doWait) {
-                // Wait for 1-3 seconds
-                sleepForSeconds(1, 3);
-            }
+	@Override
+	public void run() {
+		while (!Thread.interrupted()) {
+			if (doWait) {
+				// Wait for 1-3 seconds
+				sleepForSeconds(1, 3);
+			}
 
-            System.out.println(connector.getSingleClockOrders());
-            // First try high priority single clock orders
-            boolean done = connector.takeSingleClockOrder(OrderPriority.HOCH, productionTask);
-            // If none can be found try middle priority single clock orders
-            done = done ? true : connector.takeSingleClockOrder(OrderPriority.MITTEL, productionTask);
+			System.out.println(connector.getSingleClockOrders());
+			// First try high priority single clock orders
+			boolean done = connector.takeSingleClockOrder(OrderPriority.HOCH,null, productionTask);
+			for(ClockType type : ClockType.values()){
+				done = done ? true : connector.takeSingleClockOrder(OrderPriority.HOCH,type, productionTask);
+				done = done ? true : connector.takeSingleClockOrder(OrderPriority.HOCH,type, productionTask);
+				done = done ? true : connector.takeSingleClockOrder(OrderPriority.HOCH,type, productionTask);
+			}
+			// If none can be found try middle priority single clock orders
+			done = done ? true : connector.takeSingleClockOrder(OrderPriority.MITTEL,null, productionTask);
+			for(ClockType type : ClockType.values()){
+				done = done ? true : connector.takeSingleClockOrder(OrderPriority.MITTEL,type, productionTask);
+				done = done ? true : connector.takeSingleClockOrder(OrderPriority.MITTEL,type, productionTask);
+				done = done ? true : connector.takeSingleClockOrder(OrderPriority.MITTEL,type, productionTask);
+			}
+			// If none can be found check if a low priority single clock order should be tried
+			if (!done && AssemblyActor.this.lastPriority == null) {
+				// Try low priority single clock orders
+				done = connector.takeSingleClockOrder(OrderPriority.NIEDRIG,null, productionTask);
+				for(ClockType type : ClockType.values()){
+					done = done ? true : connector.takeSingleClockOrder(OrderPriority.NIEDRIG,type, productionTask);
+					done = done ? true : connector.takeSingleClockOrder(OrderPriority.NIEDRIG,type, productionTask);
+					done = done ? true : connector.takeSingleClockOrder(OrderPriority.NIEDRIG,type, productionTask);
+				}
+				// Remember that we tried low priority so we can alternate
+				AssemblyActor.this.lastPriority = OrderPriority.NIEDRIG;
+			}
 
-            // If none can be found check if a low priority single clock order should be tried
-            if (!done && AssemblyActor.this.lastPriority == null) {
-                // Try low priority single clock orders
-                done = connector.takeSingleClockOrder(OrderPriority.NIEDRIG, productionTask);
-                // Remember that we tried low priority so we can alternate
-                AssemblyActor.this.lastPriority = OrderPriority.NIEDRIG;
-            }
+			if (!done) {
+				// Try to produce a random clock type
+				AssemblyActor.this.lastPriority = null;
+				produceClock(getRandomClockType(), null);
+			}
+		}
+	}
 
-            if (!done) {
-                // Try to produce a random clock type
-                AssemblyActor.this.lastPriority = null;
-                produceClock(getRandomClockType(), null);
-            }
-        }
-    }
+	private ClockType getRandomClockType() {
+		return types[random.get()
+		             .nextInt(types.length)];
+	}
 
-    private ClockType getRandomClockType() {
-        return types[random.get()
-            .nextInt(types.length)];
-    }
+	private void produceClock(final ClockType typeToProduce, final UUID orderId) {
+		connector.takeParts(typeToProduce.getNeededParts(), new TransactionalTask<List<ClockPart>>() {
 
-    private void produceClock(final ClockType typeToProduce, final UUID orderId) {
-        connector.takeParts(typeToProduce.getNeededParts(), new TransactionalTask<List<ClockPart>>() {
+			@Override
+			public void doWork(List<ClockPart> clockParts) {
 
-            @Override
-            public void doWork(List<ClockPart> clockParts) {
+				ClockPart chassis = null;
+				ClockPart clockWork = null;
+				ClockPart wristband = null;
+				ClockPart clockHand1 = null;
+				ClockPart clockHand2 = null;
+				ClockPart clockHand3 = null;
 
-                ClockPart chassis = null;
-                ClockPart clockWork = null;
-                ClockPart wristband = null;
-                ClockPart clockHand1 = null;
-                ClockPart clockHand2 = null;
-                ClockPart clockHand3 = null;
+				for (ClockPart p : clockParts) {
+					switch (p.getType()) {
+					case GEHAEUSE:
+						chassis = p;
+						break;
+					case UHRWERK:
+						clockWork = p;
+						break;
+					case LEDERARMBAND:
+					case METALLARMBAND:
+						wristband = p;
+						break;
+					case ZEIGER:
+						if (clockHand1 == null) {
+							clockHand1 = p;
+						} else if (clockHand2 == null) {
+							clockHand2 = p;
+						} else {
+							clockHand3 = p;
+						}
+						break;
+					}
+				}
 
-                for (ClockPart p : clockParts) {
-                    switch (p.getType()) {
-                        case GEHAEUSE:
-                            chassis = p;
-                            break;
-                        case UHRWERK:
-                            clockWork = p;
-                            break;
-                        case LEDERARMBAND:
-                        case METALLARMBAND:
-                            wristband = p;
-                            break;
-                        case ZEIGER:
-                            if (clockHand1 == null) {
-                                clockHand1 = p;
-                            } else if (clockHand2 == null) {
-                                clockHand2 = p;
-                            } else {
-                                clockHand3 = p;
-                            }
-                            break;
-                    }
-                }
+				if (chassis == null || clockWork == null || wristband == null || clockHand1 == null || clockHand2 == null) {
+					throw new IllegalArgumentException("Invalid clock parts have been given!\n" + clockParts);
+				}
 
-                if (chassis == null || clockWork == null || wristband == null || clockHand1 == null || clockHand2 == null) {
-                    throw new IllegalArgumentException("Invalid clock parts have been given!\n" + clockParts);
-                }
+				Clock clock = null;
 
-                Clock clock = null;
-
-                switch (typeToProduce) {
-                    case KLASSISCH:
-                        clock = new ClassicClock(chassis, clockWork, wristband, clockHand1, clockHand2, id);
-                        break;
-                    case SPORT:
-                        clock = new SportsClock(chassis, clockWork, wristband, clockHand1, clockHand2, id);
-                        break;
-                    case ZEITZONEN_SPORT:
-                        if (clockHand3 == null) {
-                            throw new IllegalArgumentException("Invalid clock parts have been given!\n" + clockHand3);
-                        }
-                        clock = new TimezoneSportsClock(chassis, clockWork, wristband, clockHand1, clockHand2, clockHand3, id);
-                        break;
-                }
-                clock.setOrderId(orderId);
-                connector.addAssembledClock(clock);
-            }
-        });
-    }
+				switch (typeToProduce) {
+				case KLASSISCH:
+					clock = new ClassicClock(chassis, clockWork, wristband, clockHand1, clockHand2, id);
+					break;
+				case SPORT:
+					clock = new SportsClock(chassis, clockWork, wristband, clockHand1, clockHand2, id);
+					break;
+				case ZEITZONEN_SPORT:
+					if (clockHand3 == null) {
+						throw new IllegalArgumentException("Invalid clock parts have been given!\n" + clockHand3);
+					}
+					clock = new TimezoneSportsClock(chassis, clockWork, wristband, clockHand1, clockHand2, clockHand3, id);
+					break;
+				}
+				clock.setOrderId(orderId);
+				connector.addAssembledClock(clock);
+			}
+		});
+	}
 
 }

@@ -166,6 +166,20 @@ public class JmsConnector extends AbstractJmsComponent implements Connector {
         // Return false if no work for any single clock order was successful
         return false;
     }
+    
+    @Override
+    public boolean takeSingleClockOrder(final OrderPriority priority,ClockType type, final TransactionalTask<SingleClockOrder> transactionalTask) {
+        final boolean[] done = { false };
+        final boolean[] noneAvailable = { false };
+
+        // Try any single clock order
+        String typeString = (type == null) ? "any" : type.name();
+        		
+        tm.transactional(new TakeSingleClockOrderWork(done, noneAvailable, priority, transactionalTask, typeString));
+        // If the work is done ore no single clock order available, return
+        return done[0];
+
+    }
 
     @Override
     public void deliverDemandedClock(final UUID handlerId) {
