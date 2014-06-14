@@ -122,7 +122,7 @@ public class JmsConnector extends AbstractJmsComponent implements Connector {
 
         @Override
         public void doWork() throws JMSException {
-            connectOrder();
+            connectOrderConsumer();
             ObjectMessage message = (ObjectMessage) singleClockOrderPriorityAndTypeConsumers.get(priority)
                 .get(type)
                 .receiveNoWait();
@@ -495,7 +495,7 @@ public class JmsConnector extends AbstractJmsComponent implements Connector {
             }
         }
     }
-
+    
     private void connectOrder() throws JMSException {
         orderQueue = createQueueIfNull(orderQueue, JmsConstants.ORDER_QUEUE);
         orderTopic = createTopicIfNull(orderTopic, JmsConstants.ORDER_TOPIC);
@@ -504,7 +504,11 @@ public class JmsConnector extends AbstractJmsComponent implements Connector {
         orderQueueProducer = createProducerIfNull(orderQueueProducer, orderQueue);
         orderTopicProducer = createProducerIfNull(orderTopicProducer, orderTopic);
         singleClockOrderQueueProducer = createProducerIfNull(singleClockOrderQueueProducer, singleClockOrderQueue);
+    }
 
+    private void connectOrderConsumer() throws JMSException {
+        singleClockOrderQueue = createQueueIfNull(singleClockOrderQueue, JmsConstants.SINGLE_CLOCK_ORDER_QUEUE);
+        
         if (singleClockOrderPriorityAndTypeConsumers.isEmpty()) {
             for (OrderPriority priority : OrderPriority.values()) {
                 Map<String, MessageConsumer> innerMap = new HashMap<String, MessageConsumer>();

@@ -56,7 +56,6 @@ public class AssemblyActor extends AbstractActor {
 
     @Override
     public void run() {
-
         while (!Thread.interrupted()) {
             if (doWait) {
                 // Wait for 1-3 seconds
