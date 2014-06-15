@@ -103,10 +103,12 @@ public interface Connector {
      * The take operations and the transactional task share the same transaction, resulting in a rollback if any operation fails.
      *
      * @param priority          the order priority needed
+     * @param type				the clocktype needed, if null a singleClockOrder of any type is taken
      * @param transactionalTask the task that uses the single clock order
      * @return true if a single clock order has successfully been processed
      */
-    public boolean takeSingleClockOrder(OrderPriority priority, TransactionalTask<SingleClockOrder> transactionalTask);
+	boolean takeSingleClockOrder(OrderPriority priority, ClockType type,
+			TransactionalTask<SingleClockOrder> transactionalTask);;
 
     /**
      * Adds the given clock as assembled clock.
@@ -152,7 +154,6 @@ public interface Connector {
 
     public List<SingleClockOrder> getSingleClockOrders();
 
-	boolean takeSingleClockOrder(OrderPriority priority, ClockType type,
-			TransactionalTask<SingleClockOrder> transactionalTask);
+
 
 }

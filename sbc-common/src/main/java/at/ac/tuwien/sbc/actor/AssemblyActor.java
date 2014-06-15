@@ -62,7 +62,6 @@ public class AssemblyActor extends AbstractActor {
 				sleepForSeconds(1, 3);
 			}
 
-			System.out.println(connector.getSingleClockOrders());
 			// First try high priority single clock orders
 			boolean done = connector.takeSingleClockOrder(OrderPriority.HOCH,null, productionTask);
 			for(ClockType type : ClockType.values()){

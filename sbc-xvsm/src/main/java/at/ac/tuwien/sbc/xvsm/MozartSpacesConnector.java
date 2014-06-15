@@ -15,6 +15,7 @@ import at.ac.tuwien.sbc.model.DistributorDemand;
 import at.ac.tuwien.sbc.model.Order;
 import at.ac.tuwien.sbc.model.OrderPriority;
 import at.ac.tuwien.sbc.model.SingleClockOrder;
+
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
@@ -22,6 +23,7 @@ import java.util.EnumSet;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
+
 import org.mozartspaces.capi3.CoordinationData;
 import org.mozartspaces.capi3.FifoCoordinator;
 import org.mozartspaces.capi3.IsolationLevel;
@@ -339,24 +341,21 @@ public class MozartSpacesConnector extends AbstractMozartSpacesComponent impleme
         }
     }
 
-    @Override
-    public boolean takeSingleClockOrder(final OrderPriority priority, final TransactionalTask<SingleClockOrder> transactionalTask) {
+    
+	@Override
+	public boolean takeSingleClockOrder(OrderPriority priority, ClockType type,
+			TransactionalTask<SingleClockOrder> transactionalTask) {
+		
         final boolean[] done = { false };
 
-        // Try single clock orders of a specific type in the order they are in the clockTypes array
-        ClockType[] clockTypes = new ClockType[]{ null, ClockType.ZEITZONEN_SPORT, ClockType.SPORT, ClockType.KLASSISCH };
-        for (ClockType type : clockTypes) {
-            tm.transactional(new TakeSingleClockOrderWork(done, priority, transactionalTask, type == null ? "" : type.name()));
+        // Try any single clock order
+        String typeString = (type == null) ? "" : type.name();
+        		
+        tm.transactional(new TakeSingleClockOrderWork(done, priority, transactionalTask, typeString));
+        // If the work is done ore no single clock order available, return
+        return done[0];
 
-            // Return as soon as one work was successful
-            if (done[0]) {
-                return true;
-            }
-        }
-
-        // Return false if no work for any single clock order was successful
-        return false;
-    }
+	}
 
     private Clock takeDeliveredClockOfNoOrder(final ClockType type) {
         final List<Clock> clocks = new ArrayList<Clock>();
@@ -434,5 +433,7 @@ public class MozartSpacesConnector extends AbstractMozartSpacesComponent impleme
         });
 
     }
+
+
 
 }

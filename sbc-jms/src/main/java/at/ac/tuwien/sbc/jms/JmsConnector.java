@@ -140,32 +140,6 @@ public class JmsConnector extends AbstractJmsComponent implements Connector {
         }
     }
 
-    @Override
-    public boolean takeSingleClockOrder(final OrderPriority priority, final TransactionalTask<SingleClockOrder> transactionalTask) {
-        final boolean[] done = { false };
-        final boolean[] noneAvailable = { false };
-
-        // Try any single clock order
-        tm.transactional(new TakeSingleClockOrderWork(done, noneAvailable, priority, transactionalTask, "any"));
-        // If the work is done ore no single clock order available, return
-        if (done[0] || noneAvailable[0]) {
-            return done[0];
-        }
-
-        // Try single clock orders of a specific type in the order they are in the clockTypes array
-        ClockType[] clockTypes = new ClockType[]{ ClockType.ZEITZONEN_SPORT, ClockType.SPORT, ClockType.KLASSISCH };
-        for (ClockType type : clockTypes) {
-            tm.transactional(new TakeSingleClockOrderWork(done, noneAvailable, priority, transactionalTask, type.name()));
-
-            // Return as soon as one work was successful
-            if (done[0]) {
-                return true;
-            }
-        }
-
-        // Return false if no work for any single clock order was successful
-        return false;
-    }
     
     @Override
     public boolean takeSingleClockOrder(final OrderPriority priority,ClockType type, final TransactionalTask<SingleClockOrder> transactionalTask) {
