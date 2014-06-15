@@ -66,14 +66,10 @@ public class AssemblyActor extends AbstractActor {
 			boolean done = connector.takeSingleClockOrder(OrderPriority.HOCH,null, productionTask);
 			for(ClockType type : ClockType.values()){
 				done = done ? true : connector.takeSingleClockOrder(OrderPriority.HOCH,type, productionTask);
-				done = done ? true : connector.takeSingleClockOrder(OrderPriority.HOCH,type, productionTask);
-				done = done ? true : connector.takeSingleClockOrder(OrderPriority.HOCH,type, productionTask);
 			}
 			// If none can be found try middle priority single clock orders
 			done = done ? true : connector.takeSingleClockOrder(OrderPriority.MITTEL,null, productionTask);
 			for(ClockType type : ClockType.values()){
-				done = done ? true : connector.takeSingleClockOrder(OrderPriority.MITTEL,type, productionTask);
-				done = done ? true : connector.takeSingleClockOrder(OrderPriority.MITTEL,type, productionTask);
 				done = done ? true : connector.takeSingleClockOrder(OrderPriority.MITTEL,type, productionTask);
 			}
 			// If none can be found check if a low priority single clock order should be tried
@@ -81,8 +77,6 @@ public class AssemblyActor extends AbstractActor {
 				// Try low priority single clock orders
 				done = connector.takeSingleClockOrder(OrderPriority.NIEDRIG,null, productionTask);
 				for(ClockType type : ClockType.values()){
-					done = done ? true : connector.takeSingleClockOrder(OrderPriority.NIEDRIG,type, productionTask);
-					done = done ? true : connector.takeSingleClockOrder(OrderPriority.NIEDRIG,type, productionTask);
 					done = done ? true : connector.takeSingleClockOrder(OrderPriority.NIEDRIG,type, productionTask);
 				}
 				// Remember that we tried low priority so we can alternate
