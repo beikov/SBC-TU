@@ -1,21 +1,5 @@
 package at.ac.tuwien.sbc.xvsm;
 
-import at.ac.tuwien.sbc.ClockListener;
-import at.ac.tuwien.sbc.ClockPartListener;
-import at.ac.tuwien.sbc.Connector;
-import at.ac.tuwien.sbc.OrderListener;
-import at.ac.tuwien.sbc.Subscription;
-import at.ac.tuwien.sbc.TransactionalTask;
-import at.ac.tuwien.sbc.model.Clock;
-import at.ac.tuwien.sbc.model.ClockPart;
-import at.ac.tuwien.sbc.model.ClockPartType;
-import at.ac.tuwien.sbc.model.ClockQualityType;
-import at.ac.tuwien.sbc.model.ClockType;
-import at.ac.tuwien.sbc.model.DistributorDemand;
-import at.ac.tuwien.sbc.model.Order;
-import at.ac.tuwien.sbc.model.OrderPriority;
-import at.ac.tuwien.sbc.model.SingleClockOrder;
-
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
@@ -38,6 +22,22 @@ import org.mozartspaces.core.MzsConstants;
 import org.mozartspaces.core.MzsCoreException;
 import org.mozartspaces.core.TransactionReference;
 import org.mozartspaces.notifications.Operation;
+
+import at.ac.tuwien.sbc.ClockListener;
+import at.ac.tuwien.sbc.ClockPartListener;
+import at.ac.tuwien.sbc.Connector;
+import at.ac.tuwien.sbc.OrderListener;
+import at.ac.tuwien.sbc.Subscription;
+import at.ac.tuwien.sbc.TransactionalTask;
+import at.ac.tuwien.sbc.model.Clock;
+import at.ac.tuwien.sbc.model.ClockPart;
+import at.ac.tuwien.sbc.model.ClockPartType;
+import at.ac.tuwien.sbc.model.ClockQualityType;
+import at.ac.tuwien.sbc.model.ClockType;
+import at.ac.tuwien.sbc.model.DistributorDemand;
+import at.ac.tuwien.sbc.model.Order;
+import at.ac.tuwien.sbc.model.OrderPriority;
+import at.ac.tuwien.sbc.model.SingleClockOrder;
 
 /**
  * A simple MozartSpaces implementation of the {@link Connector} interface.
@@ -106,7 +106,8 @@ public class MozartSpacesConnector extends AbstractMozartSpacesComponent impleme
     @Override
     public Subscription subscribeForClocks(final ClockListener listener) {
         return subscribeListener(new MozartSpacesClockListener(listener), EnumSet.of(Operation.WRITE), assembledClocksContainer,
-                                 checkedClocksContainer, deliveredClocksContainer, disassembledClocksContainer);
+                                 checkedClocksContainer, deliveredClocksContainer, disassembledClocksContainer, 
+                                 clocksDeliveredToDistributorsContainer);
     }
 
     @Override
@@ -371,6 +372,7 @@ public class MozartSpacesConnector extends AbstractMozartSpacesComponent impleme
                     .filter(Property.forName("orderId")
                         .equalTo(null));
                 selectors.add(QueryCoordinator.newSelector(query, 1));
+                selectors.add(FifoCoordinator.newSelector(1));
                 clocks.addAll((List) capi
                     .take(deliveredClocksContainer, selectors, MozartSpacesConstants.MAX_TIMEOUT_MILLIS, tx));
             }
@@ -394,9 +396,13 @@ public class MozartSpacesConnector extends AbstractMozartSpacesComponent impleme
 
                 try {
                     // Connect to the distributors stock
+                	try{
                     stockConnector = new MozartSpacesDistributorStockConnector(distributorDemand.getUri(), distributorDemand
                                                                                .getDestinationName());
-
+                	} catch (RuntimeException ex){
+                		// happens when the distributor isn't available anymore, no need to write demand back
+                		return;
+                	}
                     Map<ClockType, Integer> demandedClocks = distributorDemand.getNeededClocksPerType();
                     Map<ClockType, Integer> stockCount = stockConnector.getDistributorStock();
 
@@ -410,11 +416,13 @@ public class MozartSpacesConnector extends AbstractMozartSpacesComponent impleme
                                 clock.setDistributor(distributorDemand.getDestinationName());
                                 clock.setHandlerId(handlerId);
                                 clock.setDistributor(distributorDemand.getDestinationName());
+  
+                                // Push the clock back by adding it to the clocksDeliveredToDistributorsContainer clock container
+                                Entry entry = new Entry(clock);
+                                capi.write(clocksDeliveredToDistributorsContainer, MzsConstants.RequestTimeout.ZERO, tx, entry);
+                                
                                 stockConnector.deliver(clock);
 
-                                // Push the clock back by adding it to the disassembled clock container
-                                Entry entry = new Entry(clock);
-                                capi.write(disassembledClocksContainer, MzsConstants.RequestTimeout.ZERO, tx, entry);
                                 break;
                             }
                         }
@@ -423,11 +431,12 @@ public class MozartSpacesConnector extends AbstractMozartSpacesComponent impleme
                 } finally {
                     if (stockConnector != null) {
                         stockConnector.close();
+                        // Push back the demand
+                        capi.write(distributorDemandContainer, MzsConstants.RequestTimeout.INFINITE, tx,
+                                   new Entry(distributorDemand));
                     }
 
-                    // Push back the demand
-                    capi.write(distributorDemandContainer, MzsConstants.RequestTimeout.INFINITE, tx,
-                               new Entry(distributorDemand));
+                   
                 }
             }
         });

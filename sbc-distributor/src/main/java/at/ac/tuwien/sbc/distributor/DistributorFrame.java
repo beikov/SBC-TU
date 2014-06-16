@@ -54,16 +54,22 @@ public class DistributorFrame extends javax.swing.JFrame {
 
     private void updateOrderCounts() {
         // Update current order counts
-        clockList.setOrderCount(ClockType.KLASSISCH, Integer.parseInt(classicClockDemandTextField.getText()));
-        clockList.setOrderCount(ClockType.SPORT, Integer.parseInt(sportsClockDemandTextField.getText()));
-        clockList.setOrderCount(ClockType.ZEITZONEN_SPORT, Integer.parseInt(timezoneClockDemandTextField.getText()));
+//        clockList.setOrderCount(ClockType.KLASSISCH, Integer.parseInt(classicClockDemandTextField.getText()));
+//        clockList.setOrderCount(ClockType.SPORT, Integer.parseInt(sportsClockDemandTextField.getText()));
+//        clockList.setOrderCount(ClockType.ZEITZONEN_SPORT, Integer.parseInt(timezoneClockDemandTextField.getText()));
 
-        // Retriev current demand counts
+//        // Retriev current demand counts
+//        final Map<ClockType, Integer> demand = new EnumMap<ClockType, Integer>(ClockType.class);
+//        int classicDemand = clockList.getDemandCount(ClockType.KLASSISCH);
+//        int sportsDemand = clockList.getDemandCount(ClockType.SPORT);
+//        int timezoneDemand = clockList.getDemandCount(ClockType.ZEITZONEN_SPORT);
+        
+     // Retriev current demand counts
         final Map<ClockType, Integer> demand = new EnumMap<ClockType, Integer>(ClockType.class);
-        int classicDemand = clockList.getDemandCount(ClockType.KLASSISCH);
-        int sportsDemand = clockList.getDemandCount(ClockType.SPORT);
-        int timezoneDemand = clockList.getDemandCount(ClockType.ZEITZONEN_SPORT);
-
+        int classicDemand = Integer.parseInt(classicClockDemandTextField.getText());
+        int sportsDemand = Integer.parseInt(sportsClockDemandTextField.getText());
+        int timezoneDemand = Integer.parseInt(timezoneClockDemandTextField.getText());
+        
         // Only put the demand into the demand map if it actually is greater than 0
         if (classicDemand > 0) {
             demand.put(ClockType.KLASSISCH, classicDemand);
@@ -76,6 +82,7 @@ public class DistributorFrame extends javax.swing.JFrame {
         }
 
         // Let the factory know of our current demand
+        System.out.println("setting new demand");
         connector.setDemand(demand);
     }
 

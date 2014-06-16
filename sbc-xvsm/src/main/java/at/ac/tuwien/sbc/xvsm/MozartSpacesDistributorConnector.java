@@ -84,7 +84,7 @@ public class MozartSpacesDistributorConnector extends AbstractMozartSpacesCompon
     }
 
     @Override
-    public void setDemand(Map<ClockType, Integer> demand) {
+    public void setDemand(final Map<ClockType, Integer> demand) {
         DistributorDemand distributorDemand = new DistributorDemand(distributorUri, distributorId.toString(), demand);
         final Entry entry = new Entry(distributorDemand);
 
@@ -103,6 +103,7 @@ public class MozartSpacesDistributorConnector extends AbstractMozartSpacesCompon
                 capi.delete(distributorDemandContainer, selectors, MzsConstants.RequestTimeout.TRY_ONCE, tx);
                 // Save the new demand
                 capi.write(entry, distributorDemandContainer, MozartSpacesConstants.MAX_TIMEOUT_MILLIS, tx);
+             
             }
         });
 
